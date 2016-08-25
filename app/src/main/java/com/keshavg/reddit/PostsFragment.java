@@ -1,0 +1,117 @@
+package com.keshavg.reddit;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+/**
+ * Created by keshav.g on 22/08/16.
+ */
+public class PostsFragment extends Fragment {
+
+    private PostsAdapter postsAdapter;
+    private List<Post> posts;
+    private ListView listView;
+
+    public PostsFragment() {
+
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        try {
+            fetchPosts();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        View rootView = inflater.inflate(R.layout.content_main, container, false);
+        listView = (ListView) rootView.findViewById(R.id.posts_list);
+
+        return rootView;
+    }
+
+    public void fetchPosts() throws IOException {
+        posts = new ArrayList<Post>();
+
+        String url = "http://f9591e36.ngrok.io/api/v1/hot";
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        Call call = new OkHttpClient().newCall(request);
+
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    String HTML = response.body().string();
+                    JSONArray redditPost = new JSONArray(HTML);
+                    for (int idx = 0; idx < redditPost.length(); ++idx) {
+                        JSONObject currentPost = redditPost.getJSONObject(idx);
+                        Post post = new Post(
+                                currentPost.getString("author"),
+                                currentPost.getInt("score"),
+                                currentPost.getString("subreddit"),
+                                currentPost.getString("thumbnail"),
+                                currentPost.getString("title"),
+                                currentPost.getString("url")
+                        );
+
+                        posts.add(post);
+
+                        /**
+                         * Logging Posts URL
+                         */
+                        Log.d("Post URL #" + idx + " ", post.getUrl());
+                    }
+
+                    Handler handler = new Handler(Looper.getMainLooper());
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            postsAdapter = new PostsAdapter(getActivity(), R.layout.post_item, posts);
+                            listView.setAdapter(postsAdapter);
+                        }
+                    });
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+}
