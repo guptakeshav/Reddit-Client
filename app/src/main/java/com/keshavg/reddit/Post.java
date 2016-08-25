@@ -44,7 +44,7 @@ public class Post {
     }
 
     public String getScore() {
-        return Integer.toString(score);
+        return Integer.toString(score) + " score";
     }
 
     public String getSubreddit() {
@@ -64,6 +64,6 @@ public class Post {
     }
 
     public String getDetails() {
-        return "Posted by " + getAuthor() + " . " + "/r/" + getSubreddit();
+        return "Posted by " + getAuthor() + "\n" + "/r/" + getSubreddit();
     }
 }

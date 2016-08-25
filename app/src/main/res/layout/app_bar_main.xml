@@ -23,12 +23,12 @@
     <!--<include layout="@layout/content_main" />-->
 
     <fragment
-        android:id="@+id/hot_posts_fragment"
+        android:id="@+id/posts_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="?attr/actionBarSize"
         android:name="com.keshavg.reddit.PostsFragment" />
-    
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"

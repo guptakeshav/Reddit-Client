@@ -1,11 +1,10 @@
 package com.keshavg.reddit;
 
-import android.app.Activity;
 import android.content.Context;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,57 +15,65 @@ import java.util.List;
 /**
  * Created by keshav.g on 23/08/16.
  */
-public class PostsAdapter extends ArrayAdapter<Post> {
+public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> {
 
     Context context;
-    int resource;
     List<Post> objects;
 
-    public PostsAdapter(Context context, int resource, List<Post> objects) {
-        super(context, resource, objects);
+    public PostsAdapter(Context context, List<Post> objects) {
         this.context = context;
-        this.resource = resource;
         this.objects = objects;
     }
 
-    class ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView image;
         TextView title;
         TextView details;
         TextView score;
         TextView commentsCount;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            image = (ImageView) itemView.findViewById(R.id.post_image);
+            title = (TextView) itemView.findViewById(R.id.post_title);
+            details = (TextView) itemView.findViewById(R.id.post_details);
+            score = (TextView) itemView.findViewById(R.id.post_score);
+            commentsCount = (TextView) itemView.findViewById(R.id.post_comments_count);
+        }
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder = null;
+    public int getItemCount() {
+        return objects.size();
+    }
 
-        if (convertView == null) {
-            LayoutInflater inflater = ((Activity) context).getLayoutInflater();
-            convertView = inflater.inflate(resource, parent, false);
+    @Override
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater
+                .from(parent.getContext())
+                .inflate(R.layout.post_item, parent, false);
 
-            holder = new ViewHolder();
-            holder.image = (ImageView) convertView.findViewById(R.id.post_image);
-            holder.title = (TextView) convertView.findViewById(R.id.post_title);
-            holder.details = (TextView) convertView.findViewById(R.id.post_details);
-            holder.score = (TextView) convertView.findViewById(R.id.post_score);
-            holder.commentsCount = (TextView) convertView.findViewById(R.id.post_comments_count);
+        return new ViewHolder(itemView);
+    }
 
-            convertView.setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
-        }
-
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position) {
         Post post = objects.get(position);
 
         if (post.getThumbnail().startsWith("http")) {
-            Picasso.with(context).load(post.getThumbnail()).into(holder.image);
+            Picasso.with(context).load(post.getThumbnail())
+                    .resize(1536, 384)
+                    .centerCrop()
+                    .into(holder.image);
         }
         holder.title.setText(post.getTitle());
         holder.details.setText(post.getDetails());
         holder.score.setText(post.getScore());
         holder.commentsCount.setText(post.getNumComments());
+    }
 
-        return convertView;
+    public void addItem(Post dataObj) {
+        objects.add(dataObj);
+        notifyItemInserted(objects.size());
     }
 }

@@ -5,13 +5,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
-import android.widget.ListView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,13 +30,13 @@ import okhttp3.Response;
  */
 public class PostsFragment extends Fragment {
 
+    public static final String BASE_URL = "http://4230ab1c.ngrok.io";
+
     private Boolean initFlag, loadingFlag;
-    private ListView listView;
+    private RecyclerView recList;
     private PostsAdapter postsAdapter;
     private List<Post> posts;
     private String afterParam;
-
-    public static final String BASE_URL = "https://d80480b2.ngrok.io";
 
     public PostsFragment() {
         initFlag = false;
@@ -47,12 +46,20 @@ public class PostsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setRetainInstance(true);
+        setRetainInstance(true);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.content_main, container, false);
+        recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
+        recList.setHasFixedSize(false);
+
+        final LinearLayoutManager llm = new LinearLayoutManager(getActivity());
+        llm.setOrientation(LinearLayoutManager.VERTICAL);
+        recList.setLayoutManager(llm);
+
         String url = BASE_URL + "/api/v1/hot";
 
         try {
@@ -61,28 +68,25 @@ public class PostsFragment extends Fragment {
             e.printStackTrace();
         }
 
-        View rootView = inflater.inflate(R.layout.content_main, container, false);
-        listView = (ListView) rootView.findViewById(R.id.posts_list);
-
         /**
          * Adding more posts to the list, at the end of scroll
          */
-        listView.setOnScrollListener(new OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView absListView, int i) {
-
-            }
+        recList.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
             @Override
-            public void onScroll(AbsListView absListView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (firstVisibleItem + visibleItemCount == totalItemCount && totalItemCount != 0) {
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                int totalItemCount = llm.getItemCount();
+                int lastVisibleItem = llm.findLastVisibleItemPosition();
+                int visibleThreshold = 2;
+
+                if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
                     String url = BASE_URL + "/api/v1/hot/" + afterParam;
 
                     try {
-                        if (loadingFlag == false) {
-                            loadingFlag = true;
-                            fetchPosts(url);
-                        }
+                        loadingFlag = true;
+                        fetchPosts(url);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -146,12 +150,12 @@ public class PostsFragment extends Fragment {
                         @Override
                         public void run() {
                             if (initFlag == false) {
-                                postsAdapter = new PostsAdapter(getActivity(), R.layout.post_item, posts);
-                                listView.setAdapter(postsAdapter);
+                                postsAdapter = new PostsAdapter(getContext(), posts);
+                                recList.setAdapter(postsAdapter);
                                 initFlag = true;
                             } else {
                                 for (Post post : posts) {
-                                    postsAdapter.add(post);
+                                    postsAdapter.addItem(post);
                                 }
                             }
                         }

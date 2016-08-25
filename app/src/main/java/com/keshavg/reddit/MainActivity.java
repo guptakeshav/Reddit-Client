@@ -1,9 +1,12 @@
 package com.keshavg.reddit;
 
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -27,7 +30,7 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    public static final String BASE_URL = "https://d80480b2.ngrok.io";
+    public static final String BASE_URL = "http://4230ab1c.ngrok.io";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,10 +75,9 @@ public class MainActivity extends AppCompatActivity
 //            }
 //        });
 
-//        FragmentManager fragmentManager = getFragmentManager();
-//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//        PostsFragment fragment = new PostsFragment();
-//        fragmentTransaction.add(R.id.content_frame, fragment);
+//        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+//        Fragment fragment = new PostsFragment();
+//        fragmentTransaction.replace(R.id.posts_fragment, fragment);
 //        fragmentTransaction.commit();
     }
 
