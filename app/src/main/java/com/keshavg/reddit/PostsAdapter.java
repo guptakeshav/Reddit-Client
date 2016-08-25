@@ -6,7 +6,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -27,11 +30,11 @@ public class PostsAdapter extends ArrayAdapter<Post> {
     }
 
     class ViewHolder {
-//        ImageView image;
+        ImageView image;
         TextView title;
         TextView details;
         TextView score;
-        TextView comments;
+        TextView commentsCount;
     }
 
     @Override
@@ -43,11 +46,11 @@ public class PostsAdapter extends ArrayAdapter<Post> {
             convertView = inflater.inflate(resource, parent, false);
 
             holder = new ViewHolder();
-//            holder.image = (ImageView) convertView.findViewById(R.id.post_image);
+            holder.image = (ImageView) convertView.findViewById(R.id.post_image);
             holder.title = (TextView) convertView.findViewById(R.id.post_title);
             holder.details = (TextView) convertView.findViewById(R.id.post_details);
             holder.score = (TextView) convertView.findViewById(R.id.post_score);
-            holder.comments = (TextView) convertView.findViewById(R.id.post_comments);
+            holder.commentsCount = (TextView) convertView.findViewById(R.id.post_comments_count);
 
             convertView.setTag(holder);
         } else {
@@ -55,11 +58,14 @@ public class PostsAdapter extends ArrayAdapter<Post> {
         }
 
         Post post = objects.get(position);
-//        holder.image.setImageURI(post.getThumbnail());
+
+        if (post.getThumbnail().startsWith("http")) {
+            Picasso.with(context).load(post.getThumbnail()).into(holder.image);
+        }
         holder.title.setText(post.getTitle());
         holder.details.setText(post.getDetails());
         holder.score.setText(post.getScore());
-        holder.comments.setText(post.getNumComments());
+        holder.commentsCount.setText(post.getNumComments());
 
         return convertView;
     }

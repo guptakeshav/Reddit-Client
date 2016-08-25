@@ -27,22 +27,12 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    public static final String BASE_URL = "https://d80480b2.ngrok.io";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        /**
-         * Not working. Null pointer exception.
-         */
-
-//        SwipeRefreshLayout swipeContainer = (SwipeRefreshLayout) findViewById(R.id.content_frame);
-//        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-//            @Override
-//            public void onRefresh() {
-//                // CALL TO REFRESH THE POSTS
-//            }
-//        });
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -73,10 +63,24 @@ public class MainActivity extends AppCompatActivity
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+//        SwipeRefreshLayout swipeContainer = (SwipeRefreshLayout) findViewById(R.id.content_frame);
+//        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                // CALL TO REFRESH THE POSTS
+//            }
+//        });
+
+//        FragmentManager fragmentManager = getFragmentManager();
+//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+//        PostsFragment fragment = new PostsFragment();
+//        fragmentTransaction.add(R.id.content_frame, fragment);
+//        fragmentTransaction.commit();
     }
 
     public void getSubredditsList(final SubMenu subMenu) throws IOException {
-        String url = "http://f9591e36.ngrok.io/api/v1/subreddits";
+        String url = BASE_URL + "/api/v1/subreddits";
 
         Request request = new Request.Builder()
                 .url(url)
@@ -98,13 +102,12 @@ public class MainActivity extends AppCompatActivity
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            for (int idx = 0; idx < subreddits.length(); ++idx) {
-
-                                try {
+                            try {
+                                for (int idx = 0; idx < subreddits.length(); ++idx) {
                                     subMenu.add(subreddits.getString(idx));
-                                } catch (Exception e) {
-                                    e.printStackTrace();
                                 }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
                         }
                     });

@@ -1,7 +1,5 @@
 package com.keshavg.reddit;
 
-import android.content.Intent;
-
 /**
  * Created by keshav.g on 22/08/16.
  */

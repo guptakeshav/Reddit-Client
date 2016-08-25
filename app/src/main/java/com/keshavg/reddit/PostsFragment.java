@@ -37,6 +37,8 @@ public class PostsFragment extends Fragment {
     private List<Post> posts;
     private String afterParam;
 
+    public static final String BASE_URL = "https://d80480b2.ngrok.io";
+
     public PostsFragment() {
         initFlag = false;
         loadingFlag = false;
@@ -51,7 +53,7 @@ public class PostsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        String url = "http://f9591e36.ngrok.io/api/v1/hot";
+        String url = BASE_URL + "/api/v1/hot";
 
         try {
             fetchPosts(url);
@@ -74,7 +76,7 @@ public class PostsFragment extends Fragment {
             @Override
             public void onScroll(AbsListView absListView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 if (firstVisibleItem + visibleItemCount == totalItemCount && totalItemCount != 0) {
-                    String url = "http://f9591e36.ngrok.io/api/v1/hot/" + afterParam;
+                    String url = BASE_URL + "/api/v1/hot/" + afterParam;
 
                     try {
                         if (loadingFlag == false) {
