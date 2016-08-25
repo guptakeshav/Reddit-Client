@@ -11,7 +11,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
+
+import org.json.JSONArray;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -20,6 +31,18 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        /**
+         * Not working. Null pointer exception.
+         */
+
+//        SwipeRefreshLayout swipeContainer = (SwipeRefreshLayout) findViewById(R.id.content_frame);
+//        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                // CALL TO REFRESH THE POSTS
+//            }
+//        });
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -41,6 +64,55 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        final Menu menu = navigationView.getMenu();
+        final SubMenu subMenu = menu.addSubMenu("Subreddits");
+
+        try {
+            getSubredditsList(subMenu);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getSubredditsList(final SubMenu subMenu) throws IOException {
+        String url = "http://f9591e36.ngrok.io/api/v1/subreddits";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        Call call = new OkHttpClient().newCall(request);
+
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    final JSONArray subreddits = new JSONArray(response.body().string());
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (int idx = 0; idx < subreddits.length(); ++idx) {
+
+                                try {
+                                    subMenu.add(subreddits.getString(idx));
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Override
@@ -89,10 +161,6 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
 
         }
 

@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
@@ -32,6 +31,7 @@ public class PostsAdapter extends ArrayAdapter<Post> {
         TextView title;
         TextView details;
         TextView score;
+        TextView comments;
     }
 
     @Override
@@ -47,6 +47,7 @@ public class PostsAdapter extends ArrayAdapter<Post> {
             holder.title = (TextView) convertView.findViewById(R.id.post_title);
             holder.details = (TextView) convertView.findViewById(R.id.post_details);
             holder.score = (TextView) convertView.findViewById(R.id.post_score);
+            holder.comments = (TextView) convertView.findViewById(R.id.post_comments);
 
             convertView.setTag(holder);
         } else {
@@ -58,6 +59,7 @@ public class PostsAdapter extends ArrayAdapter<Post> {
         holder.title.setText(post.getTitle());
         holder.details.setText(post.getDetails());
         holder.score.setText(post.getScore());
+        holder.comments.setText(post.getNumComments());
 
         return convertView;
     }

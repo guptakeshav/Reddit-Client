@@ -9,15 +9,19 @@ public class Post {
 
     private String author;
     private int created;
+    private int numComments;
+    private String permalink;
     private int score;
     private String subreddit;
     private String thumbnail;
     private String title;
     private String url;
 
-    public Post(String author, int created, int score, String subreddit, String thumbnail, String title, String url) {
+    public Post(String author, int created, int numComments, String permalink, int score, String subreddit, String thumbnail, String title, String url) {
         this.author = author;
         this.created = created;
+        this.numComments = numComments;
+        this.permalink = permalink;
         this.score = score;
         this.subreddit = subreddit;
         this.thumbnail = thumbnail;
@@ -31,6 +35,14 @@ public class Post {
 
     public int getCreated() {
         return created;
+    }
+
+    public String getNumComments() {
+        return Integer.toString(numComments) + " comments";
+    }
+
+    public String getPermalink() {
+        return permalink;
     }
 
     public String getScore() {

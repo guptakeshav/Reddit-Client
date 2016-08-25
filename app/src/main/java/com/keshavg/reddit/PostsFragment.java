@@ -45,6 +45,7 @@ public class PostsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+//        setRetainInstance(true);
     }
 
     @Nullable
@@ -108,8 +109,7 @@ public class PostsFragment extends Fragment {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 try {
-                    String HTML = response.body().string();
-                    JSONObject jsonObject = new JSONObject(HTML);
+                    JSONObject jsonObject = new JSONObject(response.body().string());
 
                     afterParam = jsonObject.getString("after");
                     JSONArray redditPosts = jsonObject.getJSONArray("data");
@@ -119,6 +119,8 @@ public class PostsFragment extends Fragment {
                         Post post = new Post(
                                 currentPost.getString("author"),
                                 currentPost.getInt("created"),
+                                currentPost.getInt("num_comments"),
+                                currentPost.getString("permalink"),
                                 currentPost.getInt("score"),
                                 currentPost.getString("subreddit"),
                                 currentPost.getString("thumbnail"),
@@ -160,5 +162,4 @@ public class PostsFragment extends Fragment {
             }
         });
     }
-
 }
