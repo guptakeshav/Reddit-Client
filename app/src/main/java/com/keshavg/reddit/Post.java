@@ -1,30 +1,23 @@
 package com.keshavg.reddit;
 
+import android.content.Intent;
+
 /**
  * Created by keshav.g on 22/08/16.
  */
 public class Post {
-    @Override
-    public String toString() {
-        return "Post{" +
-                "author='" + author + '\'' +
-                ", score=" + score +
-                ", subreddit='" + subreddit + '\'' +
-                ", thumbnail='" + thumbnail + '\'' +
-                ", title='" + title + '\'' +
-                ", url='" + url + '\'' +
-                '}';
-    }
 
     private String author;
+    private int created;
     private int score;
     private String subreddit;
     private String thumbnail;
     private String title;
     private String url;
 
-    public Post(String author, int score, String subreddit, String thumbnail, String title, String url) {
+    public Post(String author, int created, int score, String subreddit, String thumbnail, String title, String url) {
         this.author = author;
+        this.created = created;
         this.score = score;
         this.subreddit = subreddit;
         this.thumbnail = thumbnail;
@@ -36,8 +29,12 @@ public class Post {
         return author;
     }
 
-    public int getScore() {
-        return score;
+    public int getCreated() {
+        return created;
+    }
+
+    public String getScore() {
+        return Integer.toString(score);
     }
 
     public String getSubreddit() {
@@ -54,5 +51,9 @@ public class Post {
 
     public String getUrl() {
         return url;
+    }
+
+    public String getDetails() {
+        return "Posted by " + getAuthor() + " . " + "/r/" + getSubreddit();
     }
 }
