@@ -1,7 +1,10 @@
 package com.keshavg.reddit;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +20,8 @@ import java.util.List;
  */
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> {
 
-    private Context context;
-    private List<Post> objects;
+    private static Context context;
+    private static List<Post> objects;
 
     public PostsAdapter(Context context, List<Post> objects) {
         this.context = context;
@@ -39,6 +42,24 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
             details = (TextView) itemView.findViewById(R.id.post_details);
             score = (TextView) itemView.findViewById(R.id.post_score);
             commentsCount = (TextView) itemView.findViewById(R.id.post_comments_count);
+
+            title.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    int pos = getAdapterPosition();
+                    String url = objects.get(pos).getUrl();
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    context.startActivity(i);
+                }
+            });
+
+            commentsCount.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d("Fetching..", "Comments");
+                }
+            });
         }
     }
 

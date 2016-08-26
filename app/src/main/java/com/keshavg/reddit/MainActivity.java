@@ -1,11 +1,10 @@
 package com.keshavg.reddit;
 
-import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -35,6 +34,9 @@ public class MainActivity extends AppCompatActivity
 
     private PostsFragment fragment;
     private SwipeRefreshLayout swipeContainer;
+
+    private Menu menu;
+    private MenuItem prevMenuItem;
 
     private String[] categories = {"hot", "new", "rising", "controversial", "top"};
 
@@ -79,12 +81,14 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        final Menu menu = navigationView.getMenu();
+        menu = navigationView.getMenu();
         for (String category : categories) {
             menu.add(category);
         }
-        final SubMenu subMenu = menu.addSubMenu("Subreddits");
+        menu.getItem(0).setChecked(true);
+        prevMenuItem = menu.getItem(0);
 
+        final SubMenu subMenu = menu.addSubMenu("Subreddits");
         try {
             getSubredditsList(subMenu);
         } catch (Exception e) {
@@ -164,6 +168,10 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+
+        prevMenuItem.setChecked(false);
+        item.setChecked(true);
+        prevMenuItem = item;
 
         String url = BASE_URL + "/api/v1/" + item.getTitle().toString();
         fragment.getNewPosts(url);
