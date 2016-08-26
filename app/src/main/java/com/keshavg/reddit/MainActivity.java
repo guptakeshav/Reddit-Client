@@ -33,7 +33,10 @@ import static com.keshavg.reddit.Constants.BASE_URL;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    SwipeRefreshLayout swipeContainer;
+    private PostsFragment fragment;
+    private SwipeRefreshLayout swipeContainer;
+
+    private String[] categories = {"hot", "new", "rising", "controversial", "top"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +44,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        Fragment fragment = new PostsFragment();
+        fragment = new PostsFragment();
         fragmentTransaction.add(R.id.fragment_container, fragment);
         fragmentTransaction.commit();
 
@@ -77,6 +80,9 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         final Menu menu = navigationView.getMenu();
+        for (String category : categories) {
+            menu.add(category);
+        }
         final SubMenu subMenu = menu.addSubMenu("Subreddits");
 
         try {
@@ -111,7 +117,7 @@ public class MainActivity extends AppCompatActivity
                         public void run() {
                             try {
                                 for (int idx = 0; idx < subreddits.length(); ++idx) {
-                                    subMenu.add(subreddits.getString(idx));
+                                    subMenu.add("r/" + subreddits.getString(idx));
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -159,18 +165,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
 
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        }
+        String url = BASE_URL + "/api/v1/" + item.getTitle().toString();
+        fragment.getNewPosts(url);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);

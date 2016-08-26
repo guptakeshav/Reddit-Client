@@ -35,18 +35,17 @@ import static com.keshavg.reddit.Constants.BASE_URL;
 public class PostsFragment extends Fragment {
 
     private Boolean initFlag, loadingFlag;
+
     private RecyclerView recList;
     private PostsAdapter postsAdapter;
     private List<Post> posts;
+
+    private String url;
     private String afterParam;
 
     public PostsFragment() {
         initFlag = false;
         loadingFlag = false;
-    }
-
-    public PostsFragment(String url) {
-
     }
 
     @Override
@@ -61,10 +60,18 @@ public class PostsFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.content_main, container, false);
         recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
 
-        final LinearLayoutManager llm = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
+        final LinearLayoutManager llm = new LinearLayoutManager(
+                getActivity(),
+                LinearLayoutManager.VERTICAL,
+                false
+        );
         recList.setLayoutManager(llm);
 
-        String url = BASE_URL + "/api/v1/hot";
+        /**
+         * Fetching "hot" posts
+         * It will be shown on the first activity, on opening the app
+         */
+        url = BASE_URL + "/api/v1/hot";
 
         try {
             fetchPosts(url);
@@ -86,11 +93,10 @@ public class PostsFragment extends Fragment {
                 int visibleThreshold = 2;
 
                 if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-                    String url = BASE_URL + "/api/v1/hot/" + afterParam;
+                    String paramUrl = url + "/" + afterParam;
 
                     try {
-                        loadingFlag = true;
-                        fetchPosts(url);
+                        fetchPosts(paramUrl);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -101,7 +107,24 @@ public class PostsFragment extends Fragment {
         return rootView;
     }
 
+    public void getNewPosts(String url) {
+        this.url = url;
+        initFlag = false;
+
+        try {
+            fetchPosts(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void fetchPosts(String url) throws IOException {
+
+        /**
+         * Indicating that the posts are being fetched
+         */
+        loadingFlag = true;
+
         posts = new ArrayList<Post>();
 
         Request request = new Request.Builder()
@@ -167,6 +190,9 @@ public class PostsFragment extends Fragment {
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
+                    /**
+                     * Fetching of posts is completed
+                     */
                     loadingFlag = false;
                 }
             }
