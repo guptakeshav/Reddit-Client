@@ -1,5 +1,7 @@
 package com.keshavg.reddit;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -25,12 +27,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static com.keshavg.reddit.Constants.BASE_URL;
+
 /**
  * Created by keshav.g on 22/08/16.
  */
 public class PostsFragment extends Fragment {
-
-    public static final String BASE_URL = "http://4230ab1c.ngrok.io";
 
     private Boolean initFlag, loadingFlag;
     private RecyclerView recList;
@@ -41,6 +43,10 @@ public class PostsFragment extends Fragment {
     public PostsFragment() {
         initFlag = false;
         loadingFlag = false;
+    }
+
+    public PostsFragment(String url) {
+
     }
 
     @Override
@@ -54,10 +60,8 @@ public class PostsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.content_main, container, false);
         recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
-        recList.setHasFixedSize(false);
 
-        final LinearLayoutManager llm = new LinearLayoutManager(getActivity());
-        llm.setOrientation(LinearLayoutManager.VERTICAL);
+        final LinearLayoutManager llm = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         recList.setLayoutManager(llm);
 
         String url = BASE_URL + "/api/v1/hot";

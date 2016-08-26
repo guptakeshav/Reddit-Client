@@ -1,5 +1,8 @@
 package com.keshavg.reddit;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by keshav.g on 22/08/16.
  */
@@ -31,8 +34,16 @@ public class Post {
         return author;
     }
 
-    public int getCreated() {
-        return created;
+    public String getCreated() {
+        Date date = new Date(created);
+
+        SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
+        String dateString = formatter.format(date);
+
+        formatter = new SimpleDateFormat("hh:mm a");
+        String time = formatter.format(date);
+
+        return dateString + " " + time;
     }
 
     public String getNumComments() {
@@ -64,6 +75,8 @@ public class Post {
     }
 
     public String getDetails() {
-        return "Posted by " + getAuthor() + "\n" + "/r/" + getSubreddit();
+        return "Posted by " + getAuthor() +
+                " on " + getCreated() +
+                "\n" + "/r/" + getSubreddit();
     }
 }

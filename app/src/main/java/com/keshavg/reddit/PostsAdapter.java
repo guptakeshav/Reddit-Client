@@ -17,8 +17,8 @@ import java.util.List;
  */
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> {
 
-    Context context;
-    List<Post> objects;
+    private Context context;
+    private List<Post> objects;
 
     public PostsAdapter(Context context, List<Post> objects) {
         this.context = context;
@@ -65,15 +65,28 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
                     .resize(1536, 384)
                     .centerCrop()
                     .into(holder.image);
+        } else {
+            holder.image.setImageBitmap(null);
         }
+
         holder.title.setText(post.getTitle());
         holder.details.setText(post.getDetails());
         holder.score.setText(post.getScore());
         holder.commentsCount.setText(post.getNumComments());
     }
 
+    public void clear() {
+        objects.clear();
+        notifyDataSetChanged();
+    }
+
     public void addItem(Post dataObj) {
         objects.add(dataObj);
         notifyItemInserted(objects.size());
+    }
+
+    public void addAll(List<Post> objects) {
+        this.objects.addAll(objects);
+        notifyDataSetChanged();
     }
 }

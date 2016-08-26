@@ -21,13 +21,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/post_image"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:gravity="center"
+            android:textColor="#000000"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TextView
             android:id="@+id/post_details"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/post_title"
+            android:layout_margin="8dp"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TextView
@@ -35,14 +40,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/post_details"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TextView
             android:id="@+id/post_comments_count"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/post_score"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
 
     </RelativeLayout>
 </android.support.v7.widget.CardView>
