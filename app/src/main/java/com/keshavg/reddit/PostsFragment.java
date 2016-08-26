@@ -1,10 +1,9 @@
 package com.keshavg.reddit;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -32,8 +31,9 @@ import static com.keshavg.reddit.Constants.BASE_URL;
  */
 public class PostsFragment extends Fragment {
 
-    private Boolean initFlag, loadingFlag;
+    private Boolean loadingFlag;
 
+    private SwipeRefreshLayout swipeContainer;
     private RecyclerView recList;
     private PostsAdapter postsAdapter;
     private List<Post> posts;
@@ -42,8 +42,8 @@ public class PostsFragment extends Fragment {
     private String afterParam;
 
     public PostsFragment() {
-        initFlag = false;
         loadingFlag = false;
+        posts = new ArrayList<Post>();
     }
 
     @Override
@@ -57,6 +57,8 @@ public class PostsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.content_main, container, false);
         recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
+        postsAdapter = new PostsAdapter(getContext(), posts);
+        recList.setAdapter(postsAdapter);
 
         final LinearLayoutManager llm = new LinearLayoutManager(
                 getActivity(),
@@ -70,12 +72,18 @@ public class PostsFragment extends Fragment {
          * It will be shown on the first activity, on opening the app
          */
         url = BASE_URL + "/api/v1/hot";
+        getNewPosts(url);
 
-        try {
-            fetchPosts(url);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        /**
+         * Adding pull to refresh
+         */
+        swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.posts_container);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                getNewPosts(url);
+            }
+        });
 
         /**
          * Adding more posts to the list, at the end of scroll
@@ -105,10 +113,14 @@ public class PostsFragment extends Fragment {
         return rootView;
     }
 
+    /**
+     * Get all posts from the starting for a particular link
+     * @param url
+     */
     public void getNewPosts(String url) {
         this.url = url;
-        initFlag = false;
 
+        postsAdapter.clear();
         try {
             fetchPosts(url);
         } catch (Exception e) {
@@ -116,6 +128,11 @@ public class PostsFragment extends Fragment {
         }
     }
 
+    /**
+     * Making calls to the API and fetching required data
+     * @param url
+     * @throws IOException
+     */
     public void fetchPosts(String url) throws IOException {
 
         /**
@@ -162,7 +179,7 @@ public class PostsFragment extends Fragment {
                         posts.add(post);
 
                         /**
-                         * Logging Posts URL
+                         * Logging posts URL
                          */
                         Log.d("Post URL #" + idx + " ", post.getTitle());
                     }
@@ -170,19 +187,10 @@ public class PostsFragment extends Fragment {
                     /**
                      * Updating the UI on async fetching of posts
                      */
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
+                    getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (initFlag == false) {
-                                postsAdapter = new PostsAdapter(getContext(), posts);
-                                recList.setAdapter(postsAdapter);
-                                initFlag = true;
-                            } else {
-                                for (Post post : posts) {
-                                    postsAdapter.addItem(post);
-                                }
-                            }
+                            postsAdapter.addAll(posts);
                         }
                     });
                 } catch (Exception e) {
@@ -192,6 +200,13 @@ public class PostsFragment extends Fragment {
                      * Fetching of posts is completed
                      */
                     loadingFlag = false;
+
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            swipeContainer.setRefreshing(false);
+                        }
+                    });
                 }
             }
         });

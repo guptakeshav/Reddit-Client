@@ -7,11 +7,9 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -33,7 +31,6 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private PostsFragment fragment;
-    private SwipeRefreshLayout swipeContainer;
 
     private Menu menu;
     private MenuItem prevMenuItem;
@@ -49,16 +46,6 @@ public class MainActivity extends AppCompatActivity
         fragment = new PostsFragment();
         fragmentTransaction.add(R.id.fragment_container, fragment);
         fragmentTransaction.commit();
-
-        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.posts_container);
-        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                /**
-                 * Not working
-                 */
-            }
-        });
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -85,6 +72,7 @@ public class MainActivity extends AppCompatActivity
         for (String category : categories) {
             menu.add(category);
         }
+        setTitle("Reddit - hot");
         menu.getItem(0).setChecked(true);
         prevMenuItem = menu.getItem(0);
 
@@ -168,6 +156,8 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+
+        setTitle("Reddit - " + item.getTitle().toString());
 
         prevMenuItem.setChecked(false);
         item.setChecked(true);
