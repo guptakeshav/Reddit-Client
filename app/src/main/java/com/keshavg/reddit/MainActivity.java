@@ -1,19 +1,21 @@
 package com.keshavg.reddit;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.EditText;
 
 import org.json.JSONArray;
 
@@ -30,7 +32,8 @@ import static com.keshavg.reddit.Constants.BASE_URL;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private PostsFragment fragment;
+    private PostsFragment postsFragment;
+    private PostsFragment searchFragment;
 
     private Menu menu;
     private MenuItem prevMenuItem;
@@ -42,10 +45,10 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragment = new PostsFragment();
-        fragmentTransaction.add(R.id.fragment_container, fragment);
-        fragmentTransaction.commit();
+        postsFragment = PostsFragment.newInstance(BASE_URL + "/api/v1/hot");
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.posts_fragment_container, postsFragment)
+                .commit();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -54,17 +57,20 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                showSearchDialog();
             }
         });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
 
+        createMenuBar();
+    }
+
+    private void createMenuBar() {
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
@@ -72,6 +78,7 @@ public class MainActivity extends AppCompatActivity
         for (String category : categories) {
             menu.add(category);
         }
+        
         setTitle("Reddit - hot");
         menu.getItem(0).setChecked(true);
         prevMenuItem = menu.getItem(0);
@@ -129,13 +136,18 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                setTitle("Reddit - " + prevMenuItem.getTitle().toString());
+                prevMenuItem.setChecked(true);
+                getSupportFragmentManager().popBackStack();
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
@@ -156,18 +168,66 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-
-        setTitle("Reddit - " + item.getTitle().toString());
-
         prevMenuItem.setChecked(false);
+
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+        }
+        setTitle("Reddit - " + item.getTitle().toString());
         item.setChecked(true);
+
         prevMenuItem = item;
 
         String url = BASE_URL + "/api/v1/" + item.getTitle().toString();
-        fragment.getNewPosts(url);
+        postsFragment.fetchNewPosts(url);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void showSearchDialog() {
+        View promptView = LayoutInflater.from(MainActivity.this).inflate(R.layout.input_dialog, null);
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+        alertDialogBuilder.setView(promptView);
+
+        final EditText editText = (EditText) promptView.findViewById(R.id.search_text);
+
+        alertDialogBuilder
+                .setPositiveButton("Search", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String searchQuery = editText.getText().toString();
+                        setTitle("Results - " + searchQuery);
+                        prevMenuItem.setChecked(false);
+
+                        String url = BASE_URL + "/api/v1/search/" + searchQuery;
+
+                        /**
+                         * Checking if already on the search fragment
+                         * Then only update the list of posts
+                         * No need to create a new fragment
+                         */
+                        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                            searchFragment.fetchNewPosts(url);
+                        } else {
+                            searchFragment = PostsFragment.newInstance(url);
+                            getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.posts_fragment_container, searchFragment)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
     }
 }

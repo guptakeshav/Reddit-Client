@@ -24,8 +24,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static com.keshavg.reddit.Constants.BASE_URL;
-
 /**
  * Created by keshav.g on 22/08/16.
  */
@@ -35,89 +33,95 @@ public class PostsFragment extends Fragment {
 
     private SwipeRefreshLayout swipeContainer;
     private RecyclerView recList;
-    private PostsAdapter postsAdapter;
+    private LinearLayoutManager llm;
+
     private List<Post> posts;
+    private PostsAdapter postsAdapter;
 
     private String url;
     private String afterParam;
 
     public PostsFragment() {
-        loadingFlag = false;
-        posts = new ArrayList<Post>();
+    }
+
+    public static PostsFragment newInstance(String url) {
+        PostsFragment fragment = new PostsFragment();
+        Bundle args = new Bundle();
+        args.putString("url", url);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
+
+        loadingFlag = false;
+
+        posts = new ArrayList<Post>();
+        postsAdapter = new PostsAdapter(getContext(), posts);
+
+        fetchNewPosts(getArguments().getString("url"));
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.content_main, container, false);
-        recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
-        postsAdapter = new PostsAdapter(getContext(), posts);
-        recList.setAdapter(postsAdapter);
+        return inflater.inflate(R.layout.content_post, container, false);
+    }
 
-        final LinearLayoutManager llm = new LinearLayoutManager(
+    @Override
+    public void onViewCreated(View rootView, Bundle savedInstanceState) {
+        recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
+        recList.setAdapter(postsAdapter);
+        llm = new LinearLayoutManager(
                 getActivity(),
                 LinearLayoutManager.VERTICAL,
                 false
         );
         recList.setLayoutManager(llm);
+        recList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                loadMorePosts();
+            }
+        });
 
-        /**
-         * Fetching "hot" posts
-         * It will be shown on the first activity, on opening the app
-         */
-        url = BASE_URL + "/api/v1/hot";
-        getNewPosts(url);
-
-        /**
-         * Adding pull to refresh
-         */
         swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.posts_container);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                getNewPosts(url);
+                fetchNewPosts(url);
             }
         });
+    }
 
-        /**
-         * Adding more posts to the list, at the end of scroll
-         */
-        recList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+    /**
+     * Fetching more posts when the end of list has reached
+     */
+    private void loadMorePosts() {
+        int totalItemCount = llm.getItemCount();
+        int lastVisibleItem = llm.findLastVisibleItemPosition();
+        int visibleThreshold = 2;
 
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
+        if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+            String paramUrl = url + "/" + afterParam;
 
-                int totalItemCount = llm.getItemCount();
-                int lastVisibleItem = llm.findLastVisibleItemPosition();
-                int visibleThreshold = 2;
-
-                if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-                    String paramUrl = url + "/" + afterParam;
-
-                    try {
-                        fetchPosts(paramUrl);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+            try {
+                fetchPosts(paramUrl);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        });
-
-        return rootView;
+        }
     }
 
     /**
      * Get all posts from the starting for a particular link
+     *
      * @param url
      */
-    public void getNewPosts(String url) {
+    public void fetchNewPosts(String url) {
         this.url = url;
 
         postsAdapter.clear();
@@ -130,6 +134,7 @@ public class PostsFragment extends Fragment {
 
     /**
      * Making calls to the API and fetching required data
+     *
      * @param url
      * @throws IOException
      */
@@ -139,7 +144,6 @@ public class PostsFragment extends Fragment {
          * Indicating that the posts are being fetched
          */
         loadingFlag = true;
-
         posts = new ArrayList<Post>();
 
         Request request = new Request.Builder()
@@ -179,7 +183,7 @@ public class PostsFragment extends Fragment {
                         posts.add(post);
 
                         /**
-                         * Logging posts URL
+                         * Logging posts title
                          */
                         Log.d("Post URL #" + idx + " ", post.getTitle());
                     }
@@ -200,7 +204,6 @@ public class PostsFragment extends Fragment {
                      * Fetching of posts is completed
                      */
                     loadingFlag = false;
-
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {

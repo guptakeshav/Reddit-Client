@@ -2,9 +2,7 @@ package com.keshavg.reddit;
 
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,16 +46,21 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
                 public void onClick(View view) {
                     int pos = getAdapterPosition();
                     String url = objects.get(pos).getUrl();
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    i.setData(Uri.parse(url));
-                    context.startActivity(i);
+                    Intent i = new Intent(view.getContext(), WebViewActivity.class);
+                    i.putExtra("Url", url);
+                    view.getContext().startActivity(i);
                 }
             });
 
             commentsCount.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Log.d("Fetching..", "Comments");
+                    Intent i = new Intent(view.getContext(), WebViewActivity.class);
+
+//                    Intent i = new Intent(view.getContext(), CommentsActivity.class);
+//                    i.putExtra("Title", objects.get(getAdapterPosition()).getTitle());
+                    i.putExtra("Url", "https://www.reddit.com" + objects.get(getAdapterPosition()).getPermalink());
+                    view.getContext().startActivity(i);
                 }
             });
         }
@@ -72,7 +75,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater
                 .from(parent.getContext())
-                .inflate(R.layout.post_item, parent, false);
+                .inflate(R.layout.post_row, parent, false);
 
         return new ViewHolder(itemView);
     }

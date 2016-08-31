@@ -9,7 +9,7 @@ import java.util.Date;
 public class Post {
 
     private String author;
-    private int created;
+    private long created;
     private int numComments;
     private String permalink;
     private int score;
@@ -18,7 +18,7 @@ public class Post {
     private String title;
     private String url;
 
-    public Post(String author, int created, int numComments, String permalink, int score, String subreddit, String thumbnail, String title, String url) {
+    public Post(String author, long created, int numComments, String permalink, int score, String subreddit, String thumbnail, String title, String url) {
         this.author = author;
         this.created = created;
         this.numComments = numComments;
@@ -35,7 +35,7 @@ public class Post {
     }
 
     public String getCreated() {
-        Date date = new Date(created);
+        Date date = new Date(created * 1000L);
 
         SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
         String dateString = formatter.format(date);

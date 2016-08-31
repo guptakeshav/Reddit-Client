@@ -21,14 +21,11 @@
     </android.support.design.widget.AppBarLayout>
 
     <FrameLayout
-        android:id="@+id/fragment_container"
+        android:id="@+id/posts_fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="?attr/actionBarSize"
-        android:background="#F1F1F1">
-
-        <include layout="@layout/content_main" />
-    </FrameLayout>
+        android:background="#F1F1F1"></FrameLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
@@ -36,6 +33,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_dialog_email" />
+        android:src="@android:drawable/ic_menu_search" />
 
 </android.support.design.widget.CoordinatorLayout>
