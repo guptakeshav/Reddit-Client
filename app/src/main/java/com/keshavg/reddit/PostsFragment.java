@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -32,6 +33,7 @@ public class PostsFragment extends Fragment {
     private Boolean loadingFlag;
 
     private SwipeRefreshLayout swipeContainer;
+    private ProgressBar progressBar;
     private RecyclerView recList;
     private LinearLayoutManager llm;
 
@@ -57,10 +59,9 @@ public class PostsFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         loadingFlag = false;
-
         posts = new ArrayList<Post>();
         postsAdapter = new PostsAdapter(getContext(), posts);
-
+        progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar);
         fetchNewPosts(getArguments().getString("url"));
     }
 
@@ -72,6 +73,8 @@ public class PostsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
+        postsAdapter = new PostsAdapter(getContext(), posts);
+
         recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
         recList.setAdapter(postsAdapter);
         llm = new LinearLayoutManager(
@@ -123,8 +126,8 @@ public class PostsFragment extends Fragment {
      */
     public void fetchNewPosts(String url) {
         this.url = url;
-
         postsAdapter.clear();
+
         try {
             fetchPosts(url);
         } catch (Exception e) {
@@ -144,6 +147,8 @@ public class PostsFragment extends Fragment {
          * Indicating that the posts are being fetched
          */
         loadingFlag = true;
+        progressBar.setVisibility(View.VISIBLE);
+
         posts = new ArrayList<Post>();
 
         Request request = new Request.Builder()
@@ -207,6 +212,7 @@ public class PostsFragment extends Fragment {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            progressBar.setVisibility(View.GONE);
                             swipeContainer.setRefreshing(false);
                         }
                     });
