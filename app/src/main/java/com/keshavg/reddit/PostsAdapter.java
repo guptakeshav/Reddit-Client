@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
 
 import java.util.List;
 
@@ -83,8 +83,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
         Post post = objects.get(position);
 
         if (post.getThumbnail().startsWith("http")) {
-            Picasso.with(context).load(post.getThumbnail())
-                    .resize(1536, 384)
+            Glide.with(context)
+                    .load(post.getThumbnail())
+                    .override(1536, 384)
                     .centerCrop()
                     .into(holder.image);
         } else {
