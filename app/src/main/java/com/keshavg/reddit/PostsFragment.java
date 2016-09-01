@@ -61,7 +61,7 @@ public class PostsFragment extends Fragment {
         loadingFlag = false;
         posts = new ArrayList<Post>();
         postsAdapter = new PostsAdapter(getContext(), posts);
-        progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar);
+        progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
         fetchNewPosts(getArguments().getString("url"));
     }
 
