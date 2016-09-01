@@ -84,6 +84,10 @@ public class Comment {
         return replies;
     }
 
+    public List<String> getMoreReplies() {
+        return moreReplies;
+    }
+
     public String getUps() {
         return Integer.toString(ups) + " points";
     }

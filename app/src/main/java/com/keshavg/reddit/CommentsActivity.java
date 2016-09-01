@@ -1,5 +1,6 @@
 package com.keshavg.reddit;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -8,18 +9,8 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 import static com.keshavg.reddit.Constants.BASE_URL;
 
@@ -34,6 +25,30 @@ public class CommentsActivity extends AppCompatActivity {
     private CommentsAdapter commentsAdapter;
 
     private List<Comment> comments;
+
+    private class FetchComments extends AsyncTask<String, Void, List<Comment>> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            progressBar.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected List<Comment> doInBackground(String... params) {
+            return new NetworkTasks().fetchCommentsList(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(List<Comment> comments) {
+            super.onPostExecute(comments);
+
+            commentsAdapter.addAll(comments);
+            progressBar.setVisibility(View.GONE);
+            swipeContainer.setRefreshing(false);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +65,7 @@ public class CommentsActivity extends AppCompatActivity {
         Log.d("Comment URL", url);
 
         comments = new ArrayList<>();
-        commentsAdapter = new CommentsAdapter(getApplicationContext(), comments);
+        commentsAdapter = new CommentsAdapter(getApplicationContext(), url, comments);
 
         progressBar = (ProgressBar) findViewById(R.id.progressbar_comments);
 
@@ -73,85 +88,9 @@ public class CommentsActivity extends AppCompatActivity {
         commentsAdapter.clear();
 
         try {
-            fetchComments(url);
+            new FetchComments().execute(url);
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public void fetchComments(String url) throws IOException {
-
-        /**
-         * Indicating that the posts are being fetched
-         */
-//        loadingFlag = true;
-//        progressBar.setVisibility(View.VISIBLE);
-
-        comments = new ArrayList<>();
-
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        Call call = new OkHttpClient().newCall(request);
-
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                try {
-                    JSONObject jsonObject = new JSONObject(response.body().string());
-
-                    JSONArray redditComments = jsonObject.getJSONArray("data");
-
-                    for (int idx = 0; idx < redditComments.length(); ++idx) {
-                        JSONObject currentComment = redditComments.getJSONObject(idx);
-                        Comment comment = new Comment(
-                                currentComment.getString("author"),
-                                currentComment.getString("body"),
-                                currentComment.getInt("created"),
-                                currentComment.getJSONObject("replies").getJSONArray("data"),
-                                currentComment.getJSONObject("replies").getJSONArray("more"),
-                                currentComment.getInt("ups")
-                        );
-
-                        comments.add(comment);
-
-                        /**
-                         * Logging comments
-                         */
-                        Log.d("Comment #" + idx + " ", comment.getBody());
-                    }
-
-                    /**
-                     * Updating the UI on async fetching of posts
-                     */
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            commentsAdapter.addAll(comments);
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    /**
-                     * Fetching of posts is completed
-                     */
-//                    loadingFlag = false;
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-//                            progressBar.setVisibility(View.GONE);
-                            swipeContainer.setRefreshing(false);
-                        }
-                    });
-                }
-            }
-        });
     }
 }

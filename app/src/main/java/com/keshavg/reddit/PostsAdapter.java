@@ -57,8 +57,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
                 public void onClick(View view) {
                     Intent i = new Intent(view.getContext(), CommentsActivity.class);
                     i.putExtra("Title", objects.get(getAdapterPosition()).getTitle());
-
-//                    Intent i = new Intent(view.getContext(), WebViewActivity.class);
                     i.putExtra("Url", objects.get(getAdapterPosition()).getPermalink());
                     view.getContext().startActivity(i);
                 }

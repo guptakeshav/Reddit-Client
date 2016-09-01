@@ -8,5 +8,5 @@ public final class Constants {
 
     }
 
-    public static final String BASE_URL = "http://172.16.44.237:65010";
+    public static final String BASE_URL = "http://192.168.0.9:65010";
 }

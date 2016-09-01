@@ -46,14 +46,27 @@
             android:layout_below="@id/comment_body"
             android:textSize="11dp" />
 
-        <ListView
+        <LinearLayout
             android:id="@+id/subcomments_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/comment_upvotes"
-            android:background="#FFFFFF">
-        </ListView>
+            android:orientation="vertical">
+        </LinearLayout>
 
+        <Button
+            android:id="@+id/load_more"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/subcomments_list"
+            android:text="Load More"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/progressbar_replies"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/subcomments_list"
+            android:visibility="gone" />
     </RelativeLayout>
-
 </LinearLayout>
