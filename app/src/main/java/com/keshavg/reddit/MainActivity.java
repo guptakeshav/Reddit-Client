@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity
             if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                 setTitle("Reddit - " + prevMenuItem.getTitle().toString());
                 prevMenuItem.setChecked(true);
-                boolean b = getSupportFragmentManager().popBackStackImmediate();
+                getSupportFragmentManager().popBackStackImmediate();
             } else {
                 super.onBackPressed();
             }

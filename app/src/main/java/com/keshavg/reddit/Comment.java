@@ -77,7 +77,7 @@ public class Comment {
         formatter = new SimpleDateFormat("hh:mm a");
         String time = formatter.format(date);
 
-        return " on " + dateString + " " + time;
+        return "on " + dateString + " " + time;
     }
 
     public List<Comment> getReplies() {

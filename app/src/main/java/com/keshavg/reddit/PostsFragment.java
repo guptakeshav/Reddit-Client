@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +26,7 @@ public class PostsFragment extends Fragment {
 
     private NetworkTasks networkTasks;
     private Boolean loadingFlag;
+    private FetchPosts fetchPosts;
 
     private SwipeRefreshLayout swipeContainer;
     private ProgressBar progressBar;
@@ -78,11 +80,6 @@ public class PostsFragment extends Fragment {
             progressBar.setVisibility(View.GONE);
             swipeContainer.setRefreshing(false);
             loadingFlag = false;
-        }
-
-        @Override
-        protected void onCancelled() {
-            super.onCancelled();
         }
     }
 
@@ -143,7 +140,9 @@ public class PostsFragment extends Fragment {
 
         if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
             String paramUrl = url + "/" + afterParam;
-            new FetchPosts().execute(paramUrl);
+
+            fetchPosts = new FetchPosts();
+            fetchPosts.execute(paramUrl);
         }
     }
 
@@ -155,6 +154,12 @@ public class PostsFragment extends Fragment {
     public void fetchNewPosts(String url) {
         this.url = url;
         postsAdapter.clear();
-        new FetchPosts().execute(url);
+
+        if (loadingFlag == true) {
+            fetchPosts.cancel(true);
+        }
+
+        fetchPosts = new FetchPosts();
+        fetchPosts.execute(url);
     }
 }
