@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity
         for (String category : categories) {
             menu.add(category);
         }
-        
+
         setTitle("Reddit - hot");
         menu.getItem(0).setChecked(true);
         prevMenuItem = menu.getItem(0);

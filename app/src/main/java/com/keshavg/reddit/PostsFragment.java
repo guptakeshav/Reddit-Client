@@ -1,35 +1,29 @@
 package com.keshavg.reddit;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
-import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * Created by keshav.g on 22/08/16.
  */
 public class PostsFragment extends Fragment {
 
+    private NetworkTasks networkTasks;
     private Boolean loadingFlag;
 
     private SwipeRefreshLayout swipeContainer;
@@ -54,10 +48,49 @@ public class PostsFragment extends Fragment {
         return fragment;
     }
 
+    private class FetchPosts extends AsyncTask<String, Void, List<Post>> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            loadingFlag = true;
+            progressBar.setVisibility(View.VISIBLE);
+
+            posts = new ArrayList<Post>();
+        }
+
+        @Override
+        protected List<Post> doInBackground(String... params) {
+            JSONObject jsonObject = networkTasks.fetchJSONFromUrl(params[0]);
+            try {
+                afterParam = jsonObject.getString("after");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return networkTasks.fetchPostsList(jsonObject);
+        }
+
+        @Override
+        protected void onPostExecute(List<Post> posts) {
+            super.onPostExecute(posts);
+
+            postsAdapter.addAll(posts);
+            progressBar.setVisibility(View.GONE);
+            swipeContainer.setRefreshing(false);
+            loadingFlag = false;
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        networkTasks = new NetworkTasks();
         loadingFlag = false;
         posts = new ArrayList<Post>();
         postsAdapter = new PostsAdapter(getContext(), posts);
@@ -110,12 +143,7 @@ public class PostsFragment extends Fragment {
 
         if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
             String paramUrl = url + "/" + afterParam;
-
-            try {
-                fetchPosts(paramUrl);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            new FetchPosts().execute(paramUrl);
         }
     }
 
@@ -127,97 +155,6 @@ public class PostsFragment extends Fragment {
     public void fetchNewPosts(String url) {
         this.url = url;
         postsAdapter.clear();
-
-        try {
-            fetchPosts(url);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Making calls to the API and fetching required data
-     *
-     * @param url
-     * @throws IOException
-     */
-    public void fetchPosts(String url) throws IOException {
-
-        /**
-         * Indicating that the posts are being fetched
-         */
-        loadingFlag = true;
-        progressBar.setVisibility(View.VISIBLE);
-
-        posts = new ArrayList<Post>();
-
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        Call call = new OkHttpClient().newCall(request);
-
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                try {
-                    JSONObject jsonObject = new JSONObject(response.body().string());
-
-                    afterParam = jsonObject.getString("after");
-                    JSONArray redditPosts = jsonObject.getJSONArray("data");
-
-                    for (int idx = 0; idx < redditPosts.length(); ++idx) {
-                        JSONObject currentPost = redditPosts.getJSONObject(idx);
-                        Post post = new Post(
-                                currentPost.getString("author"),
-                                currentPost.getInt("created"),
-                                currentPost.getInt("num_comments"),
-                                currentPost.getString("permalink"),
-                                currentPost.getInt("score"),
-                                currentPost.getString("subreddit"),
-                                currentPost.getString("thumbnail"),
-                                currentPost.getString("title"),
-                                currentPost.getString("url")
-                        );
-
-                        posts.add(post);
-
-                        /**
-                         * Logging posts title
-                         */
-                        Log.d("Post URL #" + idx + " ", post.getTitle());
-                    }
-
-                    /**
-                     * Updating the UI on async fetching of posts
-                     */
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            postsAdapter.addAll(posts);
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    /**
-                     * Fetching of posts is completed
-                     */
-                    loadingFlag = false;
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.setVisibility(View.GONE);
-                            swipeContainer.setRefreshing(false);
-                        }
-                    });
-                }
-            }
-        });
+        new FetchPosts().execute(url);
     }
 }

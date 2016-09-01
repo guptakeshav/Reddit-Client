@@ -86,11 +86,6 @@ public class CommentsActivity extends AppCompatActivity {
     public void fetchNewComments(String url) {
         this.url = url;
         commentsAdapter.clear();
-
-        try {
-            new FetchComments().execute(url);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        new FetchComments().execute(url);
     }
 }

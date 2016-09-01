@@ -115,6 +115,7 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
 
     /**
      * Recursive code to create threaded comments
+     *
      * @param subcomments
      * @param replies
      */
@@ -131,6 +132,7 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
 
     /**
      * Function to set the data for each of the view elements
+     *
      * @param comment
      * @param viewHolder
      */
@@ -158,6 +160,7 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
 
     /**
      * Generate a random background color for the comment start line
+     *
      * @param convertView
      */
     private void makeRandomColorLine(View convertView) {

@@ -5,7 +5,6 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +19,7 @@ public class NetworkTasks {
 
     OkHttpClient client = new OkHttpClient();
 
-    public String fetchFromUrl(String url) {
+    public JSONObject fetchJSONFromUrl(String url) {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
@@ -28,8 +27,8 @@ public class NetworkTasks {
         Response response = null;
         try {
             response = client.newCall(request).execute();
-            return response.body().string();
-        } catch (IOException e) {
+            return new JSONObject(response.body().string());
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -40,7 +39,7 @@ public class NetworkTasks {
         List<Comment> comments = new ArrayList<>();
 
         try {
-            JSONObject jsonObject = new JSONObject(fetchFromUrl(url));
+            JSONObject jsonObject = fetchJSONFromUrl(url);
             JSONArray redditComments = jsonObject.getJSONArray("data");
 
             for (int idx = 0; idx < redditComments.length(); ++idx) {
@@ -66,5 +65,39 @@ public class NetworkTasks {
         }
 
         return comments;
+    }
+
+    public List<Post> fetchPostsList(JSONObject jsonObject) {
+        List<Post> posts = new ArrayList<>();
+
+        try {
+            JSONArray redditPosts = jsonObject.getJSONArray("data");
+
+            for (int idx = 0; idx < redditPosts.length(); ++idx) {
+                JSONObject currentPost = redditPosts.getJSONObject(idx);
+                Post post = new Post(
+                        currentPost.getString("author"),
+                        currentPost.getInt("created"),
+                        currentPost.getInt("num_comments"),
+                        currentPost.getString("permalink"),
+                        currentPost.getInt("score"),
+                        currentPost.getString("subreddit"),
+                        currentPost.getString("thumbnail"),
+                        currentPost.getString("title"),
+                        currentPost.getString("url")
+                );
+
+                posts.add(post);
+
+                /**
+                 * Logging posts title
+                 */
+                Log.d("Post URL #" + idx + " ", post.getTitle());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return posts;
     }
 }
