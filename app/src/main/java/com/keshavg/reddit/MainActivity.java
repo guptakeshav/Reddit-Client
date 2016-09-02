@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity
     private Menu menu;
     private MenuItem prevMenuItem;
 
-    private String[] categories = {"hot", "new", "rising", "controversial", "top"};
+    private String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,8 +75,8 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         menu = navigationView.getMenu();
-        for (String category : categories) {
-            menu.add(category);
+        for (String sortBy : sortByList) {
+            menu.add(sortBy);
         }
 
         setTitle("Reddit - hot");

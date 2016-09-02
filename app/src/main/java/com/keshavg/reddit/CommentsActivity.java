@@ -79,6 +79,8 @@ public class CommentsActivity extends AppCompatActivity {
 
         commentsList = (ListView) findViewById(R.id.comments_list);
         commentsList.setAdapter(commentsAdapter);
+        commentsList.setFastScrollEnabled(true);
+        commentsList.setFastScrollAlwaysVisible(true);
 
         fetchNewComments(url);
     }

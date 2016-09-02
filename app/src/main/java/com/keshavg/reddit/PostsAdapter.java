@@ -2,6 +2,7 @@ package com.keshavg.reddit;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -11,13 +12,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.util.List;
 
 /**
  * Created by keshav.g on 23/08/16.
  */
-public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> {
+public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> implements FastScrollRecyclerView.SectionedAdapter {
 
     private static Context context;
     private static List<Post> objects;
@@ -79,6 +81,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
         }
     }
 
+    @NonNull
+    @Override
+    public String getSectionName(int position) {
+        return String.valueOf(position);
+    }
+
     @Override
     public int getItemCount() {
         return objects.size();
@@ -100,6 +108,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
         if (post.getThumbnail().startsWith("http")) {
             Glide.with(context)
                     .load(post.getThumbnail())
+                    .asBitmap()
                     .override(1536, 384)
                     .centerCrop()
                     .into(holder.image);
