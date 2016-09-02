@@ -2,21 +2,28 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="10dp">
+    android:layout_height="match_parent">
 
     <TextView
         android:id="@+id/search_heading"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="15dp"
         android:text="Search"
         android:textColor="#000000"
         android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="0.03dip"
+        android:layout_marginBottom="5dip"
+        android:background="#404040" />
 
     <EditText
         android:id="@+id/search_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingLeft="15dp"
         android:hint="Enter the keyword(s)" />
 
 </LinearLayout>

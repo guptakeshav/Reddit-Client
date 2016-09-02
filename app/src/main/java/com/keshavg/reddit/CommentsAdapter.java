@@ -3,6 +3,7 @@ package com.keshavg.reddit;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;

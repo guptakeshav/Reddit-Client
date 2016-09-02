@@ -2,6 +2,7 @@ package com.keshavg.reddit;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +41,20 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
             details = (TextView) itemView.findViewById(R.id.post_details);
             score = (TextView) itemView.findViewById(R.id.post_score);
             commentsCount = (TextView) itemView.findViewById(R.id.post_comments_count);
+
+            image.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    AlertDialog.Builder imagePopup = new AlertDialog.Builder(context);
+                    View view = LayoutInflater.from(context).inflate(R.layout.image_dialog, null);
+                    Glide.with(context)
+                            .load(objects.get(getAdapterPosition()).getThumbnail())
+                            .into((ImageView) view.findViewById(R.id.image_popup));
+                    imagePopup.setView(view);
+
+                    imagePopup.create().show();
+                }
+            });
 
             title.setOnClickListener(new View.OnClickListener() {
                 @Override

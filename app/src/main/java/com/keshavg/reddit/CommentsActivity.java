@@ -83,6 +83,10 @@ public class CommentsActivity extends AppCompatActivity {
         fetchNewComments(url);
     }
 
+    /**
+     * Function to fetch comments from the starting
+     * @param url
+     */
     public void fetchNewComments(String url) {
         this.url = url;
         commentsAdapter.clear();
