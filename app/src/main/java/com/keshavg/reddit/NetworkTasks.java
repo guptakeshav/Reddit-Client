@@ -3,8 +3,10 @@ package com.keshavg.reddit;
 import android.util.Log;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -24,83 +26,67 @@ public class NetworkTasks {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build();
 
-    public JSONObject fetchJSONFromUrl(String url) {
+    public JSONObject fetchJSONFromUrl(String url) throws IOException, JSONException {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
 
-        Response response = null;
-        try {
-            response = client.newCall(request).execute();
-            return new JSONObject(response.body().string());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        Response response = client.newCall(request).execute();
+        return new JSONObject(response.body().string());
     }
 
-    public List<Comment> fetchCommentsList(String url) {
+    public List<Comment> fetchCommentsListFromUrl(String url) throws IOException, JSONException {
+        JSONObject jsonObject = fetchJSONFromUrl(url);
+        JSONArray redditComments = jsonObject.getJSONArray("data");
+        return fetchCommentsList(redditComments);
+    }
+
+    public List<Comment> fetchCommentsList(JSONArray redditComments) throws IOException, JSONException {
         List<Comment> comments = new ArrayList<>();
+        for (int idx = 0; idx < redditComments.length(); ++idx) {
+            JSONObject currentComment = redditComments.getJSONObject(idx);
+            Comment comment = new Comment(
+                    currentComment.getString("author"),
+                    currentComment.getString("body"),
+                    currentComment.getInt("created"),
+                    currentComment.getJSONObject("replies").getJSONArray("data"),
+                    currentComment.getJSONObject("replies").getJSONArray("more"),
+                    currentComment.getInt("ups")
+            );
 
-        try {
-            JSONObject jsonObject = fetchJSONFromUrl(url);
-            JSONArray redditComments = jsonObject.getJSONArray("data");
+            comments.add(comment);
 
-            for (int idx = 0; idx < redditComments.length(); ++idx) {
-                JSONObject currentComment = redditComments.getJSONObject(idx);
-                Comment comment = new Comment(
-                        currentComment.getString("author"),
-                        currentComment.getString("body"),
-                        currentComment.getInt("created"),
-                        currentComment.getJSONObject("replies").getJSONArray("data"),
-                        currentComment.getJSONObject("replies").getJSONArray("more"),
-                        currentComment.getInt("ups")
-                );
-
-                comments.add(comment);
-
-                /**
-                 * Logging comments
-                 */
-                Log.d("Comment #" + idx + " ", comment.getBody());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            /**
+             * Logging comments
+             */
+            Log.d("Comment #" + idx + " ", comment.getBody());
         }
 
         return comments;
     }
 
-    public List<Post> fetchPostsList(JSONObject jsonObject) {
+    public List<Post> fetchPostsList(JSONArray redditPosts) throws JSONException {
         List<Post> posts = new ArrayList<>();
+        for (int idx = 0; idx < redditPosts.length(); ++idx) {
+            JSONObject currentPost = redditPosts.getJSONObject(idx);
+            Post post = new Post(
+                    currentPost.getString("author"),
+                    currentPost.getInt("created"),
+                    currentPost.getInt("num_comments"),
+                    currentPost.getString("permalink"),
+                    currentPost.getInt("score"),
+                    currentPost.getString("subreddit"),
+                    currentPost.getString("thumbnail"),
+                    currentPost.getString("title"),
+                    currentPost.getString("url")
+            );
 
-        try {
-            JSONArray redditPosts = jsonObject.getJSONArray("data");
+            posts.add(post);
 
-            for (int idx = 0; idx < redditPosts.length(); ++idx) {
-                JSONObject currentPost = redditPosts.getJSONObject(idx);
-                Post post = new Post(
-                        currentPost.getString("author"),
-                        currentPost.getInt("created"),
-                        currentPost.getInt("num_comments"),
-                        currentPost.getString("permalink"),
-                        currentPost.getInt("score"),
-                        currentPost.getString("subreddit"),
-                        currentPost.getString("thumbnail"),
-                        currentPost.getString("title"),
-                        currentPost.getString("url")
-                );
-
-                posts.add(post);
-
-                /**
-                 * Logging posts title
-                 */
-                Log.d("Post URL #" + idx + " ", post.getTitle());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            /**
+             * Logging posts title
+             */
+            Log.d("Post URL #" + idx + " ", post.getTitle());
         }
 
         return posts;

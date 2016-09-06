@@ -3,7 +3,6 @@ package com.keshavg.reddit;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
-import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,7 +12,13 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
@@ -21,7 +26,6 @@ import java.util.Random;
  * Created by keshav.g on 29/08/16.
  */
 public class CommentsAdapter extends ArrayAdapter<Comment> {
-
     private Context context;
     private String url;
     private List<Comment> objects;
@@ -54,6 +58,7 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
     }
 
     private class FetchComments extends AsyncTask<String, Void, List<Comment>> {
+        private Boolean ioExceptionFlag, jsonExceptionFlag;
 
         private LinearLayout subcomments;
         private Button loadMore;
@@ -71,24 +76,46 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
         protected void onPreExecute() {
             super.onPreExecute();
 
+            ioExceptionFlag = false;
+            jsonExceptionFlag = false;
+
             loadMore.setVisibility(View.GONE);
             progressBar.setVisibility(View.VISIBLE);
         }
 
         @Override
         protected List<Comment> doInBackground(String... params) {
-            Log.d("Load More", params[0]);
-            return new NetworkTasks().fetchCommentsList(params[0]);
+            List<Comment> comments = null;
+
+            try {
+                comments = new NetworkTasks().fetchCommentsListFromUrl(params[0]);
+            } catch (IOException ioE) {
+                ioE.printStackTrace();
+                ioExceptionFlag = true;
+            } catch (JSONException jsonE) {
+                jsonE.printStackTrace();
+                jsonExceptionFlag = true;
+            }
+
+            return comments;
         }
 
         @Override
         protected void onPostExecute(List<Comment> comments) {
             super.onPostExecute(comments);
 
-            progressBar.setVisibility(View.GONE);
-            createThreadedComments(subcomments, comments);
+            if (ioExceptionFlag == true) {
+                Toast.makeText(context, context.getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
+                        .show();
+            } else if(jsonExceptionFlag == true) {
+                Toast.makeText(context, String.format(context.getString(R.string.json_exception), "comments"), Toast.LENGTH_SHORT)
+                        .show();
+            } else {
+                createThreadedComments(subcomments, comments);
+                moreRepliesId.remove(0);
+            }
 
-            moreRepliesId.remove(0);
+            progressBar.setVisibility(View.GONE);
             if (moreRepliesId.size() > 0) {
                 loadMore.setVisibility(View.VISIBLE);
             }
@@ -101,7 +128,7 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
         final Comment comment = getItem(position);
 
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.comment_row, parent, false);
+            convertView = LayoutInflater.from(context).inflate(R.layout.comment_row, parent, false);
             viewHolder = new ViewHolder(convertView);
             makeRandomColorLine(convertView);
             convertView.setTag(viewHolder);
@@ -123,7 +150,7 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
     private void createThreadedComments(LinearLayout subcomments, final List<Comment> replies) {
         if (replies.size() > 0) {
             for (final Comment reply : replies) {
-                View view = LayoutInflater.from(getContext()).inflate(R.layout.comment_row, subcomments, false);
+                View view = LayoutInflater.from(context).inflate(R.layout.comment_row, subcomments, false);
                 makeRandomColorLine(view);
                 setViewData(reply, new ViewHolder(view));
                 subcomments.addView(view);

@@ -16,10 +16,14 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -45,6 +49,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setTitle("Reddit - hot");
         postsFragment = PostsFragment.newInstance(BASE_URL + "/api/v1/hot");
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.posts_fragment_container, postsFragment)
@@ -67,10 +72,10 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        createMenuBar();
+        createNavBar();
     }
 
-    private void createMenuBar() {
+    private void createNavBar() {
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
@@ -78,16 +83,16 @@ public class MainActivity extends AppCompatActivity
         for (String sortBy : sortByList) {
             menu.add(sortBy);
         }
-
-        setTitle("Reddit - hot");
         menu.getItem(0).setChecked(true);
         prevMenuItem = menu.getItem(0);
 
-        final SubMenu subMenu = menu.addSubMenu("Subreddits");
+        SubMenu subMenu = menu.addSubMenu("Subreddits");
         try {
             getSubredditsList(subMenu);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException ioE) {
+            ioE.printStackTrace();
+            Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
+                    .show();
         }
     }
 
@@ -107,24 +112,31 @@ public class MainActivity extends AppCompatActivity
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(Call call, Response response) {
                 try {
-                    final JSONArray subreddits = new JSONArray(response.body().string());
+                    final List<String> subredditsList = new ArrayList<>();
+
+                    JSONArray subreddits = new JSONArray(response.body().string());
+                    for (int idx = 0; idx < subreddits.length(); ++idx) {
+                        subredditsList.add("r/" + subreddits.getString(idx));
+                    }
 
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            try {
-                                for (int idx = 0; idx < subreddits.length(); ++idx) {
-                                    subMenu.add("r/" + subreddits.getString(idx));
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                            for (String subreddit : subredditsList) {
+                                subMenu.add(subreddit);
                             }
                         }
                     });
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (IOException ioE) {
+                    ioE.printStackTrace();
+                    Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
+                            .show();
+                } catch (JSONException jsonE) {
+                    jsonE.printStackTrace();
+                    Toast.makeText(MainActivity.this, String.format(getString(R.string.json_exception), "subreddits"), Toast.LENGTH_SHORT)
+                            .show();
                 }
             }
         });
@@ -176,6 +188,7 @@ public class MainActivity extends AppCompatActivity
         prevMenuItem = item;
 
         String url = BASE_URL + "/api/v1/" + item.getTitle().toString();
+        postsFragment.clearPostsAdapter();
         postsFragment.fetchNewPosts(url);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

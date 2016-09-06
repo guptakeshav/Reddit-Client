@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,22 +31,12 @@ public class Comment {
         this.body = body;
         this.created = created;
 
-        this.replies = new ArrayList<>();
-        for (int idx = 0; idx < replies.length(); ++idx) {
-            try {
-                JSONObject currentComment = replies.getJSONObject(idx);
-                Comment comment = new Comment(
-                        currentComment.getString("author"),
-                        currentComment.getString("body"),
-                        currentComment.getInt("created"),
-                        currentComment.getJSONObject("replies").getJSONArray("data"),
-                        currentComment.getJSONObject("replies").getJSONArray("more"),
-                        currentComment.getInt("ups")
-                );
-                this.replies.add(comment);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        try {
+            this.replies = new NetworkTasks().fetchCommentsList(replies);
+        } catch (IOException ioE) {
+            ioE.printStackTrace();
+        } catch (JSONException jsonE) {
+            jsonE.printStackTrace();
         }
 
         this.moreReplies = new ArrayList<>();

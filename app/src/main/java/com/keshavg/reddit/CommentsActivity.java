@@ -8,14 +8,19 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.keshavg.reddit.Constants.BASE_URL;
 
 public class CommentsActivity extends AppCompatActivity {
-
     private String url;
 
     private SwipeRefreshLayout swipeContainer;
@@ -27,24 +32,49 @@ public class CommentsActivity extends AppCompatActivity {
     private List<Comment> comments;
 
     private class FetchComments extends AsyncTask<String, Void, List<Comment>> {
+        private Boolean ioExceptionFlag, jsonExceptionFlag;
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+
+            ioExceptionFlag = false;
+            jsonExceptionFlag = false;
 
             progressBar.setVisibility(View.VISIBLE);
         }
 
         @Override
         protected List<Comment> doInBackground(String... params) {
-            return new NetworkTasks().fetchCommentsList(params[0]);
+            List<Comment> comments = null;
+
+            try {
+                comments = new NetworkTasks().fetchCommentsListFromUrl(params[0]);
+            } catch (IOException ioE) {
+                ioE.printStackTrace();
+                ioExceptionFlag = true;
+            } catch (JSONException jsonE) {
+                jsonE.printStackTrace();
+                jsonExceptionFlag = true;
+            }
+
+            return comments;
         }
 
         @Override
         protected void onPostExecute(List<Comment> comments) {
             super.onPostExecute(comments);
 
-            commentsAdapter.addAll(comments);
+            if (ioExceptionFlag == true) {
+                Toast.makeText(CommentsActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
+                        .show();
+            } else if(jsonExceptionFlag == true) {
+                Toast.makeText(CommentsActivity.this, String.format(getString(R.string.json_exception), "comments"), Toast.LENGTH_SHORT)
+                        .show();
+            } else {
+                commentsAdapter.addAll(comments);
+            }
+
             progressBar.setVisibility(View.GONE);
             swipeContainer.setRefreshing(false);
         }
