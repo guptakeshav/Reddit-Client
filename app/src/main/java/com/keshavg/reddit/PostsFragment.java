@@ -123,7 +123,7 @@ public class PostsFragment extends Fragment {
         networkTasks = new NetworkTasks();
         loadingFlag = false;
         posts = new ArrayList<Post>();
-        postsAdapter = new PostsAdapter(getContext(), posts);
+        postsAdapter = new PostsAdapter(getActivity(), getContext(), posts);
         progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
 
         fetchNewPosts(getArguments().getString("url"));
@@ -137,7 +137,7 @@ public class PostsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
-        postsAdapter = new PostsAdapter(getContext(), posts);
+        postsAdapter = new PostsAdapter(getActivity(), getContext(), posts);
 
         recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
         recList.setAdapter(postsAdapter);

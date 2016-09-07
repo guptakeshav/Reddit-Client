@@ -1,5 +1,7 @@
 package com.keshavg.reddit;
 
+import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -9,13 +11,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.util.List;
@@ -25,10 +26,12 @@ import java.util.List;
  */
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> implements FastScrollRecyclerView.SectionedAdapter {
 
+    private static Activity activity;
     private static Context context;
     private static List<Post> objects;
 
-    public PostsAdapter(Context context, List<Post> objects) {
+    public PostsAdapter(Activity activity, Context context, List<Post> objects) {
+        this.activity = activity;
         this.context = context;
         this.objects = objects;
     }
@@ -38,7 +41,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
         TextView title;
         TextView details;
         TextView score;
-        TextView commentsCount;
+        Button commentsCount;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -46,23 +49,27 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
             title = (TextView) itemView.findViewById(R.id.post_title);
             details = (TextView) itemView.findViewById(R.id.post_details);
             score = (TextView) itemView.findViewById(R.id.post_score);
-            commentsCount = (TextView) itemView.findViewById(R.id.post_comments_count);
+            commentsCount = (Button) itemView.findViewById(R.id.post_comments_count);
 
             image.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AlertDialog.Builder imagePopup = new AlertDialog.Builder(context);
-                    View view = LayoutInflater.from(context).inflate(R.layout.image_dialog, null);
-                    Glide.with(context)
+                    AlertDialog.Builder imagePopup = new AlertDialog.Builder(v.getContext());
+                    View view = LayoutInflater.from(v.getContext()).inflate(R.layout.image_dialog, null);
+                    ImageView imageView = (ImageView) view.findViewById(R.id.image_popup);
+                    GlideDrawableImageViewTarget glideDrawableImageViewTarget = new GlideDrawableImageViewTarget(imageView);
+
+                    // TODO: fix issue with size of image as compared to the size of dialog box
+                    Glide.with(v.getContext())
                             .load(objects.get(getAdapterPosition()).getThumbnail())
-                            .into((ImageView) view.findViewById(R.id.image_popup));
+                            .into(glideDrawableImageViewTarget);
                     imagePopup.setView(view);
 
                     imagePopup.create().show();
                 }
             });
 
-            title.setOnClickListener(new View.OnClickListener() {
+            (itemView.findViewById(R.id.post_content)).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int pos = getAdapterPosition();
@@ -79,7 +86,13 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
                     Intent i = new Intent(view.getContext(), CommentsActivity.class);
                     i.putExtra("Title", objects.get(getAdapterPosition()).getTitle());
                     i.putExtra("Url", objects.get(getAdapterPosition()).getPermalink());
-                    view.getContext().startActivity(i);
+                    i.putExtra("Image", objects.get(getAdapterPosition()).getThumbnail());
+                    view.getContext().startActivity(i,
+                            ActivityOptions.makeSceneTransitionAnimation(activity,
+                                    title,
+                                    "comment_transition"
+                            ).toBundle()
+                    );
                 }
             });
         }
@@ -114,7 +127,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
             Glide.with(context)
                     .load(post.getThumbnail())
                     .asBitmap()
-                    .override(1536, 384)
+                    .override(1536, 512)
                     .centerCrop()
                     .into(holder.image);
         } else {

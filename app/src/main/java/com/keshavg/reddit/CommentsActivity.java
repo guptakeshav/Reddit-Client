@@ -8,11 +8,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,7 +21,9 @@ import static com.keshavg.reddit.Constants.BASE_URL;
 
 public class CommentsActivity extends AppCompatActivity {
     private String url;
+    private String title;
 
+    private TextView textView;
     private SwipeRefreshLayout swipeContainer;
     private ProgressBar progressBar;
 
@@ -87,17 +88,12 @@ public class CommentsActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
-            setTitle(extras.getString("Title"));
+            title = extras.getString("Title");
             url = BASE_URL + "/api/v1" + extras.getString("Url");
             url = url.substring(0, url.length() - 1);
         }
 
         Log.d("Comment URL", url);
-
-        comments = new ArrayList<>();
-        commentsAdapter = new CommentsAdapter(getApplicationContext(), url, comments);
-
-        progressBar = (ProgressBar) findViewById(R.id.progressbar_comments);
 
         swipeContainer = (SwipeRefreshLayout) findViewById(R.id.comments_container);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -106,6 +102,14 @@ public class CommentsActivity extends AppCompatActivity {
                 fetchNewComments(url);
             }
         });
+
+        progressBar = (ProgressBar) findViewById(R.id.progressbar_comments);
+
+        textView = (TextView) findViewById(R.id.post_title);
+        textView.setText(title);
+
+        comments = new ArrayList<>();
+        commentsAdapter = new CommentsAdapter(getApplicationContext(), url, comments);
 
         commentsList = (ListView) findViewById(R.id.comments_list);
         commentsList.setAdapter(commentsAdapter);

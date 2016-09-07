@@ -6,9 +6,8 @@
 
     <View
         android:id="@+id/comment_start_line"
-        android:layout_width="2dp"
-        android:layout_height="match_parent"
-        android:layout_marginLeft="2dp" />
+        android:layout_width="3dp"
+        android:layout_height="match_parent" />
 
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
@@ -53,7 +52,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/comment_upvotes"
-            android:orientation="vertical"></LinearLayout>
+            android:orientation="vertical">
+        </LinearLayout>
 
         <Button
             android:id="@+id/load_more"
@@ -61,6 +61,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/subcomments_list"
             android:text="Load More"
+            style="@style/Widget.AppCompat.Button.Colored"
             android:visibility="gone" />
 
         <ProgressBar

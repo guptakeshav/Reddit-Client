@@ -209,6 +209,15 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String searchQuery = editText.getText().toString();
+
+                        if (searchQuery.trim().matches("")) {
+                            Toast.makeText(MainActivity.this, getText(R.string.empty_search), Toast.LENGTH_SHORT)
+                                    .show();
+                            dialogInterface.cancel();
+
+                            return;
+                        }
+
                         setTitle("Results - " + searchQuery);
                         prevMenuItem.setChecked(false);
 
