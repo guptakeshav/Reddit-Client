@@ -3,6 +3,8 @@ package com.keshavg.reddit;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +15,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
+
 import org.json.JSONException;
 
 import java.io.IOException;
@@ -22,19 +26,18 @@ import java.util.Random;
 /**
  * Created by keshav.g on 29/08/16.
  */
-public class CommentsAdapter extends ArrayAdapter<Comment> {
+public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHolder> implements FastScrollRecyclerView.SectionedAdapter {
     private Context context;
     private String url;
     private List<Comment> objects;
 
     public CommentsAdapter(Context context, String url, List<Comment> objects) {
-        super(context, 0, objects);
         this.context = context;
         this.url = url;
         this.objects = objects;
     }
 
-    private class ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView author;
         TextView comment;
         TextView created;
@@ -44,6 +47,8 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
         ProgressBar progressBar;
 
         public ViewHolder(View v) {
+            super(v);
+
             this.author = (TextView) v.findViewById(R.id.comment_author);
             this.comment = (TextView) v.findViewById(R.id.comment_body);
             this.created = (TextView) v.findViewById(R.id.comment_created);
@@ -119,40 +124,42 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
         }
     }
 
+    @NonNull
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        final ViewHolder viewHolder;
-        final Comment comment = getItem(position);
+    public String getSectionName(int position) {
+        return String.valueOf(position);
+    }
 
-        if (convertView == null) {
-            convertView = LayoutInflater.from(context).inflate(R.layout.comment_row, parent, false);
-            viewHolder = new ViewHolder(convertView);
-            makeRandomColorLine(convertView);
-            convertView.setTag(viewHolder);
-        } else {
-            viewHolder = (ViewHolder) convertView.getTag();
-        }
+    @Override
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater
+                .from(parent.getContext())
+                .inflate(R.layout.comment_row, parent, false);
+        makeRandomColorLine(view);
 
-        setViewData(comment, viewHolder);
+        return new ViewHolder(view);
+    }
 
-        return convertView;
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        Comment comment = objects.get(position);
+        setViewData(comment, holder);
+    }
+
+    @Override
+    public int getItemCount() {
+        return objects.size();
     }
 
     /**
-     * Recursive code to create threaded comments
+     * Generate a random background color for the comment start line
      *
-     * @param subcomments
-     * @param replies
+     * @param convertView
      */
-    private void createThreadedComments(LinearLayout subcomments, final List<Comment> replies) {
-        if (replies.size() > 0) {
-            for (final Comment reply : replies) {
-                View view = LayoutInflater.from(context).inflate(R.layout.comment_row, subcomments, false);
-                makeRandomColorLine(view);
-                setViewData(reply, new ViewHolder(view));
-                subcomments.addView(view);
-            }
-        }
+    private void makeRandomColorLine(View convertView) {
+        Random rnd = new Random();
+        int color = Color.argb(rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
+        convertView.findViewById(R.id.comment_start_line).setBackgroundColor(color);
     }
 
     /**
@@ -184,13 +191,29 @@ public class CommentsAdapter extends ArrayAdapter<Comment> {
     }
 
     /**
-     * Generate a random background color for the comment start line
+     * Recursive code to create threaded comments
      *
-     * @param convertView
+     * @param subcomments
+     * @param replies
      */
-    private void makeRandomColorLine(View convertView) {
-        Random rnd = new Random();
-        int color = Color.argb(rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
-        convertView.findViewById(R.id.comment_start_line).setBackgroundColor(color);
+    private void createThreadedComments(LinearLayout subcomments, final List<Comment> replies) {
+        if (replies.size() > 0) {
+            for (final Comment reply : replies) {
+                View view = LayoutInflater.from(context).inflate(R.layout.comment_row, subcomments, false);
+                makeRandomColorLine(view);
+                setViewData(reply, new ViewHolder(view));
+                subcomments.addView(view);
+            }
+        }
+    }
+
+    public void clear() {
+        objects.clear();
+        notifyDataSetChanged();
+    }
+
+    public void addAll(List<Comment> objects) {
+        this.objects.addAll(objects);
+        notifyDataSetChanged();
     }
 }

@@ -45,6 +45,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
 
         public ViewHolder(View itemView) {
             super(itemView);
+
             image = (ImageView) itemView.findViewById(R.id.post_image);
             title = (TextView) itemView.findViewById(R.id.post_title);
             details = (TextView) itemView.findViewById(R.id.post_details);
@@ -127,7 +128,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
             Glide.with(context)
                     .load(post.getThumbnail())
                     .asBitmap()
-                    .override(1536, 512)
+                    .override(1536, 512) // TODO: dynamically set the dimensions
                     .centerCrop()
                     .into(holder.image);
         } else {
@@ -143,11 +144,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
     public void clear() {
         objects.clear();
         notifyDataSetChanged();
-    }
-
-    public void addItem(Post dataObj) {
-        objects.add(dataObj);
-        notifyItemInserted(objects.size());
     }
 
     public void addAll(List<Post> objects) {

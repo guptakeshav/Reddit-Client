@@ -4,6 +4,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
@@ -27,8 +29,9 @@ public class CommentsActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeContainer;
     private ProgressBar progressBar;
 
-    private ListView commentsList;
+    private RecyclerView commentsList;
     private CommentsAdapter commentsAdapter;
+    private LinearLayoutManager llm;
 
     private List<Comment> comments;
 
@@ -111,10 +114,14 @@ public class CommentsActivity extends AppCompatActivity {
         comments = new ArrayList<>();
         commentsAdapter = new CommentsAdapter(getApplicationContext(), url, comments);
 
-        commentsList = (ListView) findViewById(R.id.comments_list);
+        commentsList = (RecyclerView) findViewById(R.id.comments_list);
         commentsList.setAdapter(commentsAdapter);
-        commentsList.setFastScrollEnabled(true);
-        commentsList.setFastScrollAlwaysVisible(true);
+        llm = new LinearLayoutManager(
+                CommentsActivity.this,
+                LinearLayoutManager.VERTICAL,
+                false
+        );
+        commentsList.setLayoutManager(llm);
 
         fetchNewComments(url);
     }

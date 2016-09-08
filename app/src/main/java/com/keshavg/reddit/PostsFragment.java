@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -77,6 +78,7 @@ public class PostsFragment extends Fragment {
             List<Post> posts = null;
 
             try {
+                // TODO: when not getting JSON from server, the app crashes
                 JSONObject jsonObject = networkTasks.fetchJSONFromUrl(params[0]);
                 afterParam = jsonObject.getString("after");
 
