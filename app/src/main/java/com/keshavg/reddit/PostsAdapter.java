@@ -30,10 +30,14 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
     private static Context context;
     private static List<Post> objects;
 
+    private RedditPostsDbHelper dbHelper;
+
     public PostsAdapter(Activity activity, Context context, List<Post> objects) {
         this.activity = activity;
         this.context = context;
         this.objects = objects;
+
+        dbHelper = new RedditPostsDbHelper(context);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -144,10 +148,16 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
     public void clear() {
         objects.clear();
         notifyDataSetChanged();
+
+        // Clear the DB
+        dbHelper.clearTable();
     }
 
     public void addAll(List<Post> objects) {
         this.objects.addAll(objects);
         notifyDataSetChanged();
+
+        // Insert the list of Posts to the DB
+        dbHelper.insertPosts(objects);
     }
 }
