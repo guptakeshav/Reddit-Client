@@ -4,13 +4,12 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +41,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         TextView comment;
         TextView created;
         TextView upvotes;
-        LinearLayout subcomments;
+        RecyclerView subcomments;
         Button loadMore;
         ProgressBar progressBar;
 
@@ -53,7 +52,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             this.comment = (TextView) v.findViewById(R.id.comment_body);
             this.created = (TextView) v.findViewById(R.id.comment_created);
             this.upvotes = (TextView) v.findViewById(R.id.comment_upvotes);
-            this.subcomments = (LinearLayout) v.findViewById(R.id.subcomments_list);
+            this.subcomments = (RecyclerView) v.findViewById(R.id.subcomments_list);
             this.loadMore = (Button) v.findViewById(R.id.load_more);
             this.progressBar = (ProgressBar) v.findViewById(R.id.progressbar_replies);
         }
@@ -62,13 +61,13 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private class FetchComments extends AsyncTask<String, Void, List<Comment>> {
         private Boolean ioExceptionFlag, jsonExceptionFlag;
 
-        private LinearLayout subcomments;
+        private CommentsAdapter subcommentsAdapter;
         private Button loadMore;
         private ProgressBar progressBar;
         private List<String> moreRepliesId;
 
-        public FetchComments(ViewHolder viewHolder, List<String> moreRepliesId) {
-            this.subcomments = viewHolder.subcomments;
+        public FetchComments(ViewHolder viewHolder, CommentsAdapter subcommentsAdapter, List<String> moreRepliesId) {
+            this.subcommentsAdapter = subcommentsAdapter;
             this.loadMore = viewHolder.loadMore;
             this.progressBar = viewHolder.progressBar;
             this.moreRepliesId = moreRepliesId;
@@ -113,7 +112,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
                 Toast.makeText(context, String.format(context.getString(R.string.json_exception), "comments"), Toast.LENGTH_SHORT)
                         .show();
             } else {
-                createThreadedComments(subcomments, comments);
+                subcommentsAdapter.addAll(comments);
                 moreRepliesId.remove(0);
             }
 
@@ -137,13 +136,37 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
                 .inflate(R.layout.comment_row, parent, false);
         makeRandomColorLine(view);
 
-        return new ViewHolder(view);
+        ViewHolder viewHolder = new ViewHolder(view);
+        return viewHolder;
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder viewHolder, int position) {
         Comment comment = objects.get(position);
-        setViewData(comment, holder);
+
+        viewHolder.author.setText(comment.getAuthor());
+        viewHolder.comment.setText(comment.getBody());
+        viewHolder.created.setText(comment.getCreated());
+        viewHolder.upvotes.setText(comment.getUps());
+
+        // TODO: take some portion to viewholder
+        final CommentsAdapter commentsAdapter = new CommentsAdapter(context, url, comment.getReplies());
+        viewHolder.subcomments.setAdapter(commentsAdapter);
+        viewHolder.subcomments.setLayoutManager(new LinearLayoutManager(context,
+                LinearLayoutManager.VERTICAL,
+                false));
+
+        final List<String> moreRepliesId = comment.getMoreReplies();
+        if (moreRepliesId.size() > 0) {
+            viewHolder.loadMore.setVisibility(View.VISIBLE);
+            viewHolder.loadMore.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    new FetchComments(viewHolder, commentsAdapter, moreRepliesId)
+                            .execute(url + "/" + moreRepliesId.get(0));
+                }
+            });
+        }
     }
 
     @Override
@@ -160,51 +183,6 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         Random rnd = new Random();
         int color = Color.argb(rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
         convertView.findViewById(R.id.comment_start_line).setBackgroundColor(color);
-    }
-
-    /**
-     * Function to set the data for each of the view elements
-     *
-     * @param comment
-     * @param viewHolder
-     */
-    private void setViewData(Comment comment, final ViewHolder viewHolder) {
-        viewHolder.author.setText(comment.getAuthor());
-        viewHolder.comment.setText(comment.getBody());
-        viewHolder.created.setText(comment.getCreated());
-        viewHolder.upvotes.setText(comment.getUps());
-
-        createThreadedComments(viewHolder.subcomments, comment.getReplies());
-
-        final List<String> moreRepliesId = comment.getMoreReplies();
-        if (moreRepliesId.size() > 0) {
-            viewHolder.loadMore.setVisibility(View.VISIBLE);
-            viewHolder.loadMore.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    new FetchComments(viewHolder,
-                            moreRepliesId)
-                            .execute(url + "/" + moreRepliesId.get(0));
-                }
-            });
-        }
-    }
-
-    /**
-     * Recursive code to create threaded comments
-     *
-     * @param subcomments
-     * @param replies
-     */
-    private void createThreadedComments(LinearLayout subcomments, final List<Comment> replies) {
-        if (replies.size() > 0) {
-            for (final Comment reply : replies) {
-                View view = LayoutInflater.from(context).inflate(R.layout.comment_row, subcomments, false);
-                makeRandomColorLine(view);
-                setViewData(reply, new ViewHolder(view));
-                subcomments.addView(view);
-            }
-        }
     }
 
     public void clear() {
