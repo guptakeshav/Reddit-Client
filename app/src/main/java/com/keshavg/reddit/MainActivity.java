@@ -1,21 +1,20 @@
 package com.keshavg.reddit;
 
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.TabLayout;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -35,9 +34,10 @@ import static com.keshavg.reddit.Constants.BASE_URL;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    private String currentPagerUrl;
 
-    private PostsFragment postsFragment;
-    private PostsFragment searchFragment;
+    private TabLayout tabLayout;
+    private ViewPager viewPager;
 
     private Menu menu;
     private MenuItem prevMenuItem;
@@ -49,20 +49,21 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        setTitle("Reddit - hot");
-        postsFragment = PostsFragment.newInstance(BASE_URL + "/api/v1/hot");
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.posts_fragment_container, postsFragment)
-                .commit();
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        setTitle("Frontpage");
+
+        currentPagerUrl = "api/v1/Frontpage";
+        tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        setupViewPager(currentPagerUrl);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                showSearchDialog();
+                Intent i = new Intent(MainActivity.this, SearchActivity.class);
+                MainActivity.this.startActivity(i);
             }
         });
 
@@ -72,17 +73,23 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        createNavBar();
-    }
-
-    private void createNavBar() {
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        setupNavBar(navigationView);
+    }
 
-        menu = navigationView.getMenu();
-        for (String sortBy : sortByList) {
-            menu.add(sortBy);
+    private void setupViewPager(String url) {
+        ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
+        for (String sortBy: sortByList) {
+            adapter.addFragment(PostsFragment.newInstance(BASE_URL + "/" + url + "/" + sortBy), sortBy);
         }
+        viewPager.setAdapter(adapter);
+        tabLayout.setupWithViewPager(viewPager);
+    }
+
+    private void setupNavBar(NavigationView navigationView) {
+        menu = navigationView.getMenu();
+        menu.add("Frontpage");
         menu.getItem(0).setChecked(true);
         prevMenuItem = menu.getItem(0);
 
@@ -131,12 +138,24 @@ public class MainActivity extends AppCompatActivity
                     });
                 } catch (IOException ioE) {
                     ioE.printStackTrace();
-                    Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                            .show();
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    });
                 } catch (JSONException jsonE) {
                     jsonE.printStackTrace();
-                    Toast.makeText(MainActivity.this, String.format(getString(R.string.json_exception), "subreddits"), Toast.LENGTH_SHORT)
-                            .show();
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, String.format(getString(R.string.json_exception), "subreddits"), Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    });
                 }
             }
         });
@@ -148,13 +167,7 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-                setTitle("Reddit - " + prevMenuItem.getTitle().toString());
-                prevMenuItem.setChecked(true);
-                getSupportFragmentManager().popBackStackImmediate();
-            } else {
-                super.onBackPressed();
-            }
+            super.onBackPressed();
         }
     }
 
@@ -169,6 +182,8 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
+        } else if (id == R.id.refresh_posts) {
+            setupViewPager(currentPagerUrl);
         }
 
         return super.onOptionsItemSelected(item);
@@ -179,74 +194,15 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         prevMenuItem.setChecked(false);
 
-        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-            getSupportFragmentManager().popBackStack();
-        }
         setTitle("Reddit - " + item.getTitle().toString());
         item.setChecked(true);
-
         prevMenuItem = item;
 
-        String url = BASE_URL + "/api/v1/" + item.getTitle().toString();
-        postsFragment.clearPostsAdapter();
-        postsFragment.fetchNewPosts(url);
+        currentPagerUrl = "api/v1/" + item.getTitle().toString();
+        setupViewPager(currentPagerUrl);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    public void showSearchDialog() {
-        View promptView = LayoutInflater.from(MainActivity.this).inflate(R.layout.input_dialog, null);
-
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-        alertDialogBuilder.setView(promptView);
-
-        final EditText editText = (EditText) promptView.findViewById(R.id.search_text);
-
-        alertDialogBuilder
-                .setPositiveButton("Search", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        String searchQuery = editText.getText().toString();
-
-                        if (searchQuery.trim().matches("")) {
-                            Toast.makeText(MainActivity.this, getText(R.string.empty_search), Toast.LENGTH_SHORT)
-                                    .show();
-                            dialogInterface.cancel();
-
-                            return;
-                        }
-
-                        setTitle("Results - " + searchQuery);
-                        prevMenuItem.setChecked(false);
-
-                        String url = BASE_URL + "/api/v1/search/" + searchQuery;
-
-                        /**
-                         * Checking if already on the search fragment
-                         * Then only update the list of posts
-                         * No need to create a new fragment
-                         */
-                        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-                            searchFragment.fetchNewPosts(url);
-                        } else {
-                            searchFragment = PostsFragment.newInstance(url);
-                            getSupportFragmentManager().beginTransaction()
-                                    .replace(R.id.posts_fragment_container, searchFragment)
-                                    .addToBackStack(null)
-                                    .commit();
-                        }
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
-                    }
-                });
-
-        AlertDialog alert = alertDialogBuilder.create();
-        alert.show();
     }
 }
