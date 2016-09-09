@@ -19,6 +19,7 @@ import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -41,18 +42,30 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         TextView comment;
         TextView created;
         TextView upvotes;
-        RecyclerView subcomments;
+
+        List<Comment> subcomments;
+        RecyclerView subcommentsView;
+        CommentsAdapter subcommentsAdapter;
+        LinearLayoutManager llm;
+
         Button loadMore;
         ProgressBar progressBar;
 
-        public ViewHolder(View v) {
+        public ViewHolder(View v, Context context, String url) {
             super(v);
 
             this.author = (TextView) v.findViewById(R.id.comment_author);
             this.comment = (TextView) v.findViewById(R.id.comment_body);
             this.created = (TextView) v.findViewById(R.id.comment_created);
             this.upvotes = (TextView) v.findViewById(R.id.comment_upvotes);
-            this.subcomments = (RecyclerView) v.findViewById(R.id.subcomments_list);
+
+            this.subcomments = new ArrayList<>();
+            this.subcommentsView = (RecyclerView) v.findViewById(R.id.subcomments_list);
+            this.subcommentsAdapter = new CommentsAdapter(context, url, subcomments);
+            this.llm = new LinearLayoutManager(context,
+                    LinearLayoutManager.VERTICAL,
+                    false);
+
             this.loadMore = (Button) v.findViewById(R.id.load_more);
             this.progressBar = (ProgressBar) v.findViewById(R.id.progressbar_replies);
         }
@@ -66,8 +79,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         private ProgressBar progressBar;
         private List<String> moreRepliesId;
 
-        public FetchComments(ViewHolder viewHolder, CommentsAdapter subcommentsAdapter, List<String> moreRepliesId) {
-            this.subcommentsAdapter = subcommentsAdapter;
+        public FetchComments(ViewHolder viewHolder, List<String> moreRepliesId) {
+            this.subcommentsAdapter = viewHolder.subcommentsAdapter;
             this.loadMore = viewHolder.loadMore;
             this.progressBar = viewHolder.progressBar;
             this.moreRepliesId = moreRepliesId;
@@ -136,7 +149,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
                 .inflate(R.layout.comment_row, parent, false);
         makeRandomColorLine(view);
 
-        ViewHolder viewHolder = new ViewHolder(view);
+        ViewHolder viewHolder = new ViewHolder(view, context, url);
         return viewHolder;
     }
 
@@ -149,12 +162,9 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         viewHolder.created.setText(comment.getCreated());
         viewHolder.upvotes.setText(comment.getUps());
 
-        // TODO: take some portion to viewholder
-        final CommentsAdapter commentsAdapter = new CommentsAdapter(context, url, comment.getReplies());
-        viewHolder.subcomments.setAdapter(commentsAdapter);
-        viewHolder.subcomments.setLayoutManager(new LinearLayoutManager(context,
-                LinearLayoutManager.VERTICAL,
-                false));
+        viewHolder.subcommentsView.setAdapter(viewHolder.subcommentsAdapter);
+        viewHolder.subcommentsView.setLayoutManager(viewHolder.llm);
+        viewHolder.subcommentsAdapter.addAll(comment.getReplies());
 
         final List<String> moreRepliesId = comment.getMoreReplies();
         if (moreRepliesId.size() > 0) {
@@ -162,7 +172,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             viewHolder.loadMore.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    new FetchComments(viewHolder, commentsAdapter, moreRepliesId)
+                    new FetchComments(viewHolder, moreRepliesId)
                             .execute(url + "/" + moreRepliesId.get(0));
                 }
             });

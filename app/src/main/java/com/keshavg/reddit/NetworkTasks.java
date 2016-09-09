@@ -1,7 +1,5 @@
 package com.keshavg.reddit;
 
-import android.util.Log;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,11 +53,6 @@ public class NetworkTasks {
             );
 
             comments.add(comment);
-
-            /**
-             * Logging comments
-             */
-            Log.d("Comment #" + idx + " ", comment.getBody());
         }
 
         return comments;
@@ -82,11 +75,6 @@ public class NetworkTasks {
             );
 
             posts.add(post);
-
-            /**
-             * Logging posts title
-             */
-            Log.d("Post URL #" + idx + " ", post.getTitle());
         }
 
         return posts;

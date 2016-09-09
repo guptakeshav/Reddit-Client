@@ -13,6 +13,8 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,7 +27,6 @@ import java.util.List;
  * Created by keshav.g on 22/08/16.
  */
 public class PostsFragment extends Fragment {
-
     private NetworkTasks networkTasks;
     private Boolean loadingFlag;
     private FetchPosts fetchPosts;
@@ -77,10 +78,8 @@ public class PostsFragment extends Fragment {
             List<Post> posts = null;
 
             try {
-                // TODO: when not getting JSON from server, the app crashes
                 JSONObject jsonObject = networkTasks.fetchJSONFromUrl(params[0]);
                 afterParam = jsonObject.getString("after");
-
                 JSONArray redditPosts = jsonObject.getJSONArray("data");
                 posts = networkTasks.fetchPostsList(redditPosts);
             } catch (IOException ioE) {
@@ -124,7 +123,7 @@ public class PostsFragment extends Fragment {
         networkTasks = new NetworkTasks();
         loadingFlag = false;
         posts = new ArrayList<Post>();
-        postsAdapter = new PostsAdapter(getActivity(), getContext(), posts);
+        postsAdapter = new PostsAdapter(getActivity(), posts, Glide.with(getContext()));
         progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
 
         fetchNewPosts(getArguments().getString("url"));
@@ -138,8 +137,6 @@ public class PostsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
-        postsAdapter = new PostsAdapter(getActivity(), getContext(), posts);
-
         recList = (RecyclerView) rootView.findViewById(R.id.posts_list);
         recList.setAdapter(postsAdapter);
         llm = new LinearLayoutManager(
@@ -163,11 +160,6 @@ public class PostsFragment extends Fragment {
                 fetchNewPosts(url);
             }
         });
-    }
-
-
-    public void clearPostsAdapter() {
-        postsAdapter.clear();
     }
 
     /**
