@@ -13,8 +13,6 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,38 +24,38 @@ import java.util.List;
 /**
  * Created by keshav.g on 22/08/16.
  */
-public class PostsFragment extends Fragment {
+public class SubredditsFragment extends Fragment {
     private NetworkTasks networkTasks;
     private Boolean loadingFlag;
-    private FetchPosts fetchPosts;
+    private FetchSubreddits fetchSubreddits;
 
     private SwipeRefreshLayout swipeContainer;
     private ProgressBar progressBar;
     private RecyclerView recList;
     private LinearLayoutManager llm;
 
-    private List<Post> posts;
-    private PostsAdapter postsAdapter;
+    private List<Subreddit> subreddits;
+    private SubredditsAdapter subredditsAdapter;
 
     private String url;
     private String afterParam;
 
-    public PostsFragment() {
+    public SubredditsFragment() {
     }
 
-    public static PostsFragment newInstance(String url) {
-        PostsFragment fragment = new PostsFragment();
+    public static SubredditsFragment newInstance(String url) {
+        SubredditsFragment fragment = new SubredditsFragment();
         Bundle args = new Bundle();
         args.putString("url", url);
         fragment.setArguments(args);
         return fragment;
     }
 
-    private class FetchPosts extends AsyncTask<String, Void, List<Post>> {
+    private class FetchSubreddits extends AsyncTask<String, Void, List<Subreddit>> {
         private Boolean ioExceptionFlag, jsonExceptionFlag;
         private Boolean clearAdapterFlag;
 
-        public FetchPosts(Boolean clearAdapterFlag) {
+        public FetchSubreddits(Boolean clearAdapterFlag) {
             this.clearAdapterFlag = clearAdapterFlag;
         }
 
@@ -70,18 +68,18 @@ public class PostsFragment extends Fragment {
 
             loadingFlag = true;
             progressBar.setVisibility(View.VISIBLE);
-            posts = new ArrayList<Post>();
+            subreddits = new ArrayList<>();
         }
 
         @Override
-        protected List<Post> doInBackground(String... params) {
-            List<Post> posts = null;
+        protected List<Subreddit> doInBackground(String... params) {
+            List<Subreddit> subreddits = null;
 
             try {
                 JSONObject jsonObject = networkTasks.fetchJSONFromUrl(params[0]);
                 afterParam = jsonObject.getString("after");
-                JSONArray redditPosts = jsonObject.getJSONArray("data");
-                posts = networkTasks.fetchPostsList(redditPosts);
+                JSONArray subredditsJSON = jsonObject.getJSONArray("data");
+                subreddits = networkTasks.fetchSubredditsList(subredditsJSON);
             } catch (IOException ioE) {
                 ioE.printStackTrace();
                 ioExceptionFlag = true;
@@ -90,24 +88,24 @@ public class PostsFragment extends Fragment {
                 jsonExceptionFlag = true;
             }
 
-            return posts;
+            return subreddits;
         }
 
         @Override
-        protected void onPostExecute(List<Post> posts) {
-            super.onPostExecute(posts);
+        protected void onPostExecute(List<Subreddit> subreddits) {
+            super.onPostExecute(subreddits);
 
             if (ioExceptionFlag == true) {
                 Toast.makeText(getContext(), getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
                         .show();
             } else if(jsonExceptionFlag == true) {
-                Toast.makeText(getContext(), String.format(getString(R.string.json_exception), "posts"), Toast.LENGTH_SHORT)
+                Toast.makeText(getContext(), String.format(getString(R.string.json_exception), "subreddits"), Toast.LENGTH_SHORT)
                         .show();
             } else {
                 if (clearAdapterFlag == true) {
-                    postsAdapter.clear();
+                    subredditsAdapter.clear();
                 }
-                postsAdapter.addAll(posts);
+                subredditsAdapter.addAll(subreddits);
             }
 
             progressBar.setVisibility(View.GONE);
@@ -122,11 +120,11 @@ public class PostsFragment extends Fragment {
 
         networkTasks = new NetworkTasks();
         loadingFlag = false;
-        posts = new ArrayList<Post>();
-        postsAdapter = new PostsAdapter(getActivity(), posts, Glide.with(getContext()));
+        subreddits = new ArrayList<>();
+        subredditsAdapter = new SubredditsAdapter(getActivity(), subreddits);
         progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
 
-        fetchNewPosts(getArguments().getString("url"));
+        fetchNewSubreddits(getArguments().getString("url"));
     }
 
     @Nullable
@@ -138,7 +136,7 @@ public class PostsFragment extends Fragment {
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         recList = (RecyclerView) rootView.findViewById(R.id.recycler_list);
-        recList.setAdapter(postsAdapter);
+        recList.setAdapter(subredditsAdapter);
         llm = new LinearLayoutManager(
                 getActivity(),
                 LinearLayoutManager.VERTICAL,
@@ -157,7 +155,7 @@ public class PostsFragment extends Fragment {
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                fetchNewPosts(url);
+                fetchNewSubreddits(url);
             }
         });
     }
@@ -173,8 +171,8 @@ public class PostsFragment extends Fragment {
         if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
             String paramUrl = url + "/" + afterParam;
 
-            fetchPosts = new FetchPosts(false);
-            fetchPosts.execute(paramUrl);
+            fetchSubreddits = new FetchSubreddits(false);
+            fetchSubreddits.execute(paramUrl);
         }
     }
 
@@ -183,7 +181,7 @@ public class PostsFragment extends Fragment {
      *
      * @param url
      */
-    public void fetchNewPosts(String url) {
+    public void fetchNewSubreddits(String url) {
         this.url = url;
 
         /**
@@ -191,10 +189,10 @@ public class PostsFragment extends Fragment {
          * Cancel loading them
          */
         if (loadingFlag == true) {
-            fetchPosts.cancel(true);
+            fetchSubreddits.cancel(true);
         }
 
-        fetchPosts = new FetchPosts(true);
-        fetchPosts.execute(url);
+        fetchSubreddits = new FetchSubreddits(true);
+        fetchSubreddits.execute(url);
     }
 }

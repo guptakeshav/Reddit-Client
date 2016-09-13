@@ -1,5 +1,7 @@
 package com.keshavg.reddit;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -78,5 +80,19 @@ public class NetworkTasks {
         }
 
         return posts;
+    }
+
+    public List<Subreddit> fetchSubredditsList(JSONArray subredditsJSON) throws JSONException {
+        List<Subreddit> subreddits = new ArrayList<>();
+        for (int idx = 0; idx < subredditsJSON.length(); ++idx) {
+            JSONObject currentSubreddit = subredditsJSON.getJSONObject(idx);
+            Subreddit subreddit = new Subreddit(
+                    currentSubreddit.getString("display_name"),
+                    currentSubreddit.getString("description")
+            );
+            subreddits.add(subreddit);
+        }
+
+        return subreddits;
     }
 }
