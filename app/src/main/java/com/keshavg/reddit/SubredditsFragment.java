@@ -76,7 +76,7 @@ public class SubredditsFragment extends Fragment {
             List<Subreddit> subreddits = null;
 
             try {
-                JSONObject jsonObject = networkTasks.fetchJSONFromUrl(params[0]);
+                JSONObject jsonObject = networkTasks.fetchJSONObjectFromUrl(params[0]);
                 afterParam = jsonObject.getString("after");
                 JSONArray subredditsJSON = jsonObject.getJSONArray("data");
                 subreddits = networkTasks.fetchSubredditsList(subredditsJSON);

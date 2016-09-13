@@ -1,7 +1,5 @@
 package com.keshavg.reddit;
 
-import android.util.Log;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,17 +24,25 @@ public class NetworkTasks {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build();
 
-    public JSONObject fetchJSONFromUrl(String url) throws IOException, JSONException {
+    private String getResponse(String url) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
 
         Response response = client.newCall(request).execute();
-        return new JSONObject(response.body().string());
+        return response.body().string();
+    }
+
+    public JSONObject fetchJSONObjectFromUrl(String url) throws IOException, JSONException {
+        return new JSONObject(getResponse(url));
+    }
+
+    public JSONArray fetchJSONArrayFromUrl(String url) throws IOException, JSONException {
+        return new JSONArray(getResponse(url));
     }
 
     public List<Comment> fetchCommentsListFromUrl(String url) throws IOException, JSONException {
-        JSONObject jsonObject = fetchJSONFromUrl(url);
+        JSONObject jsonObject = fetchJSONObjectFromUrl(url);
         JSONArray redditComments = jsonObject.getJSONArray("data");
         return fetchCommentsList(redditComments);
     }
@@ -94,5 +100,16 @@ public class NetworkTasks {
         }
 
         return subreddits;
+    }
+
+    public List<String> fetchSubredditsNameList(String url) throws IOException, JSONException {
+        List<String> subredditNames = new ArrayList<>();
+
+        JSONArray subredditsJSON = fetchJSONArrayFromUrl(url);
+        for (int idx = 0; idx < subredditsJSON.length(); ++idx) {
+            subredditNames.add("r/" + subredditsJSON.getString(idx));
+        }
+
+        return subredditNames;
     }
 }

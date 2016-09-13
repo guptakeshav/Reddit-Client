@@ -2,6 +2,7 @@ package com.keshavg.reddit;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -22,18 +23,10 @@ import android.widget.Toast;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 import static com.keshavg.reddit.Constants.BASE_URL;
 
@@ -108,77 +101,65 @@ public class MainActivity extends AppCompatActivity
         tabLayout.setupWithViewPager(viewPager);
     }
 
+
+    private class FetchSubredditNames extends AsyncTask<Void, Void, List<String>> {
+        private SubMenu subMenu;
+        private Boolean ioExceptionFlag, jsonExceptionFlag;
+
+        FetchSubredditNames(SubMenu subMenu) {
+            this.subMenu = subMenu;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            ioExceptionFlag = false;
+            jsonExceptionFlag = false;
+        }
+
+        @Override
+        protected List<String> doInBackground(Void... params) {
+            List<String> subreddits = null;
+            try {
+                subreddits = new NetworkTasks().fetchSubredditsNameList(
+                        BASE_URL + "/api/v1/subreddits");
+            } catch (IOException ioE) {
+                ioE.printStackTrace();
+                ioExceptionFlag = true;
+            } catch (JSONException jsonE) {
+                jsonE.printStackTrace();
+                jsonExceptionFlag = true;
+            }
+
+            return subreddits;
+        }
+
+        @Override
+        protected void onPostExecute(List<String> subreddits) {
+            super.onPostExecute(subreddits);
+
+            if (ioExceptionFlag == true) {
+                Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
+                        .show();
+            } else if (jsonExceptionFlag == true) {
+                Toast.makeText(MainActivity.this, String.format(getString(R.string.json_exception), "subreddits list"), Toast.LENGTH_SHORT)
+                        .show();
+            } else {
+                for (String subreddit : subreddits) {
+                    subMenu.add(subreddit);
+                }
+            }
+        }
+    }
+
     private void setupNavBar(NavigationView navigationView) {
         menu = navigationView.getMenu();
         menu.add("Frontpage");
         menu.getItem(0).setChecked(true);
 
         SubMenu subMenu = menu.addSubMenu("Subreddits");
-        try {
-            getSubredditsList(subMenu);
-        } catch (IOException ioE) {
-            ioE.printStackTrace();
-            Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                    .show();
-        }
-    }
-
-    public void getSubredditsList(final SubMenu subMenu) throws IOException {
-        String url = BASE_URL + "/api/v1/subreddits";
-
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        Call call = new OkHttpClient().newCall(request);
-
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) {
-                try {
-                    final List<String> subredditsList = new ArrayList<>();
-
-                    JSONArray subreddits = new JSONArray(response.body().string());
-                    for (int idx = 0; idx < subreddits.length(); ++idx) {
-                        subredditsList.add("r/" + subreddits.getString(idx));
-                    }
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            for (String subreddit : subredditsList) {
-                                subMenu.add(subreddit);
-                            }
-                        }
-                    });
-                } catch (IOException ioE) {
-                    ioE.printStackTrace();
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                                    .show();
-                        }
-                    });
-                } catch (JSONException jsonE) {
-                    jsonE.printStackTrace();
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, String.format(getString(R.string.json_exception), "subreddits"), Toast.LENGTH_SHORT)
-                                    .show();
-                        }
-                    });
-                }
-            }
-        });
+        new FetchSubredditNames(subMenu).execute();
     }
 
     @Override
