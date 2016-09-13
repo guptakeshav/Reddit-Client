@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,7 +15,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.RequestManager;
-import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.util.List;
@@ -84,6 +83,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             requestManager
                     .load(post.getThumbnail())
                     .asBitmap()
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .override(1536, 512) // TODO: dynamically set the dimensions
                     .centerCrop()
                     .into(holder.image);
@@ -119,18 +119,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     }
 
     private void onClickImage(View v, int position) {
-        AlertDialog.Builder imagePopup = new AlertDialog.Builder(v.getContext());
-        View view = LayoutInflater.from(v.getContext()).inflate(R.layout.image_dialog, null);
-        ImageView imageView = (ImageView) view.findViewById(R.id.image_popup);
-        GlideDrawableImageViewTarget glideDrawableImageViewTarget = new GlideDrawableImageViewTarget(imageView);
-
-        // TODO: fix issue with size of image as compared to the size of dialog box
-        requestManager
-                .load(objects.get(position).getThumbnail())
-                .into(glideDrawableImageViewTarget);
-        imagePopup.setView(view);
-
-        imagePopup.create().show();
+        Intent i = new Intent(activity, ImageViewActivity.class);
+        i.putExtra("Image", objects.get(position).getThumbnail());
+        activity.startActivity(i);
     }
 
     private void onClickContent(View view, Post post) {
