@@ -22,6 +22,7 @@
         </activity>
         <activity
             android:name=".CommentsActivity"
+            android:label=""
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
@@ -30,6 +31,8 @@
         </activity>
         <activity
             android:name=".SearchActivity"
+            android:label=""
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
     </application>
