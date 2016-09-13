@@ -58,7 +58,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Subreddit subreddit = objects.get(position);
+        final Subreddit subreddit = objects.get(position);
 
         holder.name.setText(subreddit.getName());
         holder.description.setText(subreddit.getDescription());
@@ -66,13 +66,13 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickSubreddit();
+                onClickSubreddit("r/" + subreddit.getName());
             }
         });
     }
 
-    private void onClickSubreddit() {
-        activity.finish();
+    private void onClickSubreddit(String subreddit) {
+        ((SearchActivity)activity).showSubredditPosts(subreddit);
     }
 
     @Override

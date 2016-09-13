@@ -21,6 +21,8 @@ import static com.keshavg.reddit.Constants.BASE_URL;
 public class SearchActivity extends AppCompatActivity {
     private String type;
 
+    private EditText editText;
+
     private TabLayout tabLayout;
     private ViewPager viewPager;
 
@@ -40,7 +42,7 @@ public class SearchActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        final EditText editText = (EditText) findViewById(R.id.search_text);
+        editText = (EditText) findViewById(R.id.search_text);
         editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -102,8 +104,21 @@ public class SearchActivity extends AppCompatActivity {
 
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
         String url = BASE_URL + "/api/v1/search/subreddits/" + searchQuery;
-        Log.d("Searching", url);
         adapter.addFragment(SubredditsFragment.newInstance(url), "Subreddits");
+
+        viewPager.setAdapter(adapter);
+        tabLayout.setupWithViewPager(viewPager);
+    }
+
+    public void showSubredditPosts(String subreddit) {
+        editText.setText(subreddit);
+
+        ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
+
+        String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
+        for (String sortBy: sortByList) {
+            adapter.addFragment(PostsFragment.newInstance(BASE_URL + "/api/v1/" + subreddit + "/" + sortBy), sortBy);
+        }
 
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
