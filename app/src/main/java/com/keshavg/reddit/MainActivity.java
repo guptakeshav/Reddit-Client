@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity
         currentPagerUrl = "api/v1/Frontpage";
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
-        viewPager.setOffscreenPageLimit(0);
         setupViewPager(currentPagerUrl);
 
         final FloatingActionMenu fam = (FloatingActionMenu) findViewById(R.id.fab_menu);
@@ -120,9 +119,9 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected List<String> doInBackground(Void... params) {
-            List<String> subreddits = null;
+            List<String> subredditNames = null;
             try {
-                subreddits = new NetworkTasks().fetchSubredditsNameList(
+                subredditNames = new NetworkTasks().fetchSubredditsNameList(
                         BASE_URL + "/api/v1/subreddits");
             } catch (IOException ioE) {
                 ioE.printStackTrace();
@@ -132,12 +131,12 @@ public class MainActivity extends AppCompatActivity
                 jsonExceptionFlag = true;
             }
 
-            return subreddits;
+            return subredditNames;
         }
 
         @Override
-        protected void onPostExecute(List<String> subreddits) {
-            super.onPostExecute(subreddits);
+        protected void onPostExecute(List<String> subredditNames) {
+            super.onPostExecute(subredditNames);
 
             if (ioExceptionFlag == true) {
                 Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
@@ -146,8 +145,8 @@ public class MainActivity extends AppCompatActivity
                 Toast.makeText(MainActivity.this, String.format(getString(R.string.json_exception), "subreddits list"), Toast.LENGTH_SHORT)
                         .show();
             } else {
-                for (String subreddit : subreddits) {
-                    subMenu.add(subreddit);
+                for (String subredditName : subredditNames) {
+                    subMenu.add(subredditName);
                 }
             }
         }

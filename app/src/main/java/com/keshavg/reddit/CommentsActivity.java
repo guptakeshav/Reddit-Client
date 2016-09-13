@@ -1,24 +1,13 @@
 package com.keshavg.reddit;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.keshavg.reddit.Constants.BASE_URL;
 
@@ -27,63 +16,9 @@ public class CommentsActivity extends AppCompatActivity {
     private String title;
 
     private TextView textView;
-    private SwipeRefreshLayout swipeContainer;
-    private ProgressBar progressBar;
 
-    private RecyclerView commentsList;
-    private CommentsAdapter commentsAdapter;
-    private LinearLayoutManager llm;
-
-    private List<Comment> comments;
-
-    private class FetchComments extends AsyncTask<String, Void, List<Comment>> {
-        private Boolean ioExceptionFlag, jsonExceptionFlag;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            ioExceptionFlag = false;
-            jsonExceptionFlag = false;
-
-            progressBar.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected List<Comment> doInBackground(String... params) {
-            List<Comment> comments = null;
-
-            try {
-                comments = new NetworkTasks().fetchCommentsListFromUrl(params[0]);
-            } catch (IOException ioE) {
-                ioE.printStackTrace();
-                ioExceptionFlag = true;
-            } catch (JSONException jsonE) {
-                jsonE.printStackTrace();
-                jsonExceptionFlag = true;
-            }
-
-            return comments;
-        }
-
-        @Override
-        protected void onPostExecute(List<Comment> comments) {
-            super.onPostExecute(comments);
-
-            if (ioExceptionFlag == true) {
-                Toast.makeText(CommentsActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                        .show();
-            } else if(jsonExceptionFlag == true) {
-                Toast.makeText(CommentsActivity.this, String.format(getString(R.string.json_exception), "comments"), Toast.LENGTH_SHORT)
-                        .show();
-            } else {
-                commentsAdapter.addAll(comments);
-            }
-
-            progressBar.setVisibility(View.GONE);
-            swipeContainer.setRefreshing(false);
-        }
-    }
+    private TabLayout tabLayout;
+    private ViewPager viewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,32 +38,23 @@ public class CommentsActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.comments_container);
-        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                fetchNewComments(url);
-            }
-        });
-
-        progressBar = (ProgressBar) findViewById(R.id.progressbar_comments);
-
         textView = (TextView) findViewById(R.id.post_title);
         textView.setText(title);
 
-        comments = new ArrayList<>();
-        commentsAdapter = new CommentsAdapter(getApplicationContext(), url, comments);
+        tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        setUpViewPager();
+    }
 
-        commentsList = (RecyclerView) findViewById(R.id.comments_list);
-        commentsList.setAdapter(commentsAdapter);
-        llm = new LinearLayoutManager(
-                CommentsActivity.this,
-                LinearLayoutManager.VERTICAL,
-                false
-        );
-        commentsList.setLayoutManager(llm);
+    private void setUpViewPager() {
+        ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
 
-        fetchNewComments(url);
+        String[] sortByList = {"best", "top", "new", "controversial", "old", "qa&a"};
+        for (String sortBy: sortByList) {
+            adapter.addFragment(CommentsFragment.newInstance(url + "/" + sortBy), sortBy);
+        }
+        viewPager.setAdapter(adapter);
+        tabLayout.setupWithViewPager(viewPager);
     }
 
     @Override
@@ -138,15 +64,5 @@ public class CommentsActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * Function to fetch comments from the starting
-     * @param url
-     */
-    public void fetchNewComments(String url) {
-        this.url = url;
-        commentsAdapter.clear();
-        new FetchComments().execute(url);
     }
 }

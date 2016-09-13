@@ -71,8 +71,6 @@ public class SearchActivity extends AppCompatActivity {
 
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById((R.id.viewpager));
-
-        viewPager.setOffscreenPageLimit(0);
     }
 
     @Override
