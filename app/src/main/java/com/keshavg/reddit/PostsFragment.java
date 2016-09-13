@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +43,8 @@ public class PostsFragment extends Fragment {
     private String url;
     private String afterParam;
 
+    private RedditPostsDbHelper dbHelper;
+
     public PostsFragment() {
     }
 
@@ -54,6 +57,7 @@ public class PostsFragment extends Fragment {
     }
 
     private class FetchPosts extends AsyncTask<String, Void, List<Post>> {
+        private String url;
         private Boolean ioExceptionFlag, jsonExceptionFlag;
         private Boolean clearAdapterFlag;
 
@@ -70,15 +74,16 @@ public class PostsFragment extends Fragment {
 
             loadingFlag = true;
             progressBar.setVisibility(View.VISIBLE);
-            posts = new ArrayList<Post>();
+            posts = new ArrayList<>();
         }
 
         @Override
         protected List<Post> doInBackground(String... params) {
-            List<Post> posts = null;
+            url = params[0];
 
+            List<Post> posts = null;
             try {
-                JSONObject jsonObject = networkTasks.fetchJSONFromUrl(params[0]);
+                JSONObject jsonObject = networkTasks.fetchJSONFromUrl(url);
                 afterParam = jsonObject.getString("after");
                 JSONArray redditPosts = jsonObject.getJSONArray("data");
                 posts = networkTasks.fetchPostsList(redditPosts);
@@ -97,17 +102,27 @@ public class PostsFragment extends Fragment {
         protected void onPostExecute(List<Post> posts) {
             super.onPostExecute(posts);
 
-            if (ioExceptionFlag == true) {
-                Toast.makeText(getContext(), getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                        .show();
-            } else if(jsonExceptionFlag == true) {
-                Toast.makeText(getContext(), String.format(getString(R.string.json_exception), "posts"), Toast.LENGTH_SHORT)
-                        .show();
+            if (ioExceptionFlag == true || jsonExceptionFlag == true) {
+                if (clearAdapterFlag == true) {
+                    postsAdapter.clear();
+                    postsAdapter.addAll(dbHelper.getPosts(url));
+                }
+
+                if (ioExceptionFlag == true) {
+                    Toast.makeText(getContext(), getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
+                            .show();
+                } else if (jsonExceptionFlag == true) {
+                    Toast.makeText(getContext(), String.format(getString(R.string.json_exception), "posts"), Toast.LENGTH_SHORT)
+                            .show();
+                }
             } else {
                 if (clearAdapterFlag == true) {
                     postsAdapter.clear();
+                    dbHelper.removePosts(url);
                 }
+
                 postsAdapter.addAll(posts);
+                dbHelper.insertPosts(posts, url);
             }
 
             progressBar.setVisibility(View.GONE);
@@ -122,9 +137,11 @@ public class PostsFragment extends Fragment {
 
         networkTasks = new NetworkTasks();
         loadingFlag = false;
-        posts = new ArrayList<Post>();
+        posts = new ArrayList<>();
         postsAdapter = new PostsAdapter(getActivity(), posts, Glide.with(getContext()));
         progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
+
+        dbHelper = new RedditPostsDbHelper(getContext());
 
         fetchNewPosts(getArguments().getString("url"));
     }

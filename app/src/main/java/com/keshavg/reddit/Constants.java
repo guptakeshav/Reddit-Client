@@ -8,5 +8,5 @@ public final class Constants {
 
     }
 
-    public static final String BASE_URL = "http://dc58a84f.ngrok.io";
+    public static final String BASE_URL = "http://172.16.44.237:65010";
 }

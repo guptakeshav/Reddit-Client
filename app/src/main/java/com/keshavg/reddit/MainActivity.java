@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity
         currentPagerUrl = "api/v1/Frontpage";
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
+        viewPager.setOffscreenPageLimit(0);
         setupViewPager(currentPagerUrl);
 
         final FloatingActionMenu fam = (FloatingActionMenu) findViewById(R.id.fab_menu);

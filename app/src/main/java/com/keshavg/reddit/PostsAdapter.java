@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
@@ -30,14 +30,10 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     private List<Post> objects;
     private RequestManager requestManager;
 
-    private RedditPostsDbHelper dbHelper;
-
     public PostsAdapter(Activity activity, List<Post> objects, RequestManager requestManager) {
         this.activity = activity;
         this.objects = objects;
         this.requestManager = requestManager;
-
-        dbHelper = new RedditPostsDbHelper(activity.getApplicationContext());
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -129,7 +125,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         GlideDrawableImageViewTarget glideDrawableImageViewTarget = new GlideDrawableImageViewTarget(imageView);
 
         // TODO: fix issue with size of image as compared to the size of dialog box
-        Glide.with(v.getContext())
+        requestManager
                 .load(objects.get(position).getThumbnail())
                 .into(glideDrawableImageViewTarget);
         imagePopup.setView(view);
@@ -160,16 +156,10 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     public void clear() {
         objects.clear();
         notifyDataSetChanged();
-
-        // Clear the DB
-//        dbHelper.clearTable();
     }
 
     public void addAll(List<Post> objects) {
         this.objects.addAll(objects);
         notifyDataSetChanged();
-
-        // Insert the list of Posts to the DB
-//        dbHelper.insertPosts(objects);
     }
 }
