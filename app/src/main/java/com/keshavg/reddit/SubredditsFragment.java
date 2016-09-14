@@ -1,6 +1,5 @@
 package com.keshavg.reddit;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -13,118 +12,46 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by keshav.g on 22/08/16.
  */
 public class SubredditsFragment extends Fragment {
-    private NetworkTasks networkTasks;
     private Boolean loadingFlag;
-    private FetchSubreddits fetchSubreddits;
 
     private SwipeRefreshLayout swipeContainer;
     private ProgressBar progressBar;
     private RecyclerView recList;
+    private SubredditsAdapter subredditsAdapter;
     private LinearLayoutManager llm;
 
-    private List<Subreddit> subreddits;
-    private SubredditsAdapter subredditsAdapter;
-
-    private String url;
+    private String searchQuery;
     private String afterParam;
 
     public SubredditsFragment() {
     }
 
-    public static SubredditsFragment newInstance(String url) {
+    public static SubredditsFragment newInstance(String searchQuery) {
         SubredditsFragment fragment = new SubredditsFragment();
         Bundle args = new Bundle();
-        args.putString("url", url);
+        args.putString("searchQuery", searchQuery);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    private class FetchSubreddits extends AsyncTask<String, Void, List<Subreddit>> {
-        private Boolean ioExceptionFlag, jsonExceptionFlag;
-        private Boolean clearAdapterFlag;
-
-        public FetchSubreddits(Boolean clearAdapterFlag) {
-            this.clearAdapterFlag = clearAdapterFlag;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            ioExceptionFlag = false;
-            jsonExceptionFlag = false;
-
-            loadingFlag = true;
-            progressBar.setVisibility(View.VISIBLE);
-            subreddits = new ArrayList<>();
-        }
-
-        @Override
-        protected List<Subreddit> doInBackground(String... params) {
-            List<Subreddit> subreddits = null;
-
-            try {
-                JSONObject jsonObject = networkTasks.fetchJSONObjectFromUrl(params[0]);
-                afterParam = jsonObject.getString("after");
-                JSONArray subredditsJSON = jsonObject.getJSONArray("data");
-                subreddits = networkTasks.fetchSubredditsList(subredditsJSON);
-            } catch (IOException ioE) {
-                ioE.printStackTrace();
-                ioExceptionFlag = true;
-            } catch (JSONException jsonE) {
-                jsonE.printStackTrace();
-                jsonExceptionFlag = true;
-            }
-
-            return subreddits;
-        }
-
-        @Override
-        protected void onPostExecute(List<Subreddit> subreddits) {
-            super.onPostExecute(subreddits);
-
-            if (ioExceptionFlag == true) {
-                Toast.makeText(getContext(), getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                        .show();
-            } else if(jsonExceptionFlag == true) {
-                Toast.makeText(getContext(), String.format(getString(R.string.json_exception), "subreddits"), Toast.LENGTH_SHORT)
-                        .show();
-            } else {
-                if (clearAdapterFlag == true) {
-                    subredditsAdapter.clear();
-                }
-                subredditsAdapter.addAll(subreddits);
-            }
-
-            progressBar.setVisibility(View.GONE);
-            swipeContainer.setRefreshing(false);
-            loadingFlag = false;
-        }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        networkTasks = new NetworkTasks();
+        searchQuery = getArguments().getString("searchQuery");
         loadingFlag = false;
-        subreddits = new ArrayList<>();
-        subredditsAdapter = new SubredditsAdapter(getActivity(), subreddits);
         progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
-
-        fetchNewSubreddits(getArguments().getString("url"));
     }
 
     @Nullable
@@ -136,6 +63,7 @@ public class SubredditsFragment extends Fragment {
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         recList = (RecyclerView) rootView.findViewById(R.id.recycler_list);
+        subredditsAdapter = new SubredditsAdapter(getActivity());
         recList.setAdapter(subredditsAdapter);
         llm = new LinearLayoutManager(
                 getActivity(),
@@ -155,9 +83,11 @@ public class SubredditsFragment extends Fragment {
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                fetchNewSubreddits(url);
+                fetchSubreddits(true);
             }
         });
+
+        fetchSubreddits(true);
     }
 
     /**
@@ -169,30 +99,46 @@ public class SubredditsFragment extends Fragment {
         int visibleThreshold = 2;
 
         if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-            String paramUrl = url + "/" + afterParam;
-
-            fetchSubreddits = new FetchSubreddits(false);
-            fetchSubreddits.execute(paramUrl);
+            fetchSubreddits(false);
         }
     }
 
-    /**
-     * Get all posts from the starting for a particular link
-     *
-     * @param url
-     */
-    public void fetchNewSubreddits(String url) {
-        this.url = url;
+    public void fetchSubreddits(final Boolean clearAdapterFlag) {
+        loadingFlag = true;
+        progressBar.setVisibility(View.VISIBLE);
 
-        /**
-         * If trying to load some other posts,
-         * Cancel loading them
-         */
-        if (loadingFlag == true) {
-            fetchSubreddits.cancel(true);
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+
+        Call<SubredditResponse> call;
+        if (clearAdapterFlag == true) {
+            call = apiService.getSubreddits(searchQuery);
+        } else {
+            call = apiService.getSubredditsAfter(searchQuery, afterParam);
         }
 
-        fetchSubreddits = new FetchSubreddits(true);
-        fetchSubreddits.execute(url);
+        call.enqueue(new Callback<SubredditResponse>() {
+            @Override
+            public void onResponse(Call<SubredditResponse> call, Response<SubredditResponse> response) {
+                afterParam = response.body().getAfterParam();
+                if (clearAdapterFlag == true) {
+                    subredditsAdapter.clear();
+                }
+                subredditsAdapter.addAll(response.body().getSubreddits());
+
+                progressBar.setVisibility(View.GONE);
+                swipeContainer.setRefreshing(false);
+                loadingFlag = false;
+            }
+
+            @Override
+            public void onFailure(Call<SubredditResponse> call, Throwable t) {
+                Toast.makeText(getContext(), "Error fetching the list of subreddits", Toast.LENGTH_SHORT)
+                        .show();
+
+                progressBar.setVisibility(View.GONE);
+                swipeContainer.setRefreshing(false);
+                loadingFlag = false;
+            }
+        });
     }
 }

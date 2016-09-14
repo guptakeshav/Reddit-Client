@@ -19,4 +19,17 @@
         app:fastScrollPopupBgColor="?attr/colorPrimary"
         app:fastScrollThumbColor="?attr/colorPrimary">
     </com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView>
+
+    <ProgressBar
+        android:id="@+id/progressbar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:visibility="gone" />
 </android.support.v4.widget.SwipeRefreshLayout>

@@ -5,7 +5,6 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuItem;
 import android.widget.TextView;
 
@@ -26,8 +25,8 @@ public class CommentsActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
             title = extras.getString("Title");
-            url = "api/v1" + extras.getString("Url");
-            url = url.substring(0, url.length() - 1);
+            url = extras.getString("Url");
+            url = url.substring(1, url.length() - 2);
         }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -48,8 +47,8 @@ public class CommentsActivity extends AppCompatActivity {
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
 
         String[] sortByList = {"best", "top", "new", "controversial", "old", "qa&a"};
-        for (String sortBy: sortByList) {
-            adapter.addFragment(CommentsFragment.newInstance(url + "/" + sortBy), sortBy);
+        for (String sortBy : sortByList) {
+            adapter.addFragment(CommentsFragment.newInstance(url, sortBy), sortBy);
         }
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);

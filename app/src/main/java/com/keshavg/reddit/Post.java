@@ -1,5 +1,7 @@
 package com.keshavg.reddit;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -10,7 +12,7 @@ public class Post {
 
     private String author;
     private long created;
-    private int numComments;
+    @SerializedName("num_comments") private int numComments;
     private String permalink;
     private int score;
     private String subreddit;

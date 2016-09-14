@@ -1,108 +1,57 @@
 package com.keshavg.reddit;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by keshavgupta on 9/13/16.
  */
 public class CommentsFragment extends Fragment {
     private String url;
-
-    private List<Comment> comments;
-    private CommentsAdapter commentsAdapter;
+    private String sortByParam;
 
     private SwipeRefreshLayout swipeContainer;
     private RecyclerView recList;
+    private CommentsAdapter commentsAdapter;
     private LinearLayoutManager llm;
-
+    private Button button;
     private ProgressBar progressBar;
 
-    public static CommentsFragment newInstance(String url) {
+    private ProgressBar progressBarActivity;
+
+    public static CommentsFragment newInstance(String url, String sortBy) {
         CommentsFragment fragment = new CommentsFragment();
         Bundle args = new Bundle();
         args.putString("url", url);
+        args.putString("sortBy", sortBy);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    private class FetchComments extends AsyncTask<String, Void, List<Comment>> {
-        private Boolean ioExceptionFlag, jsonExceptionFlag;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            ioExceptionFlag = false;
-            jsonExceptionFlag = false;
-
-            progressBar.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected List<Comment> doInBackground(String... params) {
-            List<Comment> comments = null;
-
-            try {
-                comments = new NetworkTasks().fetchCommentsListFromUrl(params[0]);
-            } catch (IOException ioE) {
-                ioE.printStackTrace();
-                ioExceptionFlag = true;
-            } catch (JSONException jsonE) {
-                jsonE.printStackTrace();
-                jsonExceptionFlag = true;
-            }
-
-            return comments;
-        }
-
-        @Override
-        protected void onPostExecute(List<Comment> comments) {
-            super.onPostExecute(comments);
-
-            if (ioExceptionFlag == true) {
-                Toast.makeText(getActivity(), getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                        .show();
-            } else if(jsonExceptionFlag == true) {
-                Toast.makeText(getActivity(), String.format(getString(R.string.json_exception), "comments"), Toast.LENGTH_SHORT)
-                        .show();
-            } else {
-                commentsAdapter.addAll(comments);
-            }
-
-            progressBar.setVisibility(View.GONE);
-            swipeContainer.setRefreshing(false);
-        }
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        this.url = getArguments().getString("url");
-
-        comments = new ArrayList<>();
-        commentsAdapter = new CommentsAdapter(getContext(), url, comments);
-
-        progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_comments);
-
-        fetchNewComments(url);
+        url = getArguments().getString("url");
+        sortByParam = getArguments().getString("sortBy");
+        progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_comments);
     }
 
     @Nullable
@@ -113,8 +62,16 @@ public class CommentsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        swipeContainer = (SwipeRefreshLayout) view.findViewById(R.id.swipe_container);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                commentsAdapter.clear();
+                fetchComments();
+            }
+        });
+
         recList = (RecyclerView) view.findViewById(R.id.recycler_list);
-        recList.setAdapter(commentsAdapter);
         llm = new LinearLayoutManager(
                 getActivity(),
                 LinearLayoutManager.VERTICAL,
@@ -122,22 +79,80 @@ public class CommentsFragment extends Fragment {
         );
         recList.setLayoutManager(llm);
 
-        swipeContainer = (SwipeRefreshLayout) view.findViewById(R.id.swipe_container);
-        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        button = (Button) view.findViewById(R.id.button);
+        progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
+
+        fetchComments();
+    }
+
+    public void fetchComments() {
+        progressBarActivity.setVisibility(View.VISIBLE);
+
+        final ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<CommentResponse> call = apiService.getComments(url, sortByParam);
+
+        call.enqueue(new Callback<CommentResponse>() {
             @Override
-            public void onRefresh() {
-                fetchNewComments(url);
+            public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+                commentsAdapter = new CommentsAdapter(getContext(), url, sortByParam, response.body().getComments());
+                recList.setAdapter(commentsAdapter);
+
+                final List<String> moreIds = response.body().getMoreIds();
+                if (moreIds.size() > 0) {
+                    button.setText("Load More");
+                    button.setVisibility(View.VISIBLE);
+                    button.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            onClickLoadMore(moreIds);
+                        }
+                    });
+                }
+
+                progressBarActivity.setVisibility(View.GONE);
+                swipeContainer.setRefreshing(false);
+            }
+
+            @Override
+            public void onFailure(Call<CommentResponse> call, Throwable t) {
+                Toast.makeText(getContext(), "Error fetching the list of comments", Toast.LENGTH_SHORT)
+                        .show();
+
+                progressBarActivity.setVisibility(View.GONE);
+                swipeContainer.setRefreshing(false);
             }
         });
     }
 
-    /**
-     * Function to fetch comments from the starting
-     * @param url
-     */
-    public void fetchNewComments(String url) {
-        this.url = url;
-        commentsAdapter.clear();
-        new FetchComments().execute(url);
+    private void onClickLoadMore(final List<String> moreIds) {
+        button.setVisibility(View.GONE);
+        progressBar.setVisibility(View.VISIBLE);
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+
+        Call<CommentResponse> callMore =
+                apiService.getMoreComments(url, sortByParam, moreIds.get(0));
+
+        callMore.enqueue(new Callback<CommentResponse>() {
+            @Override
+            public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+                commentsAdapter.addAll(response.body().getComments());
+
+                moreIds.remove(0);
+                if (moreIds.size() > 0) {
+                    button.setVisibility(View.VISIBLE);
+                }
+
+                progressBar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onFailure(Call<CommentResponse> call, Throwable t) {
+                Toast.makeText(getContext(), "Error fetching the list of comments", Toast.LENGTH_SHORT)
+                        .show();
+
+                progressBar.setVisibility(View.GONE);
+            }
+        });
     }
 }

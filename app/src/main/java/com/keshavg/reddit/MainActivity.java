@@ -2,7 +2,6 @@ package com.keshavg.reddit;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -13,7 +12,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -23,10 +21,11 @@ import android.widget.Toast;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
-import org.json.JSONException;
-
-import java.io.IOException;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -49,7 +48,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
         setTitle("Frontpage");
 
-        currentPagerUrl = "api/v1/Frontpage";
+        currentPagerUrl = "Frontpage";
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         setupViewPager(currentPagerUrl);
@@ -95,61 +94,11 @@ public class MainActivity extends AppCompatActivity
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
-        for (String sortBy: sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(url + "/" + sortBy), sortBy);
+        for (String sortBy : sortByList) {
+            adapter.addFragment(PostsFragment.newInstance(url, sortBy), sortBy);
         }
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
-    }
-
-    private class FetchSubredditNames extends AsyncTask<Void, Void, List<String>> {
-        private SubMenu subMenu;
-        private Boolean ioExceptionFlag, jsonExceptionFlag;
-
-        FetchSubredditNames(SubMenu subMenu) {
-            this.subMenu = subMenu;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            ioExceptionFlag = false;
-            jsonExceptionFlag = false;
-        }
-
-        @Override
-        protected List<String> doInBackground(Void... params) {
-            List<String> subredditNames = null;
-            try {
-                subredditNames = new NetworkTasks().fetchSubredditsNameList("api/v1/subreddits");
-            } catch (IOException ioE) {
-                ioE.printStackTrace();
-                ioExceptionFlag = true;
-            } catch (JSONException jsonE) {
-                jsonE.printStackTrace();
-                jsonExceptionFlag = true;
-            }
-
-            return subredditNames;
-        }
-
-        @Override
-        protected void onPostExecute(List<String> subredditNames) {
-            super.onPostExecute(subredditNames);
-
-            if (ioExceptionFlag == true) {
-                Toast.makeText(MainActivity.this, getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                        .show();
-            } else if (jsonExceptionFlag == true) {
-                Toast.makeText(MainActivity.this, String.format(getString(R.string.json_exception), "subreddits list"), Toast.LENGTH_SHORT)
-                        .show();
-            } else {
-                for (String subredditName : subredditNames) {
-                    subMenu.add(subredditName);
-                }
-            }
-        }
     }
 
     private void setupNavBar(NavigationView navigationView) {
@@ -158,8 +107,25 @@ public class MainActivity extends AppCompatActivity
         menu.getItem(0).setChecked(true);
         prevMenuItem = menu.getItem(0);
 
-        SubMenu subMenu = menu.addSubMenu("Subreddits");
-        new FetchSubredditNames(subMenu).execute();
+        final SubMenu subredditsMenu = menu.addSubMenu("Subreddits");
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<List<String>> call = apiService.getSubredditNames();
+        call.enqueue(new Callback<List<String>>() {
+            @Override
+            public void onResponse(Call<List<String>> call, Response<List<String>> response) {
+                List<String> subredditNames = response.body();
+                for (String subredditName : subredditNames) {
+                    subredditsMenu.add("r/" + subredditName);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<String>> call, Throwable t) {
+                Toast.makeText(getApplicationContext(), "Error fetching the list of subreddits", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
     }
 
     @Override
@@ -218,7 +184,7 @@ public class MainActivity extends AppCompatActivity
 
     public void changeSubreddit(String subreddit) {
         setTitle("Reddit - " + subreddit);
-        currentPagerUrl = "api/v1/" + subreddit;
+        currentPagerUrl = subreddit;
         setupViewPager(currentPagerUrl);
     }
 }

@@ -85,7 +85,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
         };
 
         String selection = "redditLink = ?";
-        String[] selectionArgs = { redditLink };
+        String[] selectionArgs = {redditLink};
 
         Cursor cursor = db.query(
                 "Posts",
@@ -124,7 +124,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
 
         String selection = "redditLink = ?";
-        String[] selectionArgs = { redditLink };
+        String[] selectionArgs = {redditLink};
         db.delete("Posts", selection, selectionArgs);
         db.close();
     }

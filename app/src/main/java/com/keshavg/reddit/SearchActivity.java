@@ -6,7 +6,6 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -47,7 +46,7 @@ public class SearchActivity extends AppCompatActivity {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
 
                     if (v.getText().toString().trim().matches("")) {
-                        Toast.makeText(SearchActivity.this,
+                        Toast.makeText(getApplicationContext(),
                                 getResources().getText(R.string.empty_search),
                                 Toast.LENGTH_SHORT)
                                 .show();
@@ -89,8 +88,8 @@ public class SearchActivity extends AppCompatActivity {
 
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
         for (String sortBy : sortByList) {
-            String url = "api/v1/search/posts/" + searchQuery + "/" + sortBy;
-            adapter.addFragment(PostsFragment.newInstance(url), sortBy);
+            String url = "search/posts/" + searchQuery + "/" + sortBy;
+            adapter.addFragment(PostsFragment.newInstance(url, sortBy), sortBy);
         }
 
         viewPager.setAdapter(adapter);
@@ -101,8 +100,7 @@ public class SearchActivity extends AppCompatActivity {
         tabLayout.setVisibility(View.VISIBLE);
 
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
-        String url = "api/v1/search/subreddits/" + searchQuery;
-        adapter.addFragment(SubredditsFragment.newInstance(url), "Subreddits");
+        adapter.addFragment(SubredditsFragment.newInstance(searchQuery), "Subreddits");
 
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
@@ -114,8 +112,8 @@ public class SearchActivity extends AppCompatActivity {
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
-        for (String sortBy: sortByList) {
-            adapter.addFragment(PostsFragment.newInstance("api/v1/" + subreddit + "/" + sortBy), sortBy);
+        for (String sortBy : sortByList) {
+            adapter.addFragment(PostsFragment.newInstance(subreddit, sortBy), sortBy);
         }
 
         viewPager.setAdapter(adapter);

@@ -1,6 +1,5 @@
 package com.keshavg.reddit;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -15,21 +14,18 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by keshav.g on 22/08/16.
  */
 public class PostsFragment extends Fragment {
-    private NetworkTasks networkTasks;
     private Boolean loadingFlag;
-    private FetchPosts fetchPosts;
 
     private SwipeRefreshLayout swipeContainer;
     private ProgressBar progressBar;
@@ -40,6 +36,7 @@ public class PostsFragment extends Fragment {
     private PostsAdapter postsAdapter;
 
     private String url;
+    private String sortByParam;
     private String afterParam;
 
     private RedditPostsDbHelper dbHelper;
@@ -47,102 +44,25 @@ public class PostsFragment extends Fragment {
     public PostsFragment() {
     }
 
-    public static PostsFragment newInstance(String url) {
+    public static PostsFragment newInstance(String url, String sortBy) {
         PostsFragment fragment = new PostsFragment();
         Bundle args = new Bundle();
         args.putString("url", url);
+        args.putString("sortBy", sortBy);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    private class FetchPosts extends AsyncTask<String, Void, List<Post>> {
-        private String url;
-        private Boolean ioExceptionFlag, jsonExceptionFlag;
-        private Boolean clearAdapterFlag;
-
-        public FetchPosts(Boolean clearAdapterFlag) {
-            this.clearAdapterFlag = clearAdapterFlag;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            ioExceptionFlag = false;
-            jsonExceptionFlag = false;
-
-            loadingFlag = true;
-            progressBar.setVisibility(View.VISIBLE);
-            posts = new ArrayList<>();
-        }
-
-        @Override
-        protected List<Post> doInBackground(String... params) {
-            url = params[0];
-
-            List<Post> posts = null;
-            try {
-                JSONObject jsonObject = networkTasks.fetchJSONObjectFromUrl(url);
-                afterParam = jsonObject.getString("after");
-                JSONArray redditPosts = jsonObject.getJSONArray("data");
-                posts = networkTasks.fetchPostsList(redditPosts);
-            } catch (IOException ioE) {
-                ioE.printStackTrace();
-                ioExceptionFlag = true;
-            } catch (JSONException jsonE) {
-                jsonE.printStackTrace();
-                jsonExceptionFlag = true;
-            }
-
-            return posts;
-        }
-
-        @Override
-        protected void onPostExecute(List<Post> posts) {
-            super.onPostExecute(posts);
-
-            if (ioExceptionFlag == true || jsonExceptionFlag == true) {
-                if (clearAdapterFlag == true) {
-                    postsAdapter.clear();
-                    postsAdapter.addAll(dbHelper.getPosts(url));
-                }
-
-                if (ioExceptionFlag == true) {
-                    Toast.makeText(getContext(), getText(R.string.network_io_exception), Toast.LENGTH_SHORT)
-                            .show();
-                } else if (jsonExceptionFlag == true) {
-                    Toast.makeText(getContext(), String.format(getString(R.string.json_exception), "posts"), Toast.LENGTH_SHORT)
-                            .show();
-                }
-            } else {
-                if (clearAdapterFlag == true) {
-                    postsAdapter.clear();
-                    dbHelper.removePosts(url);
-                }
-
-                postsAdapter.addAll(posts);
-                dbHelper.insertPosts(posts, url);
-            }
-
-            progressBar.setVisibility(View.GONE);
-            swipeContainer.setRefreshing(false);
-            loadingFlag = false;
-        }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        networkTasks = new NetworkTasks();
+        url = getArguments().getString("url");
+        sortByParam = getArguments().getString("sortBy");
         loadingFlag = false;
-        posts = new ArrayList<>();
-        postsAdapter = new PostsAdapter(getActivity(), posts, Glide.with(getContext()));
         progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
 
         dbHelper = new RedditPostsDbHelper(getContext());
-
-        fetchNewPosts(getArguments().getString("url"));
     }
 
     @Nullable
@@ -154,6 +74,7 @@ public class PostsFragment extends Fragment {
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         recList = (RecyclerView) rootView.findViewById(R.id.recycler_list);
+        postsAdapter = new PostsAdapter(getActivity(), Glide.with(getContext()));
         recList.setAdapter(postsAdapter);
         llm = new LinearLayoutManager(
                 getActivity(),
@@ -173,9 +94,11 @@ public class PostsFragment extends Fragment {
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                fetchNewPosts(url);
+                fetchPosts(true);
             }
         });
+
+        fetchPosts(true);
     }
 
     /**
@@ -187,30 +110,57 @@ public class PostsFragment extends Fragment {
         int visibleThreshold = 2;
 
         if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-            String paramUrl = url + "/" + afterParam;
-
-            fetchPosts = new FetchPosts(false);
-            fetchPosts.execute(paramUrl);
+            fetchPosts(false);
         }
     }
 
-    /**
-     * Get all posts from the starting for a particular link
-     *
-     * @param url
-     */
-    public void fetchNewPosts(String url) {
-        this.url = url;
+    public void fetchPosts(final Boolean clearAdapterFlag) {
+        loadingFlag = true;
+        progressBar.setVisibility(View.VISIBLE);
+        posts = new ArrayList<>();
 
-        /**
-         * If trying to load some other posts,
-         * Cancel loading them
-         */
-        if (loadingFlag == true) {
-            fetchPosts.cancel(true);
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+
+        Call<PostResponse> call;
+        if (clearAdapterFlag == true) {
+            call = apiService.getPosts(url, sortByParam);
+        } else {
+            call = apiService.getPostsAfter(url, sortByParam, afterParam);
         }
 
-        fetchPosts = new FetchPosts(true);
-        fetchPosts.execute(url);
+        call.enqueue(new Callback<PostResponse>() {
+            @Override
+            public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
+                afterParam = response.body().getAfterParam();
+                posts = response.body().getPosts();
+
+                if (clearAdapterFlag == true) {
+                    postsAdapter.clear();
+                    dbHelper.removePosts(url + "/" + sortByParam);
+                }
+
+                postsAdapter.addAll(posts);
+                dbHelper.insertPosts(posts, url + "/" + sortByParam);
+
+                progressBar.setVisibility(View.GONE);
+                swipeContainer.setRefreshing(false);
+                loadingFlag = false;
+            }
+
+            @Override
+            public void onFailure(Call<PostResponse> call, Throwable t) {
+                Toast.makeText(getContext(), "Error fetching the list of posts", Toast.LENGTH_SHORT)
+                        .show();
+
+                if (clearAdapterFlag == true) {
+                    postsAdapter.clear();
+                    postsAdapter.addAll(dbHelper.getPosts(url + "/" + sortByParam));
+                }
+
+                progressBar.setVisibility(View.GONE);
+                swipeContainer.setRefreshing(false);
+                loadingFlag = false;
+            }
+        });
     }
 }
