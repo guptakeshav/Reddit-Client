@@ -1,5 +1,7 @@
 package com.keshavg.reddit;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,14 +19,16 @@ import okhttp3.Response;
  * Created by keshavgupta on 9/1/16.
  */
 public class NetworkTasks {
+    private String BASE_URL = "http://b246cc77.ngrok.io/";
 
-    OkHttpClient client = new OkHttpClient.Builder()
+    private OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .build();
 
     private String getResponse(String url) throws IOException {
+        url = BASE_URL + url;
         Request request = new Request.Builder()
                 .url(url)
                 .build();

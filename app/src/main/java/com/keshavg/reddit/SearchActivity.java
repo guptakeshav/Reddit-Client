@@ -16,8 +16,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import static com.keshavg.reddit.Constants.BASE_URL;
-
 public class SearchActivity extends AppCompatActivity {
     private String type;
 
@@ -91,7 +89,7 @@ public class SearchActivity extends AppCompatActivity {
 
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
         for (String sortBy : sortByList) {
-            String url = BASE_URL + "/api/v1/search/posts/" + searchQuery + "/" + sortBy;
+            String url = "api/v1/search/posts/" + searchQuery + "/" + sortBy;
             adapter.addFragment(PostsFragment.newInstance(url), sortBy);
         }
 
@@ -103,7 +101,7 @@ public class SearchActivity extends AppCompatActivity {
         tabLayout.setVisibility(View.VISIBLE);
 
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
-        String url = BASE_URL + "/api/v1/search/subreddits/" + searchQuery;
+        String url = "api/v1/search/subreddits/" + searchQuery;
         adapter.addFragment(SubredditsFragment.newInstance(url), "Subreddits");
 
         viewPager.setAdapter(adapter);
@@ -117,7 +115,7 @@ public class SearchActivity extends AppCompatActivity {
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
         for (String sortBy: sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(BASE_URL + "/api/v1/" + subreddit + "/" + sortBy), sortBy);
+            adapter.addFragment(PostsFragment.newInstance("api/v1/" + subreddit + "/" + sortBy), sortBy);
         }
 
         viewPager.setAdapter(adapter);

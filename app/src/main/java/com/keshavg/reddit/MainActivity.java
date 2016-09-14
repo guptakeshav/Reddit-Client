@@ -28,16 +28,17 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.util.List;
 
-import static com.keshavg.reddit.Constants.BASE_URL;
-
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     private String currentPagerUrl;
+
+    private FloatingActionMenu fam;
 
     private TabLayout tabLayout;
     private ViewPager viewPager;
 
     private Menu menu;
+    private MenuItem prevMenuItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,17 +54,14 @@ public class MainActivity extends AppCompatActivity
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         setupViewPager(currentPagerUrl);
 
-        final FloatingActionMenu fam = (FloatingActionMenu) findViewById(R.id.fab_menu);
+        fam = (FloatingActionMenu) findViewById(R.id.fab_menu);
         fam.setClosedOnTouchOutside(true);
 
         FloatingActionButton fab_posts = (FloatingActionButton) findViewById(R.id.fab_posts);
         fab_posts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, SearchActivity.class);
-                i.putExtra("Type", "posts");
-                MainActivity.this.startActivity(i);
-                fam.close(true);
+                openSearchActivity("posts");
             }
         });
 
@@ -71,10 +69,7 @@ public class MainActivity extends AppCompatActivity
         fab_subreddits.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, SearchActivity.class);
-                i.putExtra("Type", "subreddits");
-                MainActivity.this.startActivity(i);
-                fam.close(true);
+                openSearchActivity("subreddits");
             }
         });
 
@@ -89,17 +84,23 @@ public class MainActivity extends AppCompatActivity
         setupNavBar(navigationView);
     }
 
+    private void openSearchActivity(String type) {
+        Intent i = new Intent(MainActivity.this, SearchActivity.class);
+        i.putExtra("Type", type);
+        MainActivity.this.startActivity(i);
+        fam.close(true);
+    }
+
     private void setupViewPager(String url) {
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
         for (String sortBy: sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(BASE_URL + "/" + url + "/" + sortBy), sortBy);
+            adapter.addFragment(PostsFragment.newInstance(url + "/" + sortBy), sortBy);
         }
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
     }
-
 
     private class FetchSubredditNames extends AsyncTask<Void, Void, List<String>> {
         private SubMenu subMenu;
@@ -121,8 +122,7 @@ public class MainActivity extends AppCompatActivity
         protected List<String> doInBackground(Void... params) {
             List<String> subredditNames = null;
             try {
-                subredditNames = new NetworkTasks().fetchSubredditsNameList(
-                        BASE_URL + "/api/v1/subreddits");
+                subredditNames = new NetworkTasks().fetchSubredditsNameList("api/v1/subreddits");
             } catch (IOException ioE) {
                 ioE.printStackTrace();
                 ioExceptionFlag = true;
@@ -156,6 +156,7 @@ public class MainActivity extends AppCompatActivity
         menu = navigationView.getMenu();
         menu.add("Frontpage");
         menu.getItem(0).setChecked(true);
+        prevMenuItem = menu.getItem(0);
 
         SubMenu subMenu = menu.addSubMenu("Subreddits");
         new FetchSubredditNames(subMenu).execute();
@@ -204,7 +205,9 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+        prevMenuItem.setChecked(false);
         item.setChecked(true);
+        prevMenuItem = item;
 
         changeSubreddit(item.getTitle().toString());
 

@@ -9,8 +9,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import static com.keshavg.reddit.Constants.BASE_URL;
-
 public class CommentsActivity extends AppCompatActivity {
     private String url;
     private String title;
@@ -28,7 +26,7 @@ public class CommentsActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
             title = extras.getString("Title");
-            url = BASE_URL + "/api/v1" + extras.getString("Url");
+            url = "api/v1" + extras.getString("Url");
             url = url.substring(0, url.length() - 1);
         }
 
