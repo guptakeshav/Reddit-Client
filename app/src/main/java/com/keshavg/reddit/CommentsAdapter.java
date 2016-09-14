@@ -2,6 +2,7 @@ package com.keshavg.reddit;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,7 +16,9 @@ import android.widget.Toast;
 
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 
 import retrofit2.Call;
@@ -25,17 +28,18 @@ import retrofit2.Response;
 /**
  * Created by keshav.g on 29/08/16.
  */
-public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHolder> implements FastScrollRecyclerView.SectionedAdapter {
+public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHolder>
+        implements FastScrollRecyclerView.SectionedAdapter {
     private Context context;
     private String url;
     private String sortByParam;
     private List<Comment> objects;
 
-    public CommentsAdapter(Context context, String url, String sortByParam, List<Comment> objects) {
+    public CommentsAdapter(Context context, String url, String sortByParam) {
         this.context = context;
         this.url = url;
         this.sortByParam = sortByParam;
-        this.objects = objects;
+        this.objects = new ArrayList<>();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -43,18 +47,30 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         TextView comment;
         TextView created;
         TextView upvotes;
+
         RecyclerView subcommentsView;
+        CommentsAdapter subcommentsAdapter;
+        LinearLayoutManager llm;
+
         ProgressBar progressBar;
         Button button;
 
-        public ViewHolder(View v) {
+        public ViewHolder(View v, Context context, String url, String sortByParam) {
             super(v);
 
             this.author = (TextView) v.findViewById(R.id.comment_author);
             this.comment = (TextView) v.findViewById(R.id.comment_body);
             this.created = (TextView) v.findViewById(R.id.comment_created);
             this.upvotes = (TextView) v.findViewById(R.id.comment_upvotes);
+
             this.subcommentsView = (RecyclerView) v.findViewById(R.id.subcomments_list);
+            this.subcommentsAdapter = new CommentsAdapter(context, url, sortByParam);
+            this.subcommentsView.setAdapter(this.subcommentsAdapter);
+            this.llm = new LinearLayoutManager(context,
+                    LinearLayoutManager.VERTICAL,
+                    false);
+            this.subcommentsView.setLayoutManager(llm);
+
             this.progressBar = (ProgressBar) v.findViewById(R.id.progressbar_loadmore);
             this.button = (Button) v.findViewById(R.id.load_more);
         }
@@ -73,63 +89,72 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
                 .inflate(R.layout.comment_row, parent, false);
 
         makeRandomColorLine(view);
-        return new ViewHolder(view);
+        return new ViewHolder(view, context, url, sortByParam);
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, int position) {
-        Comment comment = objects.get(position);
+        final Comment comment = objects.get(position);
 
         viewHolder.author.setText(comment.getAuthor());
         viewHolder.comment.setText(comment.getBody());
         viewHolder.created.setText(comment.getCreated());
         viewHolder.upvotes.setText(comment.getUps());
 
-        final CommentsAdapter subcommentsAdapter = new CommentsAdapter(context, url, sortByParam, comment.getReplies());
-        viewHolder.subcommentsView.setAdapter(subcommentsAdapter);
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                viewHolder.subcommentsAdapter.addAll(comment.getReplies());
+            }
+        });
 
-        LinearLayoutManager llm = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-        viewHolder.subcommentsView.setLayoutManager(llm);
-
-        final List<String> moreIds = comment.getMoreRepliesId();
-        if (moreIds.size() > 0) {
+        final Queue<String> moreIds = comment.getMoreRepliesId();
+        if (!moreIds.isEmpty()) {
             viewHolder.button.setVisibility(View.VISIBLE);
             viewHolder.button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    onClickLoadMore(viewHolder, moreIds, subcommentsAdapter);
+                    onClickLoadMore(viewHolder, moreIds);
                 }
             });
         }
     }
 
-    private void onClickLoadMore(final ViewHolder viewHolder, final List<String> moreIds, final CommentsAdapter commentsAdapter) {
+    /**
+     * On click listener for the load more button
+     * Fetches more comments from the REST api and adds to the adapter
+     * @param viewHolder
+     * @param moreIds
+     */
+    private void onClickLoadMore(final ViewHolder viewHolder, final Queue<String> moreIds) {
         viewHolder.button.setVisibility(View.GONE);
         viewHolder.progressBar.setVisibility(View.VISIBLE);
 
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         Call<CommentResponse> callMore =
-                apiService.getMoreComments(url, sortByParam, moreIds.get(0));
+                apiService.getMoreComments(url, sortByParam, moreIds.peek());
 
         callMore.enqueue(new Callback<CommentResponse>() {
             @Override
             public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
-                commentsAdapter.addAll(response.body().getComments());
-
-                moreIds.remove(0);
-                if (moreIds.size() > 0) {
-                    viewHolder.button.setVisibility(View.VISIBLE);
-                }
+                viewHolder.subcommentsAdapter.addAll(response.body().getComments());
 
                 viewHolder.progressBar.setVisibility(View.GONE);
+                moreIds.remove();
+                if (!moreIds.isEmpty()) {
+                    viewHolder.button.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
             public void onFailure(Call<CommentResponse> call, Throwable t) {
-                Toast.makeText(context, "Error fetching the list of comments", Toast.LENGTH_SHORT)
-                        .show();
+                Toast.makeText(context,
+                        "Error fetching the list of comments",
+                        Toast.LENGTH_SHORT
+                ).show();
 
                 viewHolder.progressBar.setVisibility(View.GONE);
+                viewHolder.button.setVisibility(View.VISIBLE);
             }
         });
     }
@@ -141,7 +166,6 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
     /**
      * Generate a random background color for the comment start line
-     *
      * @param convertView
      */
     private void makeRandomColorLine(View convertView) {
@@ -150,11 +174,20 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         convertView.findViewById(R.id.comment_start_line).setBackgroundColor(color);
     }
 
+    /**
+     * Function to clear the contents of the adapter
+     * And update the view
+     */
     public void clear() {
         objects.clear();
         notifyDataSetChanged();
     }
 
+    /**
+     * Function to objects to the adapter
+     * And update the view
+     * @param objects
+     */
     public void addAll(List<Comment> objects) {
         this.objects.addAll(objects);
         notifyDataSetChanged();

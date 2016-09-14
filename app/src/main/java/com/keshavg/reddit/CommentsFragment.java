@@ -6,7 +6,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +13,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import java.util.List;
+import java.util.Queue;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -72,6 +71,8 @@ public class CommentsFragment extends Fragment {
         });
 
         recList = (RecyclerView) view.findViewById(R.id.recycler_list);
+        commentsAdapter = new CommentsAdapter(getContext(), url, sortByParam);
+        recList.setAdapter(commentsAdapter);
         llm = new LinearLayoutManager(
                 getActivity(),
                 LinearLayoutManager.VERTICAL,
@@ -80,11 +81,15 @@ public class CommentsFragment extends Fragment {
         recList.setLayoutManager(llm);
 
         button = (Button) view.findViewById(R.id.button);
+        button.setText("Load More");
         progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
 
         fetchComments();
     }
 
+    /**
+     * Function to fetch the list of comments from the REST api
+     */
     public void fetchComments() {
         progressBarActivity.setVisibility(View.VISIBLE);
 
@@ -94,12 +99,10 @@ public class CommentsFragment extends Fragment {
         call.enqueue(new Callback<CommentResponse>() {
             @Override
             public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
-                commentsAdapter = new CommentsAdapter(getContext(), url, sortByParam, response.body().getComments());
-                recList.setAdapter(commentsAdapter);
+                commentsAdapter.addAll(response.body().getComments());
 
-                final List<String> moreIds = response.body().getMoreIds();
-                if (moreIds.size() > 0) {
-                    button.setText("Load More");
+                final Queue<String> moreIds = response.body().getMoreIds();
+                if (!moreIds.isEmpty()) {
                     button.setVisibility(View.VISIBLE);
                     button.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -124,26 +127,30 @@ public class CommentsFragment extends Fragment {
         });
     }
 
-    private void onClickLoadMore(final List<String> moreIds) {
+    /**
+     * On click listener for the load more button
+     * Fetches more comments from the REST api and adds to the adapter
+     * @param moreIds
+     */
+    private void onClickLoadMore(final Queue<String> moreIds) {
         button.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
 
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
 
         Call<CommentResponse> callMore =
-                apiService.getMoreComments(url, sortByParam, moreIds.get(0));
+                apiService.getMoreComments(url, sortByParam, moreIds.peek());
 
         callMore.enqueue(new Callback<CommentResponse>() {
             @Override
             public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
                 commentsAdapter.addAll(response.body().getComments());
 
-                moreIds.remove(0);
-                if (moreIds.size() > 0) {
+                progressBar.setVisibility(View.GONE);
+                moreIds.remove();
+                if (!moreIds.isEmpty()) {
                     button.setVisibility(View.VISIBLE);
                 }
-
-                progressBar.setVisibility(View.GONE);
             }
 
             @Override
@@ -152,6 +159,7 @@ public class CommentsFragment extends Fragment {
                         .show();
 
                 progressBar.setVisibility(View.GONE);
+                button.setVisibility(View.VISIBLE);
             }
         });
     }

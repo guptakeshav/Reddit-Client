@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * Created by keshav.g on 29/08/16.
@@ -52,7 +53,7 @@ public class Comment {
         return replyResponse.getComments();
     }
 
-    public List<String> getMoreRepliesId() {
+    public Queue<String> getMoreRepliesId() {
         return replyResponse.getMoreIds();
     }
 

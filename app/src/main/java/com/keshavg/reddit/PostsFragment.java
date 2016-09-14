@@ -14,9 +14,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -30,10 +27,8 @@ public class PostsFragment extends Fragment {
     private SwipeRefreshLayout swipeContainer;
     private ProgressBar progressBar;
     private RecyclerView recList;
-    private LinearLayoutManager llm;
-
-    private List<Post> posts;
     private PostsAdapter postsAdapter;
+    private LinearLayoutManager llm;
 
     private String url;
     private String sortByParam;
@@ -114,10 +109,13 @@ public class PostsFragment extends Fragment {
         }
     }
 
+    /**
+     * Function to fetch the list of posts from the REST api
+     * @param clearAdapterFlag
+     */
     public void fetchPosts(final Boolean clearAdapterFlag) {
         loadingFlag = true;
         progressBar.setVisibility(View.VISIBLE);
-        posts = new ArrayList<>();
 
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
 
@@ -131,19 +129,17 @@ public class PostsFragment extends Fragment {
         call.enqueue(new Callback<PostResponse>() {
             @Override
             public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
-                afterParam = response.body().getAfterParam();
-                posts = response.body().getPosts();
-
                 if (clearAdapterFlag == true) {
                     postsAdapter.clear();
                     dbHelper.removePosts(url + "/" + sortByParam);
                 }
 
-                postsAdapter.addAll(posts);
-                dbHelper.insertPosts(posts, url + "/" + sortByParam);
+                afterParam = response.body().getAfterParam();
+                postsAdapter.addAll(response.body().getPosts());
+                dbHelper.insertPosts(response.body().getPosts(), url + "/" + sortByParam);
 
-                progressBar.setVisibility(View.GONE);
                 swipeContainer.setRefreshing(false);
+                progressBar.setVisibility(View.GONE);
                 loadingFlag = false;
             }
 
@@ -157,8 +153,8 @@ public class PostsFragment extends Fragment {
                     postsAdapter.addAll(dbHelper.getPosts(url + "/" + sortByParam));
                 }
 
-                progressBar.setVisibility(View.GONE);
                 swipeContainer.setRefreshing(false);
+                progressBar.setVisibility(View.GONE);
                 loadingFlag = false;
             }
         });

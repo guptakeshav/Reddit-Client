@@ -27,7 +27,8 @@
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
-            android:name=".WebViewActivity">
+            android:name=".WebViewActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize">
         </activity>
         <activity
             android:name=".SearchActivity"
