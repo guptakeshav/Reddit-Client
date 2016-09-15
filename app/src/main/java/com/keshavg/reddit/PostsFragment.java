@@ -25,10 +25,11 @@ public class PostsFragment extends Fragment {
     private Boolean loadingFlag;
 
     private SwipeRefreshLayout swipeContainer;
-    private ProgressBar progressBar;
+    private ProgressBar progressBarActivity;
     private RecyclerView recList;
     private PostsAdapter postsAdapter;
     private LinearLayoutManager llm;
+    private ProgressBar progressBarLoadMore;
 
     private String url;
     private String sortByParam;
@@ -67,7 +68,6 @@ public class PostsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
-        progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
         recList = (RecyclerView) rootView.findViewById(R.id.recycler_list);
         postsAdapter = new PostsAdapter(getActivity(), Glide.with(getContext()));
         recList.setAdapter(postsAdapter);
@@ -89,11 +89,14 @@ public class PostsFragment extends Fragment {
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                fetchPosts(true);
+                fetchPosts(true, progressBarLoadMore);
             }
         });
 
-        fetchPosts(true);
+        progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
+        progressBarLoadMore = (ProgressBar) getActivity().findViewById(R.id.progressbar_loadmore);
+
+        fetchPosts(true, progressBarActivity);
     }
 
     /**
@@ -105,7 +108,7 @@ public class PostsFragment extends Fragment {
         int visibleThreshold = 2;
 
         if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-            fetchPosts(false);
+            fetchPosts(false, progressBarLoadMore);
         }
     }
 
@@ -113,7 +116,7 @@ public class PostsFragment extends Fragment {
      * Function to fetch the list of posts from the REST api
      * @param clearAdapterFlag
      */
-    public void fetchPosts(final Boolean clearAdapterFlag) {
+    public void fetchPosts(final Boolean clearAdapterFlag, final ProgressBar progressBar) {
         loadingFlag = true;
         progressBar.setVisibility(View.VISIBLE);
 

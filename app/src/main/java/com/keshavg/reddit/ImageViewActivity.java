@@ -17,19 +17,21 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+import com.klinker.android.sliding.SlidingActivity;
 
-public class ImageViewActivity extends AppCompatActivity {
+public class ImageViewActivity extends SlidingActivity {
     private String image;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_image_view);
+    public void init(Bundle savedInstanceState) {
+        setContent(R.layout.activity_image_view);
 
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
             image = extras.getString("Image");
         }
+
+        enableFullscreen();
 
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

@@ -66,7 +66,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickSubreddit("r/" + subreddit.getName());
+                onClickSubreddit(subreddit.getName());
             }
         });
     }

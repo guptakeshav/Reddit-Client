@@ -40,7 +40,7 @@
             android:name=".ImageViewActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
-            android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+            android:theme="@style/Theme.Sliding.DayNight">
         </activity>
     </application>
 
