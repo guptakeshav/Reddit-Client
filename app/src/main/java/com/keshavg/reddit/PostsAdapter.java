@@ -42,10 +42,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ProgressBar progressBar;
         ImageView image;
+        TextView subreddit;
         RelativeLayout postContent;
         TextView title;
-        TextView details;
+        TextView author;
         TextView score;
+        TextView created;
         Button commentsCount;
 
         public ViewHolder(View itemView) {
@@ -53,10 +55,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
             progressBar = (ProgressBar) itemView.findViewById(R.id.progressbar_image);
             image = (ImageView) itemView.findViewById(R.id.post_image);
+            subreddit = (TextView) itemView.findViewById(R.id.post_subreddit);
             postContent = (RelativeLayout) itemView.findViewById(R.id.post_content);
             title = (TextView) postContent.findViewById(R.id.post_title);
-            details = (TextView) postContent.findViewById(R.id.post_details);
+            author = (TextView) postContent.findViewById(R.id.post_author);
             score = (TextView) postContent.findViewById(R.id.post_score);
+            created = (TextView) postContent.findViewById(R.id.post_created);
             commentsCount = (Button) itemView.findViewById(R.id.post_comments_count);
         }
     }
@@ -111,52 +115,54 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             holder.image.setImageBitmap(null);
         }
 
+        holder.subreddit.setText(post.getSubreddit());
         holder.title.setText(post.getTitle());
-        holder.details.setText(post.getDetails());
+        holder.author.setText(post.getAuthor());
         holder.score.setText(post.getScore());
+        holder.created.setText(post.getCreated());
         holder.commentsCount.setText(post.getNumComments());
 
         holder.image.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                onClickImage(v, position);
+            public void onClick(View view) {
+                onClickImage(position);
             }
         });
 
         holder.postContent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                onClickContent(view, post);
+                onClickContent(post);
             }
         });
 
         holder.commentsCount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                onClickCommentsCount(view, post, holder);
+                onClickCommentsCount(post, holder);
             }
         });
     }
 
-    private void onClickImage(View v, int position) {
+    private void onClickImage(int position) {
         Intent i = new Intent(activity, ImageViewActivity.class);
         i.putExtra("Image", objects.get(position).getThumbnail());
         activity.startActivity(i);
     }
 
-    private void onClickContent(View view, Post post) {
+    private void onClickContent(Post post) {
         String url = post.getUrl();
-        Intent i = new Intent(view.getContext(), WebViewActivity.class);
+        Intent i = new Intent(activity, WebViewActivity.class);
         i.putExtra("Url", url);
-        view.getContext().startActivity(i);
+        activity.startActivity(i);
     }
 
-    private void onClickCommentsCount(View view, Post post, ViewHolder holder) {
-        Intent i = new Intent(view.getContext(), CommentsActivity.class);
+    private void onClickCommentsCount(Post post, ViewHolder holder) {
+        Intent i = new Intent(activity, CommentsActivity.class);
         i.putExtra("Title", post.getTitle());
         i.putExtra("Url", post.getPermalink());
         i.putExtra("Image", post.getThumbnail());
-        view.getContext().startActivity(i,
+        activity.startActivity(i,
                 ActivityOptions.makeSceneTransitionAnimation(activity,
                         holder.title,
                         "comment_transition"

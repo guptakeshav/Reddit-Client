@@ -34,7 +34,6 @@
                 android:layout_gravity="center"
                 android:textAlignment="center"
                 android:textColor="#FFFFFF"
-                android:textAllCaps="true"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:transitionName="comment_transition"
                 app:layout_collapseMode="parallax" />

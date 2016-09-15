@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginTop="4dp"
     android:orientation="horizontal">
 
     <View
@@ -13,7 +14,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="3dp">
+        android:layout_marginLeft="2dp">
 
         <TextView
             android:id="@+id/comment_author"
@@ -48,12 +49,21 @@
             android:layout_below="@id/comment_body"
             android:textSize="11dp" />
 
+        <View
+            android:id="@+id/comment_end_line"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/comment_upvotes"
+            android:layout_marginTop="2dp"
+            android:background="#EEEEEE">
+        </View>
+
         <android.support.v7.widget.RecyclerView
             android:id="@+id/subcomments_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="2dp"
-            android:layout_below="@id/comment_upvotes"
+            android:layout_below="@id/comment_end_line"
             android:nestedScrollingEnabled="false">
         </android.support.v7.widget.RecyclerView>
 

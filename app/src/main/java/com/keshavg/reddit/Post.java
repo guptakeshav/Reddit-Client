@@ -1,5 +1,7 @@
 package com.keshavg.reddit;
 
+import android.text.format.DateUtils;
+
 import com.google.gson.annotations.SerializedName;
 
 import java.text.SimpleDateFormat;
@@ -33,19 +35,11 @@ public class Post {
     }
 
     public String getAuthor() {
-        return author;
+        return "Posted by " + author;
     }
 
     public String getCreated() {
-        Date date = new Date(created * 1000L);
-
-        SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
-        String dateString = formatter.format(date);
-
-        formatter = new SimpleDateFormat("hh:mm a");
-        String time = formatter.format(date);
-
-        return dateString + " " + time;
+        return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
     }
 
     public String getNumComments() {
@@ -61,7 +55,7 @@ public class Post {
     }
 
     public String getSubreddit() {
-        return subreddit;
+        return "r/" + subreddit;
     }
 
     public String getThumbnail() {
@@ -74,11 +68,5 @@ public class Post {
 
     public String getUrl() {
         return url;
-    }
-
-    public String getDetails() {
-        return "Posted by " + getAuthor() +
-                " on " + getCreated() +
-                "\n" + "/r/" + getSubreddit();
     }
 }

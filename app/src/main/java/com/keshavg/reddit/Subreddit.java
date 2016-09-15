@@ -15,7 +15,7 @@ public class Subreddit {
     }
 
     public String getName() {
-        return name;
+        return "r/" + name;
     }
 
     public String getDescription() {

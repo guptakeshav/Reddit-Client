@@ -55,7 +55,6 @@ public class PostsFragment extends Fragment {
         url = getArguments().getString("url");
         sortByParam = getArguments().getString("sortBy");
         loadingFlag = false;
-        progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
 
         dbHelper = new RedditPostsDbHelper(getContext());
     }
@@ -68,6 +67,7 @@ public class PostsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
+        progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
         recList = (RecyclerView) rootView.findViewById(R.id.recycler_list);
         postsAdapter = new PostsAdapter(getActivity(), Glide.with(getContext()));
         recList.setAdapter(postsAdapter);

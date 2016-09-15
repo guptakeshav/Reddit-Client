@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity
     private ViewPager viewPager;
 
     private Menu menu;
+    private SubMenu subredditsMenu;
     private MenuItem prevMenuItem;
 
     @Override
@@ -107,8 +108,11 @@ public class MainActivity extends AppCompatActivity
         menu.getItem(0).setChecked(true);
         prevMenuItem = menu.getItem(0);
 
-        final SubMenu subredditsMenu = menu.addSubMenu("Subreddits");
+        subredditsMenu = menu.addSubMenu("Subreddits");
+        fetchSubredditNames();
+    }
 
+    private void fetchSubredditNames() {
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         Call<List<String>> call = apiService.getSubredditNames();
         call.enqueue(new Callback<List<String>>() {
@@ -161,8 +165,9 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
-        } else if (id == R.id.refresh_posts) {
+        } else if (id == R.id.reload_app) {
             setupViewPager(currentPagerUrl);
+            fetchSubredditNames();
         }
 
         return super.onOptionsItemSelected(item);

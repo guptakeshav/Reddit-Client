@@ -56,7 +56,7 @@ public class CommentsActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        finish();
+        finish(); // TODO
     }
 
     @Override

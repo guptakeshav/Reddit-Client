@@ -84,6 +84,7 @@ public class CommentsFragment extends Fragment {
         button.setText("Load More");
         progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
 
+        progressBarActivity.setVisibility(View.VISIBLE);
         fetchComments();
     }
 
@@ -91,8 +92,6 @@ public class CommentsFragment extends Fragment {
      * Function to fetch the list of comments from the REST api
      */
     public void fetchComments() {
-        progressBarActivity.setVisibility(View.VISIBLE);
-
         final ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         Call<CommentResponse> call = apiService.getComments(url, sortByParam);
 
