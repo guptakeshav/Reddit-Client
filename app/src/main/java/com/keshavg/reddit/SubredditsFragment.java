@@ -12,9 +12,6 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -26,10 +23,11 @@ public class SubredditsFragment extends Fragment {
     private Boolean loadingFlag;
 
     private SwipeRefreshLayout swipeContainer;
-    private ProgressBar progressBar;
+    private ProgressBar progressBarActivity;
     private RecyclerView recList;
     private SubredditsAdapter subredditsAdapter;
     private LinearLayoutManager llm;
+    private ProgressBar progressBarLoadMore;
 
     private String searchQuery;
     private String afterParam;
@@ -51,7 +49,6 @@ public class SubredditsFragment extends Fragment {
 
         searchQuery = getArguments().getString("searchQuery");
         loadingFlag = false;
-        progressBar = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
     }
 
     @Nullable
@@ -83,11 +80,13 @@ public class SubredditsFragment extends Fragment {
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                fetchSubreddits(true);
+                fetchSubreddits(true, progressBarLoadMore);
             }
         });
 
-        fetchSubreddits(true);
+        progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
+        progressBarLoadMore = (ProgressBar) getActivity().findViewById(R.id.progressbar_loadmore);
+        fetchSubreddits(true, progressBarActivity);
     }
 
     /**
@@ -99,11 +98,11 @@ public class SubredditsFragment extends Fragment {
         int visibleThreshold = 2;
 
         if (!loadingFlag && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
-            fetchSubreddits(false);
+            fetchSubreddits(false, progressBarLoadMore);
         }
     }
 
-    public void fetchSubreddits(final Boolean clearAdapterFlag) {
+    public void fetchSubreddits(final Boolean clearAdapterFlag, final ProgressBar progressBar) {
         loadingFlag = true;
         progressBar.setVisibility(View.VISIBLE);
 

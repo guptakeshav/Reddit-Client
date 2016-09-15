@@ -115,12 +115,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             holder.image.setImageBitmap(null);
         }
 
-        holder.subreddit.setText(post.getSubreddit());
+        holder.subreddit.setText(post.getFormattedSubreddit());
         holder.title.setText(post.getTitle());
-        holder.author.setText(post.getAuthor());
-        holder.score.setText(post.getScore());
-        holder.created.setText(post.getCreated());
-        holder.commentsCount.setText(post.getNumComments());
+        holder.author.setText(post.getPostedBy());
+        holder.score.setText(post.getScoreString());
+        holder.created.setText(post.getRelativeCreatedTimeSpan());
+        holder.commentsCount.setText(post.getCommentsCount());
 
         holder.image.setOnClickListener(new View.OnClickListener() {
             @Override

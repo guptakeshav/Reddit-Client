@@ -134,7 +134,7 @@ public class PostsFragment extends Fragment {
             public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
                 if (clearAdapterFlag == true) {
                     postsAdapter.clear();
-                    dbHelper.removePosts(url + "/" + sortByParam);
+                    dbHelper.clearTable();
                 }
 
                 afterParam = response.body().getAfterParam();

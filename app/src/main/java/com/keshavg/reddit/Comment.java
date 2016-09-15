@@ -1,9 +1,9 @@
 package com.keshavg.reddit;
 
+import android.text.format.DateUtils;
+
 import com.google.gson.annotations.SerializedName;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Queue;
 
@@ -38,15 +38,7 @@ public class Comment {
     }
 
     public String getCreated() {
-        Date date = new Date(created * 1000L);
-
-        SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
-        String dateString = formatter.format(date);
-
-        formatter = new SimpleDateFormat("hh:mm a");
-        String time = formatter.format(date);
-
-        return "on " + dateString + " " + time;
+        return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
     }
 
     public List<Comment> getReplies() {

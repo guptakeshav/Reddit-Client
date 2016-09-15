@@ -4,9 +4,6 @@ import android.text.format.DateUtils;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 /**
  * Created by keshav.g on 22/08/16.
  */
@@ -35,14 +32,26 @@ public class Post {
     }
 
     public String getAuthor() {
+        return author;
+    }
+
+    public String getPostedBy() {
         return "Posted by " + author;
     }
 
-    public String getCreated() {
+    public long getCreated() {
+        return created;
+    }
+
+    public String getRelativeCreatedTimeSpan() {
         return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
     }
 
-    public String getNumComments() {
+    public int getNumComments() {
+        return numComments;
+    }
+
+    public String getCommentsCount() {
         return Integer.toString(numComments) + " comments";
     }
 
@@ -50,11 +59,19 @@ public class Post {
         return permalink;
     }
 
-    public String getScore() {
+    public int getScore() {
+        return score;
+    }
+
+    public String getScoreString() {
         return Integer.toString(score) + " score";
     }
 
     public String getSubreddit() {
+        return subreddit;
+    }
+
+    public String getFormattedSubreddit() {
         return "r/" + subreddit;
     }
 
