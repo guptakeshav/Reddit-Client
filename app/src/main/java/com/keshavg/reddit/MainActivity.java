@@ -2,6 +2,7 @@ package com.keshavg.reddit;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -12,23 +13,47 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.List;
 
+import okhttp3.Authenticator;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Route;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    private final String OAUTH_URL = "https://www.reddit.com/api/v1/authorize";
+    private final String CLIENT_ID = "v438H_DJQuG0oQ";
+    private final String CLIENT_SECRET = "";
+    private final String RESPONSE_TYPE = "code";
+    private final String STATE = "TEST";
+    private final String REDIRECT_URI = "http://localhost";
+    private final String DURATION = "permanent";
+    private final String SCOPE = "modothers,modposts,report,subscribe,livemanage,history,creddits," +
+            "modflair,modwiki,vote,wikiread,mysubreddits,flair,modself,submit,modcontributors," +
+            "account,modtraffic,read,modlog,modmail,edit,modconfig,save,privatemessages,identity,wikiedit";
+
+    private SharedPreferences pref;
     private String currentPagerUrl;
 
     private FloatingActionMenu fam;
@@ -40,6 +65,12 @@ public class MainActivity extends AppCompatActivity
     private SubMenu subredditsMenu;
     private MenuItem prevMenuItem;
 
+    private final int AUTH_REQUEST_CODE = 1;
+    private final String GRANT_TYPE = "authorization_code";
+    private Button auth;
+    private TextView username;
+    private Button logout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,12 +78,12 @@ public class MainActivity extends AppCompatActivity
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        setTitle("Frontpage");
 
-        currentPagerUrl = "Frontpage";
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
-        setupViewPager(currentPagerUrl);
+
+        pref = getSharedPreferences("AuthPref", MODE_PRIVATE);
+        changePosts("Frontpage");
 
         fam = (FloatingActionMenu) findViewById(R.id.fab_menu);
         fam.setClosedOnTouchOutside(true);
@@ -82,13 +113,23 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         setupNavBar(navigationView);
+
+        View navViewHeader = navigationView.getHeaderView(0);
+        auth = (Button) navViewHeader.findViewById(R.id.auth);
+        auth.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickAuthButton();
+            }
+        });
+        username = (TextView) navViewHeader.findViewById(R.id.username);
+        logout = (Button) navViewHeader.findViewById(R.id.logout);
     }
 
-    private void openSearchActivity(String type) {
-        Intent i = new Intent(MainActivity.this, SearchActivity.class);
-        i.putExtra("Type", type);
-        MainActivity.this.startActivity(i);
-        fam.close(true);
+    public void changePosts(String category) {
+        setTitle("Reddit - " + category);
+        currentPagerUrl = category;
+        setupViewPager(currentPagerUrl);
     }
 
     private void setupViewPager(String url) {
@@ -100,6 +141,13 @@ public class MainActivity extends AppCompatActivity
         }
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
+    }
+
+    private void openSearchActivity(String type) {
+        Intent i = new Intent(MainActivity.this, SearchActivity.class);
+        i.putExtra("Type", type);
+        MainActivity.this.startActivity(i);
+        fam.close(true);
     }
 
     private void setupNavBar(NavigationView navigationView) {
@@ -126,7 +174,9 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onFailure(Call<List<String>> call, Throwable t) {
-                Toast.makeText(getApplicationContext(), "Error fetching the list of subreddits", Toast.LENGTH_SHORT)
+                Toast.makeText(getApplicationContext(),
+                        "Error fetching the list of subreddits",
+                        Toast.LENGTH_SHORT)
                         .show();
             }
         });
@@ -180,16 +230,108 @@ public class MainActivity extends AppCompatActivity
         item.setChecked(true);
         prevMenuItem = item;
 
-        changeSubreddit(item.getTitle().toString());
+        changePosts(item.getTitle().toString());
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    public void changeSubreddit(String subreddit) {
-        setTitle("Reddit - " + subreddit);
-        currentPagerUrl = subreddit;
-        setupViewPager(currentPagerUrl);
+    private void onClickAuthButton() {
+        String url = OAUTH_URL
+                + "?client_id=" + CLIENT_ID
+                + "&response_type=" + RESPONSE_TYPE
+                + "&state=" + STATE
+                + "&redirect_uri=" + REDIRECT_URI
+                + "&duration=" + DURATION
+                + "&scope=" + SCOPE;
+
+        Intent i = new Intent(MainActivity.this, WebViewActivity.class);
+        i.putExtra("Url", url);
+        startActivityForResult(i, AUTH_REQUEST_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == AUTH_REQUEST_CODE) {
+            String authCode = data.getStringExtra("AUTH_CODE");
+
+            OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                    .authenticator(new Authenticator() {
+                        @Override
+                        public Request authenticate(Route route, okhttp3.Response response) throws IOException {
+                            String credential = okhttp3.Credentials.basic(CLIENT_ID, CLIENT_SECRET);
+                            return response.request().newBuilder()
+                                    .header("Authorization", credential)
+                                    .build();
+                        }
+                    }).build();
+
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl("https://www.reddit.com")
+                    .client(okHttpClient)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            ApiInterface apiService = retrofit.create(ApiInterface.class);
+
+            Call<AuthAccessResponse> call = apiService.getAccessToken(GRANT_TYPE, authCode, REDIRECT_URI);
+            call.enqueue(new Callback<AuthAccessResponse>() {
+                @Override
+                public void onResponse(Call<AuthAccessResponse> call, Response<AuthAccessResponse> response) {
+
+                    if (response.isSuccessful()) {
+                        String accessToken = response.body().getAccessToken();
+                        SharedPreferences.Editor editor = pref.edit();
+                        editor.putString("ACCESS_TOKEN", accessToken);
+                        editor.commit();
+
+                        getUsername();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<AuthAccessResponse> call, Throwable t) {
+                    Toast.makeText(getApplicationContext(),
+                            "Authenticating error",
+                            Toast.LENGTH_SHORT)
+                            .show();
+                }
+            });
+        }
+    }
+
+    private void getUsername() {
+        String accessToken = pref.getString("ACCESS_TOKEN", "");
+        Log.d("Access Token", accessToken);
+        Retrofit retrofit = ApiClient.getOauthClient();
+        ApiInterface apiService = retrofit.create(ApiInterface.class);
+
+        Call<User> call = apiService.getUsername("bearer " + accessToken);
+        call.enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful()) {
+                    String name = response.body().getName();
+
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.putString("USERNAME", name);
+                    editor.commit();
+
+                    auth.setVisibility(View.GONE);
+                    logout.setVisibility(View.VISIBLE);
+                    username.setVisibility(View.VISIBLE);
+                    username.setText("Welcome, " + name);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<User> call, Throwable t) {
+                Toast.makeText(getApplicationContext(), "Unable to fetch the username", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
     }
 }
