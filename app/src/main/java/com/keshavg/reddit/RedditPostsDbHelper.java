@@ -15,7 +15,7 @@ import java.util.List;
 public class RedditPostsDbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "Reddit.db";
-    public static final int DATABASE_VERSION = 10;
+    public static final int DATABASE_VERSION = 20;
 
     public RedditPostsDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -25,6 +25,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE Posts" +
                 "(redditLink text, " +
+                "name text, " +
                 "author text, " +
                 "created integer, " +
                 "numComments integer, " +
@@ -53,6 +54,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
             ContentValues values = new ContentValues();
 
             values.put("redditLink", redditLink);
+            values.put("name", post.getName());
             values.put("author", post.getAuthor());
             values.put("created", post.getCreated());
             values.put("numComments", post.getNumComments());
@@ -73,6 +75,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
 
         String[] projection = {
+                "name",
                 "author",
                 "created",
                 "numComments",
@@ -101,7 +104,8 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
 
         cursor.moveToFirst();
         while (cursor.isAfterLast() == false) {
-            Post post = new Post(cursor.getString(cursor.getColumnIndex("author")),
+            Post post = new Post(cursor.getString(cursor.getColumnIndex("name")),
+                    cursor.getString(cursor.getColumnIndex("author")),
                     cursor.getLong(cursor.getColumnIndex("created")),
                     cursor.getInt(cursor.getColumnIndex("numComments")),
                     cursor.getString(cursor.getColumnIndex("permalink")),

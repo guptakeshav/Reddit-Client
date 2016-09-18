@@ -116,13 +116,9 @@ public class SubredditsFragment extends Fragment {
         }
 
         call.enqueue(new Callback<SubredditResponse>() {
-            @Override
-            public void onResponse(Call<SubredditResponse> call, Response<SubredditResponse> response) {
-                afterParam = response.body().getAfterParam();
-                if (clearAdapterFlag == true) {
-                    subredditsAdapter.clear();
-                }
-                subredditsAdapter.addAll(response.body().getSubreddits());
+            private void onUnsuccessfulCall(String message) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT)
+                        .show();
 
                 progressBar.setVisibility(View.GONE);
                 swipeContainer.setRefreshing(false);
@@ -130,13 +126,26 @@ public class SubredditsFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<SubredditResponse> call, Throwable t) {
-                Toast.makeText(getContext(), "Error fetching the list of subreddits", Toast.LENGTH_SHORT)
-                        .show();
+            public void onResponse(Call<SubredditResponse> call, Response<SubredditResponse> response) {
+                if (response.isSuccessful()) {
+                    if (clearAdapterFlag == true) {
+                        subredditsAdapter.clear();
+                    }
 
-                progressBar.setVisibility(View.GONE);
-                swipeContainer.setRefreshing(false);
-                loadingFlag = false;
+                    afterParam = response.body().getAfterParam();
+                    subredditsAdapter.addAll(response.body().getSubreddits());
+
+                    progressBar.setVisibility(View.GONE);
+                    swipeContainer.setRefreshing(false);
+                    loadingFlag = false;
+                } else {
+                    onUnsuccessfulCall(response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SubredditResponse> call, Throwable t) {
+                onUnsuccessfulCall(getString(R.string.server_error));
             }
         });
     }

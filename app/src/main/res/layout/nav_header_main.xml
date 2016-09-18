@@ -20,7 +20,7 @@
         android:id="@+id/username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingLeft="10dp"
+        android:layout_marginLeft="12dp"
         android:paddingBottom="2dp"
         android:visibility="gone" />
 
@@ -29,6 +29,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Logout"
+        android:drawableLeft="@drawable/ic_exit_to_app"
         android:textAlignment="viewStart"
         style="@style/Widget.AppCompat.Button.Borderless"
         android:visibility="gone" />

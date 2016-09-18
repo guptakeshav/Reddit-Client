@@ -1,16 +1,12 @@
 package com.keshavg.reddit;
 
-import org.json.JSONObject;
-
 import java.util.List;
 
 import retrofit2.Call;
-import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
-import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 
@@ -55,4 +51,10 @@ public interface ApiInterface {
 
     @GET("api/v1/me")
     Call<User> getUsername(@Header("Authorization") String authorization);
+
+    @FormUrlEncoded
+    @POST("api/vote")
+    Call<Void> votePost(@Header("Authorization") String authorization,
+                        @Field("id") String name,
+                        @Field("dir") int vote);
 }

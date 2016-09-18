@@ -25,8 +25,6 @@ import android.widget.Toast;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -288,19 +286,22 @@ public class MainActivity extends AppCompatActivity
                         editor.putString("ACCESS_TOKEN", accessToken);
                         editor.commit();
 
-                        getUsername();
+                        loggedIn();
+                    } else {
+                        showToast(response.message());
                     }
                 }
 
                 @Override
                 public void onFailure(Call<AuthAccessResponse> call, Throwable t) {
-                    Toast.makeText(getApplicationContext(),
-                            "Authenticating error",
-                            Toast.LENGTH_SHORT)
-                            .show();
+                    showToast(getString(R.string.server_error));
                 }
             });
         }
+    }
+
+    private void loggedIn() {
+        getUsername();
     }
 
     private void getUsername() {
@@ -324,14 +325,19 @@ public class MainActivity extends AppCompatActivity
                     logout.setVisibility(View.VISIBLE);
                     username.setVisibility(View.VISIBLE);
                     username.setText("Welcome, " + name);
+                } else {
+                    showToast(response.message());
                 }
             }
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(getApplicationContext(), "Unable to fetch the username", Toast.LENGTH_SHORT)
-                        .show();
+                showToast(getString(R.string.server_error));
             }
         });
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 }

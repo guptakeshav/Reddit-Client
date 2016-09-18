@@ -141,24 +141,32 @@ public class CommentsFragment extends Fragment {
                 apiService.getMoreComments(url, sortByParam, moreIds.peek());
 
         callMore.enqueue(new Callback<CommentResponse>() {
-            @Override
-            public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
-                commentsAdapter.addAll(response.body().getComments());
+            private void onUnsuccessfulCall(String message) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT)
+                        .show();
 
                 progressBar.setVisibility(View.GONE);
-                moreIds.remove();
-                if (!moreIds.isEmpty()) {
-                    button.setVisibility(View.VISIBLE);
+                button.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+                if (response.isSuccessful()) {
+                    commentsAdapter.addAll(response.body().getComments());
+
+                    progressBar.setVisibility(View.GONE);
+                    moreIds.remove();
+                    if (!moreIds.isEmpty()) {
+                        button.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    onUnsuccessfulCall(response.message());
                 }
             }
 
             @Override
             public void onFailure(Call<CommentResponse> call, Throwable t) {
-                Toast.makeText(getContext(), "Error fetching the list of comments", Toast.LENGTH_SHORT)
-                        .show();
-
-                progressBar.setVisibility(View.GONE);
-                button.setVisibility(View.VISIBLE);
+                onUnsuccessfulCall(getString(R.string.server_error));
             }
         });
     }

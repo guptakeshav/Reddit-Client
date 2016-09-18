@@ -130,25 +130,10 @@ public class PostsFragment extends Fragment {
         }
 
         call.enqueue(new Callback<PostResponse>() {
-            @Override
-            public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
-                if (clearAdapterFlag == true) {
-                    postsAdapter.clear();
-                    dbHelper.clearTable();
-                }
-
-                afterParam = response.body().getAfterParam();
-                postsAdapter.addAll(response.body().getPosts());
-                dbHelper.insertPosts(response.body().getPosts(), url + "/" + sortByParam);
-
-                swipeContainer.setRefreshing(false);
-                progressBar.setVisibility(View.GONE);
-                loadingFlag = false;
-            }
-
-            @Override
-            public void onFailure(Call<PostResponse> call, Throwable t) {
-                Toast.makeText(getContext(), "Error fetching the list of posts", Toast.LENGTH_SHORT)
+            private void onUnsuccessfulCall(String message) {
+                Toast.makeText(getContext(),
+                        message,
+                        Toast.LENGTH_SHORT)
                         .show();
 
                 if (clearAdapterFlag == true) {
@@ -159,6 +144,31 @@ public class PostsFragment extends Fragment {
                 swipeContainer.setRefreshing(false);
                 progressBar.setVisibility(View.GONE);
                 loadingFlag = false;
+            }
+
+            @Override
+            public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
+                if (response.isSuccessful()) {
+                    if (clearAdapterFlag == true) {
+                        postsAdapter.clear();
+                        dbHelper.clearTable();
+                    }
+
+                    afterParam = response.body().getAfterParam();
+                    postsAdapter.addAll(response.body().getPosts());
+                    dbHelper.insertPosts(response.body().getPosts(), url + "/" + sortByParam);
+
+                    swipeContainer.setRefreshing(false);
+                    progressBar.setVisibility(View.GONE);
+                    loadingFlag = false;
+                } else {
+                    onUnsuccessfulCall(response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PostResponse> call, Throwable t) {
+                onUnsuccessfulCall(getString(R.string.server_error));
             }
         });
     }

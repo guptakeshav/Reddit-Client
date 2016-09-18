@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName;
  */
 public class Post {
 
+    private String name;
     private String author;
     private long created;
     @SerializedName("num_comments") private int numComments;
@@ -19,7 +20,8 @@ public class Post {
     private String title;
     private String url;
 
-    public Post(String author, long created, int numComments, String permalink, int score, String subreddit, String thumbnail, String title, String url) {
+    public Post(String name, String author, long created, int numComments, String permalink, int score, String subreddit, String thumbnail, String title, String url) {
+        this.name = name;
         this.author = author;
         this.created = created;
         this.numComments = numComments;
@@ -29,6 +31,10 @@ public class Post {
         this.thumbnail = thumbnail;
         this.title = title;
         this.url = url;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getAuthor() {
@@ -59,12 +65,12 @@ public class Post {
         return permalink;
     }
 
-    public int getScore() {
-        return score;
+    public String getScore() {
+        return Integer.toString(score);
     }
 
-    public String getScoreString() {
-        return Integer.toString(score) + " score";
+    public void updateScore(int delta) {
+        score = score + delta;
     }
 
     public String getSubreddit() {
