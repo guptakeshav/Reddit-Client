@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,14 +111,16 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         final Post post = objects.get(position);
 
+        int width = activity.getWindowManager().getDefaultDisplay().getWidth() - MainActivity.dpToPx(20);
+        int height = 384;
+
         if (post.getThumbnail().startsWith("http")) {
             holder.progressBar.setVisibility(View.VISIBLE);
-
             requestManager
                     .load(post.getThumbnail())
                     .asBitmap()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .override(1536, 512) // TODO: dynamically set the dimensions
+                    .override(width, height)
                     .centerCrop()
                     .listener(new RequestListener<String, Bitmap>() {
                         @Override

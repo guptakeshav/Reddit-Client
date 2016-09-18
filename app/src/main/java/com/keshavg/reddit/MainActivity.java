@@ -3,6 +3,7 @@ package com.keshavg.reddit;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -164,18 +165,19 @@ public class MainActivity extends AppCompatActivity
         call.enqueue(new Callback<List<String>>() {
             @Override
             public void onResponse(Call<List<String>> call, Response<List<String>> response) {
-                List<String> subredditNames = response.body();
-                for (String subredditName : subredditNames) {
-                    subredditsMenu.add("r/" + subredditName);
+                if (response.isSuccessful()) {
+                    List<String> subredditNames = response.body();
+                    for (String subredditName : subredditNames) {
+                        subredditsMenu.add("r/" + subredditName);
+                    }
+                } else {
+                    showToast(response.message());
                 }
             }
 
             @Override
             public void onFailure(Call<List<String>> call, Throwable t) {
-                Toast.makeText(getApplicationContext(),
-                        "Error fetching the list of subreddits",
-                        Toast.LENGTH_SHORT)
-                        .show();
+                showToast(getString(R.string.server_error));
             }
         });
     }
@@ -339,5 +341,10 @@ public class MainActivity extends AppCompatActivity
 
     private void showToast(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    public static int dpToPx(int dp)
+    {
+        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
     }
 }
