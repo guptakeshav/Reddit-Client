@@ -34,17 +34,19 @@ public class PostsFragment extends Fragment {
     private String url;
     private String sortByParam;
     private String afterParam;
+    private int isSearch;
 
     private RedditPostsDbHelper dbHelper;
 
     public PostsFragment() {
     }
 
-    public static PostsFragment newInstance(String url, String sortBy) {
+    public static PostsFragment newInstance(String url, String sortByParam, int isSearch) {
         PostsFragment fragment = new PostsFragment();
         Bundle args = new Bundle();
-        args.putString("url", url);
-        args.putString("sortBy", sortBy);
+        args.putString("URL", url);
+        args.putString("SORT_BY", sortByParam);
+        args.putInt("IS_SEARCH", isSearch);
         fragment.setArguments(args);
         return fragment;
     }
@@ -53,8 +55,9 @@ public class PostsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        url = getArguments().getString("url");
-        sortByParam = getArguments().getString("sortBy");
+        url = getArguments().getString("URL");
+        sortByParam = getArguments().getString("SORT_BY");
+        isSearch = getArguments().getInt("IS_SEARCH");
         loadingFlag = false;
 
         dbHelper = new RedditPostsDbHelper(getContext());
@@ -120,27 +123,34 @@ public class PostsFragment extends Fragment {
         loadingFlag = true;
         progressBar.setVisibility(View.VISIBLE);
 
-        String completeUrl;
-        if (url == "") {
-            completeUrl = sortByParam;
-        } else {
-            completeUrl = url + "/" + sortByParam;
-        }
-
         if (clearAdapterFlag == true) {
             afterParam = "";
         }
 
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         Call<PostResponse> call;
-
-        if (MainActivity.AuthPrefManager.isLoggedIn()) {
-            call = apiService.getOAuthPosts("bearer " + MainActivity.AuthPrefManager.getAccessToken(),
-                    completeUrl,
-                    afterParam
-            );
+        if (isSearch == 0) {
+            String completeUrl = url.equals("") ? sortByParam : (url + "/" + sortByParam);
+            if (MainActivity.AuthPrefManager.isLoggedIn()) {
+                call = apiService.getOAuthPosts(
+                        "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                        completeUrl,
+                        afterParam
+                );
+            } else {
+                call = apiService.getPosts(completeUrl, afterParam);
+            }
         } else {
-            call = apiService.getPosts(completeUrl, afterParam);
+            if (MainActivity.AuthPrefManager.isLoggedIn()) {
+                call = apiService.searchOAuthPosts(
+                        "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                        url,
+                        sortByParam,
+                        afterParam
+                );
+            } else {
+                call = apiService.searchPosts(url, sortByParam, afterParam);
+            }
         }
 
         call.enqueue(new Callback<PostResponse>() {
@@ -169,7 +179,7 @@ public class PostsFragment extends Fragment {
 
                     onComplete();
                 } else {
-                    onUnsuccessfulCall(response.message());
+                    onUnsuccessfulCall("Posts - " + response.message());
                 }
             }
 
@@ -187,6 +197,6 @@ public class PostsFragment extends Fragment {
     }
 
     private void showToast(String message) {
-        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT);
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 }

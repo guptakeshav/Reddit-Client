@@ -38,8 +38,8 @@ public class CommentsFragment extends Fragment {
     public static CommentsFragment newInstance(String url, String sortBy) {
         CommentsFragment fragment = new CommentsFragment();
         Bundle args = new Bundle();
-        args.putString("url", url);
-        args.putString("sortBy", sortBy);
+        args.putString("URL", url);
+        args.putString("SORT_BY", sortBy);
         fragment.setArguments(args);
         return fragment;
     }
@@ -48,9 +48,8 @@ public class CommentsFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        url = getArguments().getString("url");
-        sortByParam = getArguments().getString("sortBy");
-        progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_comments);
+        url = getArguments().getString("URL");
+        sortByParam = getArguments().getString("SORT_BY");
     }
 
     @Nullable
@@ -61,6 +60,10 @@ public class CommentsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        if (getActivity().isFinishing()) {
+            return;
+        }
+
         swipeContainer = (SwipeRefreshLayout) view.findViewById(R.id.swipe_container);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -82,10 +85,16 @@ public class CommentsFragment extends Fragment {
 
         button = (Button) view.findViewById(R.id.button);
         button.setText("Load More");
-        progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
 
+        progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
+        progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_comments);
         progressBarActivity.setVisibility(View.VISIBLE);
+
         fetchComments();
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -98,28 +107,33 @@ public class CommentsFragment extends Fragment {
         call.enqueue(new Callback<CommentResponse>() {
             @Override
             public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
-                commentsAdapter.addAll(response.body().getComments());
+                if (response.isSuccessful()) {
+                    commentsAdapter.addAll(response.body().getComments());
 
-                final Queue<String> moreIds = response.body().getMoreIds();
-                if (!moreIds.isEmpty()) {
-                    button.setVisibility(View.VISIBLE);
-                    button.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            onClickLoadMore(moreIds);
-                        }
-                    });
+                    final Queue<String> moreIds = response.body().getMoreIds();
+                    if (!moreIds.isEmpty()) {
+                        button.setVisibility(View.VISIBLE);
+                        button.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                onClickLoadMore(moreIds);
+                            }
+                        });
+                    }
+                } else {
+                    showToast("Comments - " + response.message());
                 }
 
-                progressBarActivity.setVisibility(View.GONE);
-                swipeContainer.setRefreshing(false);
+                onComplete();
             }
 
             @Override
             public void onFailure(Call<CommentResponse> call, Throwable t) {
-                Toast.makeText(getContext(), "Error fetching the list of comments", Toast.LENGTH_SHORT)
-                        .show();
+                showToast(getString(R.string.server_error));
+                onComplete();
+            }
 
+            private void onComplete() {
                 progressBarActivity.setVisibility(View.GONE);
                 swipeContainer.setRefreshing(false);
             }

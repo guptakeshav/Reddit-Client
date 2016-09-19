@@ -72,7 +72,7 @@ public class SubredditsFragment extends Fragment {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                loadMorePosts();
+                loadMoreSubreddits();
             }
         });
 
@@ -90,9 +90,9 @@ public class SubredditsFragment extends Fragment {
     }
 
     /**
-     * Fetching more posts when the end of list has reached
+     * Fetching more subreddits when the end of list has reached
      */
-    private void loadMorePosts() {
+    private void loadMoreSubreddits() {
         int totalItemCount = llm.getItemCount();
         int lastVisibleItem = llm.findLastVisibleItemPosition();
         int visibleThreshold = 2;
@@ -106,23 +106,18 @@ public class SubredditsFragment extends Fragment {
         loadingFlag = true;
         progressBar.setVisibility(View.VISIBLE);
 
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-
-        Call<SubredditResponse> call;
         if (clearAdapterFlag == true) {
-            call = apiService.getSubreddits(searchQuery);
-        } else {
-            call = apiService.getSubredditsAfter(searchQuery, afterParam);
+            afterParam = "";
         }
 
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<SubredditResponse> call = apiService.getSubreddits(searchQuery, afterParam);
         call.enqueue(new Callback<SubredditResponse>() {
             private void onUnsuccessfulCall(String message) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT)
                         .show();
 
-                progressBar.setVisibility(View.GONE);
-                swipeContainer.setRefreshing(false);
-                loadingFlag = false;
+                onComplete();
             }
 
             @Override
@@ -135,9 +130,7 @@ public class SubredditsFragment extends Fragment {
                     afterParam = response.body().getAfterParam();
                     subredditsAdapter.addAll(response.body().getSubreddits());
 
-                    progressBar.setVisibility(View.GONE);
-                    swipeContainer.setRefreshing(false);
-                    loadingFlag = false;
+                    onComplete();
                 } else {
                     onUnsuccessfulCall(response.message());
                 }
@@ -146,6 +139,12 @@ public class SubredditsFragment extends Fragment {
             @Override
             public void onFailure(Call<SubredditResponse> call, Throwable t) {
                 onUnsuccessfulCall(getString(R.string.server_error));
+            }
+
+            private void onComplete() {
+                progressBar.setVisibility(View.GONE);
+                swipeContainer.setRefreshing(false);
+                loadingFlag = false;
             }
         });
     }

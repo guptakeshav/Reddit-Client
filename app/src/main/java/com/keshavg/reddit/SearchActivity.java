@@ -82,14 +82,13 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void performPostsSearch(String searchQuery) {
-        String[] sortByList = {"relevance", "top", "new", "comments"};
-
         tabLayout.setVisibility(View.VISIBLE);
 
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
+
+        String[] sortByList = {"relevance", "top", "new", "comments"};
         for (String sortBy : sortByList) {
-            String url = "search/posts/" + searchQuery + "/" + sortBy;
-            adapter.addFragment(PostsFragment.newInstance(url, sortBy), sortBy);
+            adapter.addFragment(PostsFragment.newInstance(searchQuery, sortBy, 1), sortBy);
         }
 
         viewPager.setAdapter(adapter);
@@ -113,7 +112,7 @@ public class SearchActivity extends AppCompatActivity {
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
         for (String sortBy : sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(subreddit, sortBy), sortBy);
+            adapter.addFragment(PostsFragment.newInstance(subreddit, sortBy, 0), sortBy);
         }
 
         viewPager.setAdapter(adapter);

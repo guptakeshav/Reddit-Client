@@ -270,7 +270,7 @@ public class MainActivity extends AppCompatActivity
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
         for (String sortBy : sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(url, sortBy), sortBy);
+            adapter.addFragment(PostsFragment.newInstance(url, sortBy, 0), sortBy);
         }
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);

@@ -7,6 +7,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -243,7 +244,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (!response.isSuccessful()) {
-                    showToast("Voting - " + response.message());
+                    if (response.code() == 400) {
+                        showToast("This is an archived post. You won't be able to vote or commentBody.");
+                    } else {
+                        showToast("Voting - " + response.message());
+                    }
 
                     post.setLikes(prevLikes);
                     post.updateScore(-delta);

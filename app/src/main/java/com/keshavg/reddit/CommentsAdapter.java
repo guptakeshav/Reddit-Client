@@ -120,6 +120,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         }
     }
 
+    private void showToast(String message) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
+
     /**
      * On click listener for the load more button
      * Fetches more comments from the REST api and adds to the adapter
@@ -132,27 +136,27 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         Call<CommentResponse> callMore =
-                apiService.getMoreComments(url, sortByParam, moreIds.peek());
+                apiService.getMoreComments(url, moreIds.peek(), sortByParam);
 
         callMore.enqueue(new Callback<CommentResponse>() {
             @Override
             public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
-                viewHolder.subcommentsAdapter.addAll(response.body().getComments());
+                if (response.isSuccessful()) {
+                    viewHolder.subcommentsAdapter.addAll(response.body().getComments());
 
-                viewHolder.progressBar.setVisibility(View.GONE);
-                moreIds.remove();
-                if (!moreIds.isEmpty()) {
-                    viewHolder.button.setVisibility(View.VISIBLE);
+                    viewHolder.progressBar.setVisibility(View.GONE);
+                    moreIds.remove();
+                    if (!moreIds.isEmpty()) {
+                        viewHolder.button.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    showToast("Load More - " + response.message());
                 }
             }
 
             @Override
             public void onFailure(Call<CommentResponse> call, Throwable t) {
-                Toast.makeText(context,
-                        "Error fetching the list of comments",
-                        Toast.LENGTH_SHORT
-                ).show();
-
+                showToast(context.getString(R.string.server_error));
                 viewHolder.progressBar.setVisibility(View.GONE);
                 viewHolder.button.setVisibility(View.VISIBLE);
             }

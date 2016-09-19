@@ -15,28 +15,31 @@ import retrofit2.http.Query;
  * Created by keshavgupta on 9/14/16.
  */
 public interface ApiInterface {
-    @GET("api/v1/subreddits")
+    @GET("subreddits")
     Call<List<String>> getSubredditNames();
 
-    @GET("{urlSortBy}")
+    @GET("{urlSortBy}/.json")
     Call<PostResponse> getPosts(@Path("urlSortBy") String urlSortBy,
                                 @Query("after") String afterParam);
 
-    @GET("api/v1/{url}/{sortBy}")
+    @GET("{url}.json")
     Call<CommentResponse> getComments(@Path("url") String url,
-                                      @Path("sortBy") String sortBy);
+                                      @Query("sort") String sortByParam);
 
-    @GET("api/v1/{url}/{sortBy}/{moreId}")
+    @GET("{url}/{moreId}.json")
     Call<CommentResponse> getMoreComments(@Path("url") String url,
-                                          @Path("sortBy") String sortBy,
-                                          @Path("moreId") String moreId);
+                                          @Path("moreId") String moreId,
+                                          @Query("sort") String sortByParam);
 
-    @GET("api/v1/search/subreddits/{query}")
-    Call<SubredditResponse> getSubreddits(@Path("query") String query);
+    @GET("subreddits/search.json")
+    Call<SubredditResponse> getSubreddits(@Query("q") String query,
+                                          @Query("after") String afterParam);
 
-    @GET("api/v1/search/subreddits/{query}/{after}")
-    Call<SubredditResponse> getSubredditsAfter(@Path("query") String query,
-                                               @Path("after") String after);
+    // TODO: search in subreddits
+    @GET("search.json")
+    Call<PostResponse> searchPosts(@Query("q") String searchQuery,
+                                   @Query("sort") String sortByParam,
+                                   @Query("after") String afterParam);
 
     /**
      * --------------------------------------------------------------------------------------------
@@ -63,7 +66,7 @@ public interface ApiInterface {
     @GET("api/v1/me")
     Call<User> getUsername(@Header("Authorization") String authorization);
 
-    @GET("oauth/{urlSortBy}")
+    @GET("{urlSortBy}")
     Call<PostResponse> getOAuthPosts(@Header("Authorization") String authorization,
                                      @Path("urlSortBy") String urlSortBy,
                                      @Query("after") String afterParam);
@@ -73,4 +76,11 @@ public interface ApiInterface {
     Call<Void> votePost(@Header("Authorization") String authorization,
                         @Field("id") String name,
                         @Field("dir") int vote);
+
+    // TODO: search in subreddits
+    @GET("search")
+    Call<PostResponse> searchOAuthPosts(@Header("Authorization") String authorization,
+                                        @Query("q") String searchQuery,
+                                        @Query("sort") String sortByParam,
+                                        @Query("after") String afterParam);
 }
