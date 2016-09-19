@@ -120,30 +120,39 @@ public class PostsFragment extends Fragment {
         loadingFlag = true;
         progressBar.setVisibility(View.VISIBLE);
 
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-
-        Call<PostResponse> call;
-        if (clearAdapterFlag == true) {
-            call = apiService.getPosts(url, sortByParam);
+        String completeUrl;
+        if (url == "") {
+            completeUrl = sortByParam;
         } else {
-            call = apiService.getPostsAfter(url, sortByParam, afterParam);
+            completeUrl = url + "/" + sortByParam;
+        }
+
+        if (clearAdapterFlag == true) {
+            afterParam = "";
+        }
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<PostResponse> call;
+
+        if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            call = apiService.getOAuthPosts("bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    completeUrl,
+                    afterParam
+            );
+        } else {
+            call = apiService.getPosts(completeUrl, afterParam);
         }
 
         call.enqueue(new Callback<PostResponse>() {
             private void onUnsuccessfulCall(String message) {
-                Toast.makeText(getContext(),
-                        message,
-                        Toast.LENGTH_SHORT)
-                        .show();
+                showToast(message);
 
                 if (clearAdapterFlag == true) {
                     postsAdapter.clear();
                     postsAdapter.addAll(dbHelper.getPosts(url + "/" + sortByParam));
                 }
 
-                swipeContainer.setRefreshing(false);
-                progressBar.setVisibility(View.GONE);
-                loadingFlag = false;
+                onComplete();
             }
 
             @Override
@@ -158,9 +167,7 @@ public class PostsFragment extends Fragment {
                     postsAdapter.addAll(response.body().getPosts());
                     dbHelper.insertPosts(response.body().getPosts(), url + "/" + sortByParam);
 
-                    swipeContainer.setRefreshing(false);
-                    progressBar.setVisibility(View.GONE);
-                    loadingFlag = false;
+                    onComplete();
                 } else {
                     onUnsuccessfulCall(response.message());
                 }
@@ -170,6 +177,16 @@ public class PostsFragment extends Fragment {
             public void onFailure(Call<PostResponse> call, Throwable t) {
                 onUnsuccessfulCall(getString(R.string.server_error));
             }
+
+            private void onComplete() {
+                swipeContainer.setRefreshing(false);
+                progressBar.setVisibility(View.GONE);
+                loadingFlag = false;
+            }
         });
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT);
     }
 }

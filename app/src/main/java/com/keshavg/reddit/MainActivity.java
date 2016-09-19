@@ -3,7 +3,6 @@ package com.keshavg.reddit;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -26,18 +25,12 @@ import android.widget.Toast;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
-import java.io.IOException;
 import java.util.List;
 
-import okhttp3.Authenticator;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Route;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -52,7 +45,7 @@ public class MainActivity extends AppCompatActivity
             "modflair,modwiki,vote,wikiread,mysubreddits,flair,modself,submit,modcontributors," +
             "account,modtraffic,read,modlog,modmail,edit,modconfig,save,privatemessages,identity,wikiedit";
 
-    private SharedPreferences pref;
+    private static SharedPreferences authPref;
     private String currentPagerUrl;
 
     private FloatingActionMenu fam;
@@ -65,10 +58,34 @@ public class MainActivity extends AppCompatActivity
     private MenuItem prevMenuItem;
 
     private final int AUTH_REQUEST_CODE = 1;
-    private final String GRANT_TYPE = "authorization_code";
     private Button auth;
     private TextView username;
     private Button logout;
+
+    public static class AuthPrefManager {
+        public static void add(String key, String value) {
+            SharedPreferences.Editor editor = authPref.edit();
+            editor.putString(key, value).commit();
+        }
+
+        public static void clearPreferences() {
+            SharedPreferences.Editor editor = authPref.edit();
+            editor.clear().commit();
+        }
+
+        public static String getAccessToken() {
+            String accessToken = authPref.getString("ACCESS_TOKEN", "");
+            Log.d("AccessToken", accessToken);
+            return accessToken;
+        }
+
+        public static Boolean isLoggedIn() {
+            if (authPref.contains("ACCESS_TOKEN")) {
+                return true;
+            }
+            return false;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,8 +98,7 @@ public class MainActivity extends AppCompatActivity
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
 
-        pref = getSharedPreferences("AuthPref", MODE_PRIVATE);
-        changePosts("Frontpage");
+        authPref = getSharedPreferences("AuthPref", MODE_PRIVATE);
 
         fam = (FloatingActionMenu) findViewById(R.id.fab_menu);
         fam.setClosedOnTouchOutside(true);
@@ -121,65 +137,21 @@ public class MainActivity extends AppCompatActivity
                 onClickAuthButton();
             }
         });
+
         username = (TextView) navViewHeader.findViewById(R.id.username);
         logout = (Button) navViewHeader.findViewById(R.id.logout);
-    }
-
-    public void changePosts(String category) {
-        setTitle("Reddit - " + category);
-        currentPagerUrl = category;
-        setupViewPager(currentPagerUrl);
-    }
-
-    private void setupViewPager(String url) {
-        ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
-
-        String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
-        for (String sortBy : sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(url, sortBy), sortBy);
-        }
-        viewPager.setAdapter(adapter);
-        tabLayout.setupWithViewPager(viewPager);
-    }
-
-    private void openSearchActivity(String type) {
-        Intent i = new Intent(MainActivity.this, SearchActivity.class);
-        i.putExtra("Type", type);
-        MainActivity.this.startActivity(i);
-        fam.close(true);
-    }
-
-    private void setupNavBar(NavigationView navigationView) {
-        menu = navigationView.getMenu();
-        menu.add("Frontpage");
-        menu.getItem(0).setChecked(true);
-        prevMenuItem = menu.getItem(0);
-
-        subredditsMenu = menu.addSubMenu("Subreddits");
-        fetchSubredditNames();
-    }
-
-    private void fetchSubredditNames() {
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<List<String>> call = apiService.getSubredditNames();
-        call.enqueue(new Callback<List<String>>() {
+        logout.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onResponse(Call<List<String>> call, Response<List<String>> response) {
-                if (response.isSuccessful()) {
-                    List<String> subredditNames = response.body();
-                    for (String subredditName : subredditNames) {
-                        subredditsMenu.add("r/" + subredditName);
-                    }
-                } else {
-                    showToast(response.message());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<List<String>> call, Throwable t) {
-                showToast(getString(R.string.server_error));
+            public void onClick(View v) {
+                onClickLogout();
             }
         });
+
+        if (AuthPrefManager.isLoggedIn()) {
+            showLoggedIn();
+        }
+
+        changePosts("");
     }
 
     @Override
@@ -216,11 +188,15 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_settings) {
             return true;
         } else if (id == R.id.reload_app) {
-            setupViewPager(currentPagerUrl);
-            fetchSubredditNames();
+            reloadApp();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void reloadApp() {
+        fetchSubredditNames();
+        setupViewPager(currentPagerUrl);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -230,11 +206,114 @@ public class MainActivity extends AppCompatActivity
         item.setChecked(true);
         prevMenuItem = item;
 
-        changePosts(item.getTitle().toString());
+        if (item.getTitle().equals("frontpage")) {
+            changePosts("");
+        } else {
+            changePosts(item.getTitle().toString());
+        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == AUTH_REQUEST_CODE) {
+            if (resultCode == 1) {
+
+                ApiInterface apiService = ApiClient.getAuthenticateClient(CLIENT_ID, CLIENT_SECRET)
+                        .create(ApiInterface.class);
+
+                String authCode = data.getStringExtra("AUTH_CODE");
+                Call<AuthAccessResponse> call = apiService.getAccessToken("authorization_code",
+                        authCode,
+                        REDIRECT_URI
+                );
+                call.enqueue(new Callback<AuthAccessResponse>() {
+                    @Override
+                    public void onResponse(Call<AuthAccessResponse> call, Response<AuthAccessResponse> response) {
+
+                        if (response.isSuccessful()) {
+                            AuthPrefManager.add("ACCESS_TOKEN", response.body().getAccessToken());
+                            AuthPrefManager.add("REFRESH_TOKEN", response.body().getRefreshToken());
+
+                            login();
+                        } else {
+                            showToast(response.message());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<AuthAccessResponse> call, Throwable t) {
+                        showToast(getString(R.string.server_error));
+                    }
+                });
+            }
+        }
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    public void changePosts(String subreddit) {
+        setTitle("Reddit - " + prevMenuItem.getTitle());
+        currentPagerUrl = subreddit;
+        setupViewPager(currentPagerUrl);
+    }
+
+    private void setupViewPager(String url) {
+        ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
+
+        String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
+        for (String sortBy : sortByList) {
+            adapter.addFragment(PostsFragment.newInstance(url, sortBy), sortBy);
+        }
+        viewPager.setAdapter(adapter);
+        tabLayout.setupWithViewPager(viewPager);
+    }
+
+    private void setupNavBar(NavigationView navigationView) {
+        menu = navigationView.getMenu();
+        menu.add("frontpage");
+        menu.getItem(0).setChecked(true);
+        prevMenuItem = menu.getItem(0);
+
+        subredditsMenu = menu.addSubMenu("Subreddits");
+        fetchSubredditNames();
+    }
+
+    private void fetchSubredditNames() {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<List<String>> call = apiService.getSubredditNames();
+        call.enqueue(new Callback<List<String>>() {
+            @Override
+            public void onResponse(Call<List<String>> call, Response<List<String>> response) {
+                if (response.isSuccessful()) {
+                    List<String> subredditNames = response.body();
+                    for (String subredditName : subredditNames) {
+                        subredditsMenu.add("r/" + subredditName);
+                    }
+                } else {
+                    showToast(response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<String>> call, Throwable t) {
+                showToast(getString(R.string.server_error));
+            }
+        });
+    }
+
+    private void openSearchActivity(String type) {
+        Intent i = new Intent(MainActivity.this, SearchActivity.class);
+        i.putExtra("Type", type);
+        MainActivity.this.startActivity(i);
+        fam.close(true);
     }
 
     private void onClickAuthButton() {
@@ -251,84 +330,24 @@ public class MainActivity extends AppCompatActivity
         startActivityForResult(i, AUTH_REQUEST_CODE);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == AUTH_REQUEST_CODE) {
-            String authCode = data.getStringExtra("AUTH_CODE");
-
-            OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                    .authenticator(new Authenticator() {
-                        @Override
-                        public Request authenticate(Route route, okhttp3.Response response) throws IOException {
-                            String credential = okhttp3.Credentials.basic(CLIENT_ID, CLIENT_SECRET);
-                            return response.request().newBuilder()
-                                    .header("Authorization", credential)
-                                    .build();
-                        }
-                    }).build();
-
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("https://www.reddit.com")
-                    .client(okHttpClient)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-
-            ApiInterface apiService = retrofit.create(ApiInterface.class);
-
-            Call<AuthAccessResponse> call = apiService.getAccessToken(GRANT_TYPE, authCode, REDIRECT_URI);
-            call.enqueue(new Callback<AuthAccessResponse>() {
-                @Override
-                public void onResponse(Call<AuthAccessResponse> call, Response<AuthAccessResponse> response) {
-
-                    if (response.isSuccessful()) {
-                        String accessToken = response.body().getAccessToken();
-                        SharedPreferences.Editor editor = pref.edit();
-                        editor.putString("ACCESS_TOKEN", accessToken);
-                        editor.commit();
-
-                        loggedIn();
-                    } else {
-                        showToast(response.message());
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<AuthAccessResponse> call, Throwable t) {
-                    showToast(getString(R.string.server_error));
-                }
-            });
-        }
-    }
-
-    private void loggedIn() {
+    private void login() {
+        reloadApp();
         getUsername();
     }
 
     private void getUsername() {
-        String accessToken = pref.getString("ACCESS_TOKEN", "");
-        Log.d("Access Token", accessToken);
-        Retrofit retrofit = ApiClient.getOauthClient();
+        Retrofit retrofit = ApiClient.getOAuthClient();
         ApiInterface apiService = retrofit.create(ApiInterface.class);
 
-        Call<User> call = apiService.getUsername("bearer " + accessToken);
+        Call<User> call = apiService.getUsername("bearer " + AuthPrefManager.getAccessToken());
         call.enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful()) {
-                    String name = response.body().getName();
-
-                    SharedPreferences.Editor editor = pref.edit();
-                    editor.putString("USERNAME", name);
-                    editor.commit();
-
-                    auth.setVisibility(View.GONE);
-                    logout.setVisibility(View.VISIBLE);
-                    username.setVisibility(View.VISIBLE);
-                    username.setText("Welcome, " + name);
+                    AuthPrefManager.add("USERNAME", response.body().getName());
+                    showLoggedIn();
                 } else {
-                    showToast(response.message());
+                    showToast("Username - " + response.message());
                 }
             }
 
@@ -339,12 +358,44 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    private void showToast(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    private void showLoggedIn() {
+        auth.setVisibility(View.GONE);
+        logout.setVisibility(View.VISIBLE);
+        username.setVisibility(View.VISIBLE);
+
+        String name = authPref.getString("USERNAME", "");
+        username.setText("Welcome, " + name);
     }
 
-    public static int dpToPx(int dp)
-    {
-        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    private void onClickLogout() {
+        ApiInterface apiService = ApiClient.getAuthenticateClient(CLIENT_ID, CLIENT_SECRET)
+                .create(ApiInterface.class);
+        Call<Void> call = apiService.revokeToken(AuthPrefManager.getAccessToken(), "access_token");
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    AuthPrefManager.clearPreferences();
+
+                    username.setVisibility(View.GONE);
+                    logout.setVisibility(View.GONE);
+                    auth.setVisibility(View.VISIBLE);
+
+                    logout();
+                } else {
+                    showToast("Logout - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast(getString(R.string.server_error));
+            }
+        });
+    }
+
+    private void logout() {
+        reloadApp();
     }
 }

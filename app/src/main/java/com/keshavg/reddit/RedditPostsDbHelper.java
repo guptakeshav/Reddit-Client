@@ -15,7 +15,7 @@ import java.util.List;
 public class RedditPostsDbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "Reddit.db";
-    public static final int DATABASE_VERSION = 20;
+    public static final int DATABASE_VERSION = 25;
 
     public RedditPostsDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -28,6 +28,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
                 "name text, " +
                 "author text, " +
                 "created integer, " +
+                "likes integer, " +
                 "numComments integer, " +
                 "permalink text, " +
                 "score integer, " +
@@ -57,6 +58,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
             values.put("name", post.getName());
             values.put("author", post.getAuthor());
             values.put("created", post.getCreated());
+            values.put("likes", post.getLikes());
             values.put("numComments", post.getNumComments());
             values.put("permalink", post.getPermalink());
             values.put("score", post.getScore());
@@ -78,6 +80,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
                 "name",
                 "author",
                 "created",
+                "likes",
                 "numComments",
                 "permalink",
                 "score",
@@ -107,6 +110,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
             Post post = new Post(cursor.getString(cursor.getColumnIndex("name")),
                     cursor.getString(cursor.getColumnIndex("author")),
                     cursor.getLong(cursor.getColumnIndex("created")),
+                    cursor.getInt(cursor.getColumnIndex("likes")),
                     cursor.getInt(cursor.getColumnIndex("numComments")),
                     cursor.getString(cursor.getColumnIndex("permalink")),
                     cursor.getInt(cursor.getColumnIndex("score")),

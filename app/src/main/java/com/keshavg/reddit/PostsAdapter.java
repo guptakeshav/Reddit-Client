@@ -2,13 +2,11 @@ package com.keshavg.reddit;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -98,6 +96,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         notifyDataSetChanged();
     }
 
+    public static int dpToPx(int dp)
+    {
+        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    }
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater
@@ -111,7 +114,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         final Post post = objects.get(position);
 
-        int width = activity.getWindowManager().getDefaultDisplay().getWidth() - MainActivity.dpToPx(20);
+        int width = activity.getWindowManager().getDefaultDisplay().getWidth() - dpToPx(20);
         int height = 384;
 
         if (post.getThumbnail().startsWith("http")) {
@@ -149,7 +152,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         holder.subreddit.setText(post.getFormattedSubreddit());
         holder.title.setText(post.getTitle());
         holder.author.setText(post.getPostedBy());
-        holder.scoreCount.setText(post.getScore());
+        setScoreInformation(holder, post.getScore(), post.getLikes());
         holder.created.setText(post.getRelativeCreatedTimeSpan());
         holder.commentsCount.setText(post.getCommentsCount());
 
@@ -189,6 +192,20 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         });
     }
 
+    private void setScoreInformation(ViewHolder holder, String score, int likes) {
+        holder.scoreCount.setText(score);
+        if (likes == 1) {
+            holder.scoreUp.setBackgroundColor(activity.getColor(R.color.colorAccent));
+            holder.scoreDown.setBackgroundColor(activity.getColor(android.R.color.white));
+        } else if (likes == -1) {
+            holder.scoreUp.setBackgroundColor(activity.getColor(android.R.color.white));
+            holder.scoreDown.setBackgroundColor(activity.getColor(R.color.colorAccent));
+        } else {
+            holder.scoreUp.setBackgroundColor(activity.getColor(android.R.color.white));
+            holder.scoreDown.setBackgroundColor(activity.getColor(android.R.color.white));
+        }
+    }
+
     private void onClickImage(int position) {
         Intent i = new Intent(activity, ImageViewActivity.class);
         i.putExtra("Image", objects.get(position).getThumbnail());
@@ -202,28 +219,35 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         activity.startActivity(i);
     }
 
-    private void onClickVote(final int position, final int vote, final ViewHolder holder) {
-        SharedPreferences pref = activity.getSharedPreferences("AuthPref", Context.MODE_PRIVATE);
-        if (!pref.contains("ACCESS_TOKEN")) {
+    private void onClickVote(int position, final int likes, final ViewHolder holder) {
+        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
             showToast(activity.getString(R.string.login_error));
             return;
         }
 
-        ApiInterface apiService = ApiClient.getOauthClient().create(ApiInterface.class);
-        Call<Void> call = apiService.votePost(
-                "bearer " + pref.getString("ACCESS_TOKEN", ""),
-                objects.get(position).getName(),
-                vote
-        );
+        ApiInterface apiService = ApiClient.getOAuthClient()
+                .create(ApiInterface.class);
 
+        final Post post = objects.get(position);
+        final int prevLikes = post.getLikes();
+        post.setLikes((post.getLikes() ^ likes) == 0 ? 0 : likes);
+        final int delta = post.getLikes() - prevLikes;
+        post.updateScore(delta);
+        setScoreInformation(holder, post.getScore(), post.getLikes());
+
+        Call<Void> call = apiService.votePost("bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                post.getName(),
+                post.getLikes()
+        );
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    objects.get(position).updateScore(vote);
-                    holder.scoreCount.setText(objects.get(position).getScore());
-                } else {
-                    showToast(response.message());
+                if (!response.isSuccessful()) {
+                    showToast("Voting - " + response.message());
+
+                    post.setLikes(prevLikes);
+                    post.updateScore(-delta);
+                    setScoreInformation(holder, post.getScore(), post.getLikes());
                 }
             }
 

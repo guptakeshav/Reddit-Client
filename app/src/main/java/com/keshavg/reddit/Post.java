@@ -8,10 +8,10 @@ import com.google.gson.annotations.SerializedName;
  * Created by keshav.g on 22/08/16.
  */
 public class Post {
-
     private String name;
     private String author;
     private long created;
+    private Boolean likes;
     @SerializedName("num_comments") private int numComments;
     private String permalink;
     private int score;
@@ -20,10 +20,29 @@ public class Post {
     private String title;
     private String url;
 
-    public Post(String name, String author, long created, int numComments, String permalink, int score, String subreddit, String thumbnail, String title, String url) {
+    public Post(String name,
+                String author,
+                long created,
+                int likes,
+                int numComments,
+                String permalink,
+                int score,
+                String subreddit,
+                String thumbnail,
+                String title,
+                String url) {
         this.name = name;
         this.author = author;
         this.created = created;
+
+        if (likes == 1) {
+            this.likes = true;
+        } else if (likes == -1) {
+            this.likes = false;
+        } else {
+            this.likes = null;
+        }
+
         this.numComments = numComments;
         this.permalink = permalink;
         this.score = score;
@@ -53,6 +72,26 @@ public class Post {
         return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
     }
 
+    public int getLikes() {
+        if (likes == null) {
+            return 0;
+        } else if (likes.equals(true)) {
+            return 1;
+        }
+
+        return -1;
+    }
+
+    public void setLikes(int likes) {
+        if (likes == 1) {
+            this.likes = true;
+        } else if (likes == -1) {
+            this.likes = false;
+        } else {
+            this.likes = null;
+        }
+    }
+
     public int getNumComments() {
         return numComments;
     }
@@ -70,7 +109,7 @@ public class Post {
     }
 
     public void updateScore(int delta) {
-        score = score + delta;
+        this.score += delta;
     }
 
     public String getSubreddit() {

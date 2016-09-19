@@ -12,7 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Login / Signup"
-        android:drawableLeft="@drawable/ic_action_user"
         android:textAlignment="viewStart"
         style="@style/Widget.AppCompat.Button.Borderless" />
 
@@ -29,7 +28,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Logout"
-        android:drawableLeft="@drawable/ic_exit_to_app"
         android:textAlignment="viewStart"
         style="@style/Widget.AppCompat.Button.Borderless"
         android:visibility="gone" />
