@@ -24,12 +24,14 @@ public interface ApiInterface {
 
     @GET("{url}.json")
     Call<CommentResponse> getComments(@Path("url") String url,
-                                      @Query("sort") String sortByParam);
+                                      @Query("sort") String sortByParam,
+                                      @Query("raw_json") int value);
 
     @GET("{url}/{moreId}.json")
     Call<CommentResponse> getMoreComments(@Path("url") String url,
                                           @Path("moreId") String moreId,
-                                          @Query("sort") String sortByParam);
+                                          @Query("sort") String sortByParam,
+                                          @Query("raw_json") int value);
 
     @GET("subreddits/search.json")
     Call<SubredditResponse> getSubreddits(@Query("q") String query,
@@ -83,4 +85,17 @@ public interface ApiInterface {
                                         @Query("q") String searchQuery,
                                         @Query("sort") String sortByParam,
                                         @Query("after") String afterParam);
+
+    @GET("{url}")
+    Call<CommentResponse> getOAuthComments(@Header("Authorization") String authorization,
+                                           @Path("url") String url,
+                                           @Query("sort") String sortBy,
+                                           @Query("raw_json") int value);
+
+    @GET("{url}/{moreId}")
+    Call<CommentResponse> getMoreOAuthComments(@Header("Authorization") String authorization,
+                                               @Path("url") String url,
+                                               @Path("moreId") String moreId,
+                                               @Query("sort") String sortBy,
+                                               @Query("raw_json") int value);
 }

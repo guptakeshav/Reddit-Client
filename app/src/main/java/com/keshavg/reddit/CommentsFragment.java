@@ -102,7 +102,18 @@ public class CommentsFragment extends Fragment {
      */
     public void fetchComments() {
         final ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<CommentResponse> call = apiService.getComments(url, sortByParam);
+        Call<CommentResponse> call;
+
+        if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            call = apiService.getOAuthComments(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    url,
+                    sortByParam,
+                    1
+            );
+        } else {
+            call = apiService.getComments(url, sortByParam, 1);
+        }
 
         call.enqueue(new Callback<CommentResponse>() {
             @Override
@@ -151,14 +162,22 @@ public class CommentsFragment extends Fragment {
 
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
 
-        Call<CommentResponse> callMore =
-                apiService.getMoreComments(url, sortByParam, moreIds.peek());
+        Call<CommentResponse> callMore;
+        if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            callMore = apiService.getMoreOAuthComments(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    url,
+                    moreIds.peek(),
+                    sortByParam,
+                    1
+            );
+        } else {
+            callMore = apiService.getMoreComments(url, moreIds.peek(), sortByParam, 1);
+        }
 
         callMore.enqueue(new Callback<CommentResponse>() {
             private void onUnsuccessfulCall(String message) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT)
-                        .show();
-
+                showToast(message);
                 progressBar.setVisibility(View.GONE);
                 button.setVisibility(View.VISIBLE);
             }

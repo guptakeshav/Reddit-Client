@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.GravityCompat;
@@ -34,7 +35,7 @@ import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-    private final String OAUTH_URL = "https://www.reddit.com/api/v1/authorize";
+    private final String OAUTH_URL = "https://www.reddit.com/api/v1/authorize.compact";
     private final String CLIENT_ID = "v438H_DJQuG0oQ";
     private final String CLIENT_SECRET = "";
     private final String RESPONSE_TYPE = "code";
@@ -148,6 +149,7 @@ public class MainActivity extends AppCompatActivity
         });
 
         if (AuthPrefManager.isLoggedIn()) {
+            refreshToken(); // TODO: call changesposts after refreshing is complete
             showLoggedIn();
         }
 
@@ -234,11 +236,20 @@ public class MainActivity extends AppCompatActivity
                 );
                 call.enqueue(new Callback<AuthAccessResponse>() {
                     @Override
-                    public void onResponse(Call<AuthAccessResponse> call, Response<AuthAccessResponse> response) {
+                    public void onResponse(Call<AuthAccessResponse> call, final Response<AuthAccessResponse> response) {
 
                         if (response.isSuccessful()) {
                             AuthPrefManager.add("ACCESS_TOKEN", response.body().getAccessToken());
+                            Long expiresIn = (Integer.parseInt(response.body().getExpiresIn()) - 60) * 1000L;
+                            AuthPrefManager.add("EXPIRES_IN", Long.toString(expiresIn));
                             AuthPrefManager.add("REFRESH_TOKEN", response.body().getRefreshToken());
+
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    refreshToken();
+                                }
+                            }, expiresIn);
 
                             login();
                         } else {
@@ -298,7 +309,7 @@ public class MainActivity extends AppCompatActivity
                         subredditsMenu.add("r/" + subredditName);
                     }
                 } else {
-                    showToast(response.message());
+                    showToast("Subreddits - " + response.message());
                 }
             }
 
@@ -397,5 +408,36 @@ public class MainActivity extends AppCompatActivity
 
     private void logout() {
         reloadApp();
+    }
+
+    private void refreshToken() {
+        final String refreshToken = authPref.getString("REFRESH_TOKEN", "");
+        final Long expiresIn = Long.parseLong(authPref.getString("EXPIRES_IN", ""));
+
+        ApiInterface apiService = ApiClient.getAuthenticateClient(CLIENT_ID, CLIENT_SECRET)
+                .create(ApiInterface.class);
+        Call<AuthAccessResponse> call = apiService.refreshToken("refresh_token", refreshToken);
+        call.enqueue(new Callback<AuthAccessResponse>() {
+            @Override
+            public void onResponse(Call<AuthAccessResponse> call, Response<AuthAccessResponse> response) {
+                if (response.isSuccessful()) {
+                    AuthPrefManager.add("ACCESS_TOKEN", response.body().getAccessToken());
+
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            refreshToken();
+                        }
+                    }, expiresIn);
+                } else {
+                    showToast("Refreshing Token - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AuthAccessResponse> call, Throwable t) {
+                showToast(getString(R.string.server_error));
+            }
+        });
     }
 }

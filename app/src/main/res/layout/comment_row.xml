@@ -2,85 +2,135 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="4dp"
-    android:orientation="horizontal">
+    android:background="#E0E0E0"
+    android:orientation="vertical">
 
-    <View
-        android:id="@+id/comment_start_line"
-        android:layout_width="3dp"
-        android:layout_height="match_parent" />
-
-    <RelativeLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="2dp">
-
-        <TextView
-            android:id="@+id/comment_author"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textStyle="bold"
-            android:textSize="11dp" />
-
-        <TextView
-            android:id="@+id/comment_created"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/comment_author"
-            android:layout_marginLeft="3dp"
-            android:textSize="11dp" />
-
-        <TextView
-            android:id="@+id/comment_body"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/comment_author"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:autoLink="web"
-            android:textColor="#000000"
-            android:textSize="13dp" />
-
-        <TextView
-            android:id="@+id/comment_upvotes"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/comment_body"
-            android:textSize="11dp" />
+        android:background="#FFFFFF"
+        android:orientation="horizontal">
 
         <View
-            android:id="@+id/comment_end_line"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_below="@id/comment_upvotes"
-            android:layout_marginTop="2dp"
-            android:background="#EEEEEE">
-        </View>
+            android:id="@+id/comment_start_line"
+            android:layout_width="4dp"
+            android:layout_height="match_parent" />
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/subcomments_list"
+        <LinearLayout
+            android:id="@+id/comment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="2dp"
-            android:layout_below="@id/comment_end_line"
-            android:nestedScrollingEnabled="false">
-        </android.support.v7.widget.RecyclerView>
+            android:orientation="vertical">
+
+            <View
+                android:id="@+id/comment_end_line"
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#BDBDBD">
+            </View>
+
+            <RelativeLayout
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp">
+
+                <TextView
+                    android:id="@+id/comment_author"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="4dp"
+                    android:textStyle="bold"
+                    android:textSize="11dp" />
+
+                <TextView
+                    android:id="@+id/comment_created"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="4dp"
+                    android:paddingRight="8dp"
+                    android:layout_alignParentRight="true"
+                    android:textSize="11dp" />
+
+                <TextView
+                    android:id="@+id/comment_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/comment_author"
+                    android:layout_marginTop="4dp"
+                    android:paddingRight="8dp"
+                    android:paddingBottom="0dp"
+                    android:autoLink="web"
+                    android:textColor="#000000"
+                    android:textSize="13dp" />
+
+                <TextView
+                    android:id="@+id/comment_score"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/comment_body"
+                    android:paddingBottom="4dp"
+                    android:textSize="11dp" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/comment_menu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:paddingBottom="8dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/comment_upvote"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Up"
+                    style="@style/Widget.AppCompat.Button.Borderless" />
+
+                <Button
+                    android:id="@+id/comment_downvote"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Down"
+                    style="@style/Widget.AppCompat.Button.Borderless" />
+
+                <Button
+                    android:id="@+id/comment_reply"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Reply"
+                    style="@style/Widget.AppCompat.Button.Borderless" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/subcomments_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:nestedScrollingEnabled="false">
+    </android.support.v7.widget.RecyclerView>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
         <ProgressBar
             android:id="@+id/progressbar_loadmore"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/subcomments_list"
             android:visibility="gone" />
 
         <Button
             android:id="@+id/load_more"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/subcomments_list"
             android:text="Load More"
             style="@style/Widget.AppCompat.Button.Colored"
             android:visibility="gone" />
-    </RelativeLayout>
+    </FrameLayout>
 </LinearLayout>
