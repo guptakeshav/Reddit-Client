@@ -244,7 +244,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (!response.isSuccessful()) {
                     if (response.code() == 400) {
-                        showToast("This is an archived post. You won't be able to vote or commentBody.");
+                        showToast(activity.getString(R.string.archive_error));
                     } else {
                         showToast("Voting - " + response.message());
                     }

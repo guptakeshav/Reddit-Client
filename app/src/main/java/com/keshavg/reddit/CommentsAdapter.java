@@ -1,9 +1,11 @@
 package com.keshavg.reddit;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -11,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -170,7 +173,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         viewHolder.commentReply.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickReply(viewHolder);
+                onClickReply(comment.getName());
             }
         });
 
@@ -202,7 +205,17 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     }
 
     /**
-     * Function to objects to the adapter
+     * Function to add object to the adapter
+     * And update the view
+     * @param comment
+     */
+    public void add(Comment comment) {
+        this.objects.add(comment);
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Function to add objects to the adapter
      * And update the view
      * @param objects
      */
@@ -317,8 +330,57 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         });
     }
 
-    private void onClickReply(ViewHolder viewHolder) {
+    private void onClickReply(final String parentId) {
+        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
+            showToast(context.getString(R.string.login_error));
+            return;
+        }
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Submit Comment")
+                .setView(R.layout.edit_text)
+                .setPositiveButton("Submit", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        EditText editText = (EditText) ((AlertDialog) dialog).findViewById(R.id.text);
+                        submitComment(parentId, editText.getText().toString());
+                    }
+                })
+                .setNegativeButton("Discard", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    private void submitComment(String parentId, String text) {
+        ApiInterface apiClient = ApiClient.getOAuthClient().create(ApiInterface.class);
+        Call<Void> call = apiClient.submitComment(
+                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                "json",
+                text,
+                parentId
+        );
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    // TODO: add the comment to the adapter
+                } else {
+                    showToast("Submitting - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast(context.getString(R.string.server_error));
+            }
+        });
     }
 
     /**

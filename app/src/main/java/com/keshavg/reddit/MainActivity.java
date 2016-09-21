@@ -149,7 +149,6 @@ public class MainActivity extends AppCompatActivity
         });
 
         if (AuthPrefManager.isLoggedIn()) {
-            refreshToken(); // TODO: call changesposts after refreshing is complete
             showLoggedIn();
         }
 

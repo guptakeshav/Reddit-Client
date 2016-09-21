@@ -98,4 +98,11 @@ public interface ApiInterface {
                                                @Path("moreId") String moreId,
                                                @Query("sort") String sortBy,
                                                @Query("raw_json") int value);
+
+    @FormUrlEncoded
+    @POST("api/comment")
+    Call<Void> submitComment(@Header("Authorization") String authorization,
+                             @Field("api_type") String apiType,
+                             @Field("text") String text,
+                             @Field("thing_id") String parentId);
 }

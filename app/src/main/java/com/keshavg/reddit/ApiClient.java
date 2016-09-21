@@ -13,7 +13,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * Created by keshavgupta on 9/14/16.
  */
 public class ApiClient {
-    public static final String BASE_URL = "http://192.168.0.6:65010/";
+    public static final String BASE_URL = "http://172.16.44.237:65010/";
     private static Retrofit retrofit = null;
 
     public static final String BASE_URL_OAUTH = "https://oauth.reddit.com/";
