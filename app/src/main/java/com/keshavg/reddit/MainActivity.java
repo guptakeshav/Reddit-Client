@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == AUTH_REQUEST_CODE) {
-            if (resultCode == 1) {
+            if (resultCode == RESULT_OK) {
 
                 ApiInterface apiService = ApiClient.getAuthenticateClient(CLIENT_ID, CLIENT_SECRET)
                         .create(ApiInterface.class);
@@ -337,7 +337,7 @@ public class MainActivity extends AppCompatActivity
                 + "&scope=" + SCOPE;
 
         Intent i = new Intent(MainActivity.this, WebViewActivity.class);
-        i.putExtra("Url", url);
+        i.putExtra("URL", url);
         startActivityForResult(i, AUTH_REQUEST_CODE);
     }
 

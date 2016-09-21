@@ -11,8 +11,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,22 +42,26 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private String url;
     private String sortByParam;
     private List<Comment> objects;
+    private Boolean isCollapsed;
 
     public CommentsAdapter(Context context, String url, String sortByParam) {
         this.context = context;
         this.url = url;
         this.sortByParam = sortByParam;
         this.objects = new ArrayList<>();
+        this.isCollapsed = false;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         LinearLayout comment;
 
+        RelativeLayout header;
+        ImageView collapse;
         TextView author;
-        TextView commentBody;
         TextView created;
         TextView upvotes;
 
+        TextView commentBody;
         LinearLayout commentMenu;
         Button commentUpvote;
         Button commentDownvote;
@@ -64,6 +71,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         CommentsAdapter subcommentsAdapter;
         LinearLayoutManager llm;
 
+        FrameLayout loadMore;
         ProgressBar progressBar;
         Button button;
 
@@ -72,26 +80,27 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
             this.comment = (LinearLayout) v.findViewById(R.id.comment);
 
-            this.author = (TextView) this.comment.findViewById(R.id.comment_author);
-            this.commentBody = (TextView) this.comment.findViewById(R.id.comment_body);
-            this.created = (TextView) this.comment.findViewById(R.id.comment_created);
-            this.upvotes = (TextView) this.comment.findViewById(R.id.comment_score);
+            this.header = (RelativeLayout) this.comment.findViewById(R.id.comment_header);
+            this.collapse = (ImageView) this.header.findViewById(R.id.comment_collapse);
+            this.author = (TextView) this.header.findViewById(R.id.comment_author);
+            this.created = (TextView) this.header.findViewById(R.id.comment_created);
+            this.upvotes = (TextView) this.header.findViewById(R.id.comment_score);
 
+            this.commentBody = (TextView) this.comment.findViewById(R.id.comment_body);
             this.commentMenu = (LinearLayout) this.comment.findViewById(R.id.comment_menu);
             this.commentUpvote = (Button) this.commentMenu.findViewById(R.id.comment_upvote);
             this.commentDownvote = (Button) this.commentMenu.findViewById(R.id.comment_downvote);
             this.commentReply = (Button) this.commentMenu.findViewById(R.id.comment_reply);
 
             this.subcommentsView = (RecyclerView) v.findViewById(R.id.subcomments_list);
-
             this.subcommentsAdapter = new CommentsAdapter(context, url, sortByParam);
             this.subcommentsView.setAdapter(this.subcommentsAdapter);
-
             this.llm = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
             this.subcommentsView.setLayoutManager(llm);
 
-            this.progressBar = (ProgressBar) v.findViewById(R.id.progressbar_loadmore);
-            this.button = (Button) v.findViewById(R.id.load_more);
+            this.loadMore = (FrameLayout) v.findViewById(R.id.load_more);
+            this.progressBar = (ProgressBar) this.loadMore.findViewById(R.id.progressbar_loadmore);
+            this.button = (Button) this.loadMore.findViewById(R.id.button_loadmore);
         }
     }
 
@@ -114,26 +123,33 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, final int position) {
         final Comment comment = objects.get(position);
-
-        viewHolder.comment.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickComment(viewHolder);
-            }
-        });
-
         viewHolder.author.setText(comment.getAuthor());
         viewHolder.commentBody.setText(Html.fromHtml(comment.getBody()));
         viewHolder.created.setText(comment.getCreated());
-
         viewHolder.commentMenu.setVisibility(View.GONE);
-
         setScoreInformation(viewHolder, comment);
 
-        new Handler().post(new Runnable() {
+        if (viewHolder.subcommentsAdapter.getItemCount() == 0) {
+            // do not add the replies again and again on binding of view
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    viewHolder.subcommentsAdapter.addAll(comment.getReplies());
+                }
+            });
+        }
+
+        viewHolder.header.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                viewHolder.subcommentsAdapter.addAll(comment.getReplies());
+            public void onClick(View v) {
+                onClickCommentCollapse(viewHolder);
+            }
+        });
+
+        viewHolder.commentBody.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickComment(viewHolder);
             }
         });
 
@@ -154,7 +170,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         viewHolder.commentReply.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                onClickReply(viewHolder);
+                onClickReply(viewHolder);
             }
         });
 
@@ -173,6 +189,26 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     @Override
     public int getItemCount() {
         return objects.size();
+    }
+
+
+    /**
+     * Function to clear the contents of the adapter
+     * And update the view
+     */
+    public void clear() {
+        this.objects.clear();
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Function to objects to the adapter
+     * And update the view
+     * @param objects
+     */
+    public void addAll(List<Comment> objects) {
+        this.objects.addAll(objects);
+        notifyDataSetChanged();
     }
 
     private void showToast(String message) {
@@ -197,6 +233,29 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             viewHolder.commentDownvote.setBackgroundColor(context.getColor(white));
             viewHolder.commentDownvote.setTextColor(context.getColor(black));
         }
+    }
+
+    /**
+     *
+     * @param viewHolder
+     */
+    private void onClickCommentCollapse(ViewHolder viewHolder) {
+        if (isCollapsed == false) {
+            viewHolder.loadMore.setVisibility(View.GONE);
+            viewHolder.subcommentsView.setVisibility(View.GONE);
+            viewHolder.commentMenu.setVisibility(View.GONE);
+            viewHolder.commentBody.setVisibility(View.GONE);
+
+            viewHolder.collapse.setImageDrawable(context.getDrawable(R.drawable.ic_keyboard_arrow_right));
+        } else {
+            viewHolder.commentBody.setVisibility(View.VISIBLE);
+            viewHolder.subcommentsView.setVisibility(View.VISIBLE);
+            viewHolder.loadMore.setVisibility(View.VISIBLE);
+
+            viewHolder.collapse.setImageDrawable(context.getDrawable(R.drawable.ic_keyboard_arrow_down));
+        }
+
+        isCollapsed = !isCollapsed;
     }
 
     /**
@@ -258,6 +317,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         });
     }
 
+    private void onClickReply(ViewHolder viewHolder) {
+
+    }
+
     /**
      * On click listener for the load more button
      * Fetches more comments from the REST api and adds to the adapter
@@ -316,24 +379,5 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         Random rnd = new Random();
         int color = Color.rgb(rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
         convertView.findViewById(R.id.comment_start_line).setBackgroundColor(color);
-    }
-
-    /**
-     * Function to clear the contents of the adapter
-     * And update the view
-     */
-    public void clear() {
-        objects.clear();
-        notifyDataSetChanged();
-    }
-
-    /**
-     * Function to objects to the adapter
-     * And update the view
-     * @param objects
-     */
-    public void addAll(List<Comment> objects) {
-        this.objects.addAll(objects);
-        notifyDataSetChanged();
     }
 }

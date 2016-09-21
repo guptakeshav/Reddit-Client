@@ -29,18 +29,34 @@
                 android:background="#BDBDBD">
             </View>
 
-            <RelativeLayout
-                xmlns:android="http://schemas.android.com/apk/res/android"
+            <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/comment_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp">
+                android:layout_marginBottom="4dp">
+
+                <ImageView
+                    android:id="@+id/comment_collapse"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_keyboard_arrow_down" />
 
                 <TextView
                     android:id="@+id/comment_author"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_toRightOf="@id/comment_collapse"
                     android:paddingTop="4dp"
                     android:textStyle="bold"
+                    android:textSize="11dp" />
+
+                <TextView
+                    android:id="@+id/comment_score"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@id/comment_author"
+                    android:paddingTop="4dp"
+                    android:layout_marginLeft="8dp"
                     android:textSize="11dp" />
 
                 <TextView
@@ -51,27 +67,18 @@
                     android:paddingRight="8dp"
                     android:layout_alignParentRight="true"
                     android:textSize="11dp" />
-
-                <TextView
-                    android:id="@+id/comment_body"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/comment_author"
-                    android:layout_marginTop="4dp"
-                    android:paddingRight="8dp"
-                    android:paddingBottom="0dp"
-                    android:autoLink="web"
-                    android:textColor="#000000"
-                    android:textSize="13dp" />
-
-                <TextView
-                    android:id="@+id/comment_score"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/comment_body"
-                    android:paddingBottom="4dp"
-                    android:textSize="11dp" />
             </RelativeLayout>
+
+            <TextView
+                android:id="@+id/comment_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:paddingRight="8dp"
+                android:layout_marginBottom="0dp"
+                android:autoLink="web"
+                android:textColor="#000000"
+                android:textSize="13dp" />
 
             <LinearLayout
                 android:id="@+id/comment_menu"
@@ -116,6 +123,7 @@
     </android.support.v7.widget.RecyclerView>
 
     <FrameLayout
+        android:id="@+id/load_more"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -126,7 +134,7 @@
             android:visibility="gone" />
 
         <Button
-            android:id="@+id/load_more"
+            android:id="@+id/button_loadmore"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Load More"

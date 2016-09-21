@@ -7,7 +7,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,9 +53,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         TextView title;
         TextView author;
         TextView created;
-        Button scoreUp;
+        ImageView scoreUp;
         TextView scoreCount;
-        Button scoreDown;
+        ImageView scoreDown;
         Button commentsCount;
 
         public ViewHolder(View itemView) {
@@ -69,9 +68,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             title = (TextView) postContent.findViewById(R.id.post_title);
             author = (TextView) postContent.findViewById(R.id.post_author);
             created = (TextView) postContent.findViewById(R.id.post_created);
-            scoreUp = (Button) itemView.findViewById(R.id.post_score_up);
+            scoreUp = (ImageView) itemView.findViewById(R.id.post_score_up);
             scoreCount = (TextView) itemView.findViewById(R.id.post_score_count);
-            scoreDown = (Button) itemView.findViewById(R.id.post_score_down);
+            scoreDown = (ImageView) itemView.findViewById(R.id.post_score_down);
             commentsCount = (Button) itemView.findViewById(R.id.post_comments_count);
         }
     }
@@ -216,7 +215,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     private void onClickContent(Post post) {
         String url = post.getUrl();
         Intent i = new Intent(activity, WebViewActivity.class);
-        i.putExtra("Url", url);
+        i.putExtra("URL", url);
         activity.startActivity(i);
     }
 
