@@ -15,7 +15,7 @@ import java.util.List;
 public class RedditPostsDbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "Reddit.db";
-    public static final int DATABASE_VERSION = 25;
+    public static final int DATABASE_VERSION = 30;
 
     public RedditPostsDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -33,7 +33,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
                 "permalink text, " +
                 "score integer, " +
                 "subreddit text, " +
-                "thumbnail text, " +
+                "image text, " +
                 "title text, " +
                 "url text)");
     }
@@ -63,7 +63,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
             values.put("permalink", post.getPermalink());
             values.put("score", post.getScore());
             values.put("subreddit", post.getSubreddit());
-            values.put("thumbnail", post.getThumbnail());
+            values.put("image", post.getImage());
             values.put("title", post.getTitle());
             values.put("url", post.getUrl());
 
@@ -85,7 +85,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
                 "permalink",
                 "score",
                 "subreddit",
-                "thumbnail",
+                "image",
                 "title",
                 "url"
         };
@@ -115,7 +115,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
                     cursor.getString(cursor.getColumnIndex("permalink")),
                     cursor.getInt(cursor.getColumnIndex("score")),
                     cursor.getString(cursor.getColumnIndex("subreddit")),
-                    cursor.getString(cursor.getColumnIndex("thumbnail")),
+                    cursor.getString(cursor.getColumnIndex("image")),
                     cursor.getString(cursor.getColumnIndex("title")),
                     cursor.getString(cursor.getColumnIndex("url")));
             posts.add(post);

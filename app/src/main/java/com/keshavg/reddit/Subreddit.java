@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName;
  */
 public class Subreddit {
     @SerializedName("display_name") private String name;
-    private String description;
+    @SerializedName("description_html") private String description;
 
     public Subreddit(String name, String description) {
         this.name = name;

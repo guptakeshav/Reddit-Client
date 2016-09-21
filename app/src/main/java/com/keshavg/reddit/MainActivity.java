@@ -297,15 +297,17 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void fetchSubredditNames() {
+        subredditsMenu.clear();
+
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<List<String>> call = apiService.getSubredditNames();
-        call.enqueue(new Callback<List<String>>() {
+        Call<SubredditResponse> call = apiService.getSubredditNames();
+        call.enqueue(new Callback<SubredditResponse>() {
             @Override
-            public void onResponse(Call<List<String>> call, Response<List<String>> response) {
+            public void onResponse(Call<SubredditResponse> call, Response<SubredditResponse> response) {
                 if (response.isSuccessful()) {
-                    List<String> subredditNames = response.body();
-                    for (String subredditName : subredditNames) {
-                        subredditsMenu.add("r/" + subredditName);
+                    List<Subreddit> subreddits = response.body().getSubreddits();
+                    for (Subreddit subreddit : subreddits) {
+                        subredditsMenu.add(subreddit.getName());
                     }
                 } else {
                     showToast("Subreddits - " + response.message());
@@ -313,7 +315,7 @@ public class MainActivity extends AppCompatActivity
             }
 
             @Override
-            public void onFailure(Call<List<String>> call, Throwable t) {
+            public void onFailure(Call<SubredditResponse> call, Throwable t) {
                 showToast(getString(R.string.server_error));
             }
         });

@@ -10,13 +10,13 @@ import com.google.gson.annotations.SerializedName;
 public class Post {
     private String name;
     private String author;
-    private long created;
+    @SerializedName("created_utc") private long created;
     private Boolean likes;
     @SerializedName("num_comments") private int numComments;
     private String permalink;
     private int score;
     private String subreddit;
-    private String thumbnail;
+    private String image;
     private String title;
     private String url;
 
@@ -28,7 +28,7 @@ public class Post {
                 String permalink,
                 int score,
                 String subreddit,
-                String thumbnail,
+                String image,
                 String title,
                 String url) {
         this.name = name;
@@ -47,7 +47,7 @@ public class Post {
         this.permalink = permalink;
         this.score = score;
         this.subreddit = subreddit;
-        this.thumbnail = thumbnail;
+        this.image = image;
         this.title = title;
         this.url = url;
     }
@@ -104,6 +104,11 @@ public class Post {
         return permalink;
     }
 
+    public void fixPermalink() {
+        int idx = permalink.lastIndexOf('/');
+        permalink = permalink.substring(0, idx);
+    }
+
     public String getScore() {
         return Integer.toString(score);
     }
@@ -120,8 +125,12 @@ public class Post {
         return "r/" + subreddit;
     }
 
-    public String getThumbnail() {
-        return thumbnail;
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 
     public String getTitle() {

@@ -3,6 +3,7 @@ package com.keshavg.reddit;
 import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,7 +62,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
         final Subreddit subreddit = objects.get(position);
 
         holder.name.setText(subreddit.getName());
-        holder.description.setText(subreddit.getDescription());
+        holder.description.setText(Html.fromHtml(subreddit.getDescription()));
 
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override

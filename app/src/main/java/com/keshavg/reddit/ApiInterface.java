@@ -15,27 +15,28 @@ import retrofit2.http.Query;
  * Created by keshavgupta on 9/14/16.
  */
 public interface ApiInterface {
-    @GET("subreddits")
-    Call<List<String>> getSubredditNames();
+    @GET("subreddits.json")
+    Call<SubredditResponse> getSubredditNames();
 
     @GET("{urlSortBy}/.json")
     Call<PostResponse> getPosts(@Path("urlSortBy") String urlSortBy,
                                 @Query("after") String afterParam);
 
     @GET("{url}.json")
-    Call<CommentResponse> getComments(@Path("url") String url,
-                                      @Query("sort") String sortByParam,
-                                      @Query("raw_json") int value);
+    Call<List<CommentResponse>> getComments(@Path("url") String url,
+                                            @Query("sort") String sortByParam,
+                                            @Query("raw_json") int value);
 
     @GET("{url}/{moreId}.json")
-    Call<CommentResponse> getMoreComments(@Path("url") String url,
-                                          @Path("moreId") String moreId,
-                                          @Query("sort") String sortByParam,
-                                          @Query("raw_json") int value);
+    Call<List<CommentResponse>> getMoreComments(@Path("url") String url,
+                                                @Path("moreId") String moreId,
+                                                @Query("sort") String sortByParam,
+                                                @Query("raw_json") int value);
 
     @GET("subreddits/search.json")
     Call<SubredditResponse> getSubreddits(@Query("q") String query,
-                                          @Query("after") String afterParam);
+                                          @Query("after") String afterParam,
+                                          @Query("raw_json") int value);
 
     // TODO: search in subreddits
     @GET("search.json")
@@ -87,17 +88,17 @@ public interface ApiInterface {
                                         @Query("after") String afterParam);
 
     @GET("{url}")
-    Call<CommentResponse> getOAuthComments(@Header("Authorization") String authorization,
-                                           @Path("url") String url,
-                                           @Query("sort") String sortBy,
-                                           @Query("raw_json") int value);
+    Call<List<CommentResponse>> getOAuthComments(@Header("Authorization") String authorization,
+                                                 @Path("url") String url,
+                                                 @Query("sort") String sortBy,
+                                                 @Query("raw_json") int value);
 
     @GET("{url}/{moreId}")
-    Call<CommentResponse> getMoreOAuthComments(@Header("Authorization") String authorization,
-                                               @Path("url") String url,
-                                               @Path("moreId") String moreId,
-                                               @Query("sort") String sortBy,
-                                               @Query("raw_json") int value);
+    Call<List<CommentResponse>> getMoreOAuthComments(@Header("Authorization") String authorization,
+                                                     @Path("url") String url,
+                                                     @Path("moreId") String moreId,
+                                                     @Query("sort") String sortBy,
+                                                     @Query("raw_json") int value);
 
     @FormUrlEncoded
     @POST("api/comment")

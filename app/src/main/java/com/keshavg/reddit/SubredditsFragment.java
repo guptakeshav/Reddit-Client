@@ -111,7 +111,7 @@ public class SubredditsFragment extends Fragment {
         }
 
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<SubredditResponse> call = apiService.getSubreddits(searchQuery, afterParam);
+        Call<SubredditResponse> call = apiService.getSubreddits(searchQuery, afterParam, 1);
         call.enqueue(new Callback<SubredditResponse>() {
             private void onUnsuccessfulCall(String message) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT)
@@ -127,7 +127,7 @@ public class SubredditsFragment extends Fragment {
                         subredditsAdapter.clear();
                     }
 
-                    afterParam = response.body().getAfterParam();
+                    afterParam = response.body().getAfterId();
                     subredditsAdapter.addAll(response.body().getSubreddits());
 
                     onComplete();

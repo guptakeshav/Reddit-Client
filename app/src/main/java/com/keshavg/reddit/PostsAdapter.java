@@ -117,10 +117,10 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         int width = activity.getWindowManager().getDefaultDisplay().getWidth() - dpToPx(20);
         int height = 384;
 
-        if (post.getThumbnail().startsWith("http")) {
+        if (post.getImage().startsWith("http")) {
             holder.progressBar.setVisibility(View.VISIBLE);
             requestManager
-                    .load(post.getThumbnail())
+                    .load(post.getImage())
                     .asBitmap()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .override(width, height)
@@ -208,7 +208,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
     private void onClickImage(int position) {
         Intent i = new Intent(activity, ImageViewActivity.class);
-        i.putExtra("Image", objects.get(position).getThumbnail());
+        i.putExtra("Image", objects.get(position).getImage());
         activity.startActivity(i);
     }
 
@@ -266,7 +266,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         Intent i = new Intent(activity, CommentsActivity.class);
         i.putExtra("Title", post.getTitle());
         i.putExtra("Url", post.getPermalink());
-        i.putExtra("Image", post.getThumbnail());
+        i.putExtra("Image", post.getImage());
         activity.startActivity(i,
                 ActivityOptions.makeSceneTransitionAnimation(activity,
                         holder.title,

@@ -11,12 +11,24 @@ import java.util.Queue;
  * Created by keshav.g on 29/08/16.
  */
 public class Comment {
-    private String name;
+    /**
+     * 1
+     */
+    @SerializedName("children") private Queue<String> moreIds;
+
+    public Queue<String> getMoreIds() {
+        return moreIds;
+    }
+
+    /**
+     * 2
+     */
     private String author;
-    private String body;
-    private int created;
+    @SerializedName("body_html") private String body;
+    @SerializedName("created_utc") private int created;
     private Boolean likes;
-    @SerializedName("replies") private CommentResponse replyResponse;
+    private String name;
+    private CommentResponse replyResponse;
     private int score;
 
     public String getName() {
@@ -55,11 +67,21 @@ public class Comment {
     }
 
     public List<Comment> getReplies() {
+        if (replyResponse == null) {
+            return null;
+        }
         return replyResponse.getComments();
     }
 
-    public Queue<String> getMoreRepliesId() {
+    public Queue<String> getMoreReplyIds() {
+        if (replyResponse == null) {
+            return null;
+        }
         return replyResponse.getMoreIds();
+    }
+
+    public void setReplyResponse(CommentResponse replyResponse) {
+        this.replyResponse = replyResponse;
     }
 
     public String getScore() {

@@ -132,7 +132,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         viewHolder.commentMenu.setVisibility(View.GONE);
         setScoreInformation(viewHolder, comment);
 
-        if (viewHolder.subcommentsAdapter.getItemCount() == 0) {
+        if (comment.getReplies() != null && viewHolder.subcommentsAdapter.getItemCount() == 0) {
             // do not add the replies again and again on binding of view
             new Handler().post(new Runnable() {
                 @Override
@@ -177,8 +177,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             }
         });
 
-        final Queue<String> moreIds = comment.getMoreRepliesId();
-        if (!moreIds.isEmpty()) {
+        final Queue<String> moreIds = comment.getMoreReplyIds();
+        if (moreIds != null && !moreIds.isEmpty()) {
             viewHolder.button.setVisibility(View.VISIBLE);
             viewHolder.button.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -393,10 +393,11 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         viewHolder.button.setVisibility(View.GONE);
         viewHolder.progressBar.setVisibility(View.VISIBLE);
 
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        ApiInterface apiService;
+        Call<List<CommentResponse>> callMore;
 
-        Call<CommentResponse> callMore;
         if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
             callMore = apiService.getMoreOAuthComments(
                     "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                     url,
@@ -405,18 +406,19 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
                     1
             );
         } else {
+            apiService = ApiClient.getClient().create(ApiInterface.class);
             callMore = apiService.getMoreComments(url, moreIds.peek(), sortByParam, 1);
         }
 
-        callMore.enqueue(new Callback<CommentResponse>() {
+        callMore.enqueue(new Callback<List<CommentResponse>>() {
             @Override
-            public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+            public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
                 if (response.isSuccessful()) {
-                    viewHolder.subcommentsAdapter.addAll(response.body().getComments());
+                    viewHolder.subcommentsAdapter.addAll(response.body().get(1).getComments());
 
                     viewHolder.progressBar.setVisibility(View.GONE);
                     moreIds.remove();
-                    if (!moreIds.isEmpty()) {
+                    if (moreIds != null && !moreIds.isEmpty()) {
                         viewHolder.button.setVisibility(View.VISIBLE);
                     }
                 } else {
@@ -425,7 +427,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             }
 
             @Override
-            public void onFailure(Call<CommentResponse> call, Throwable t) {
+            public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
                 showToast(context.getString(R.string.server_error));
                 viewHolder.progressBar.setVisibility(View.GONE);
                 viewHolder.button.setVisibility(View.VISIBLE);

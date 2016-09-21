@@ -14,6 +14,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -127,21 +129,28 @@ public class PostsFragment extends Fragment {
             afterParam = "";
         }
 
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        ApiInterface apiService;
         Call<PostResponse> call;
+
         if (isSearch == 0) {
             String completeUrl = url.equals("") ? sortByParam : (url + "/" + sortByParam);
             if (MainActivity.AuthPrefManager.isLoggedIn()) {
+
+                apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
                 call = apiService.getOAuthPosts(
                         "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                         completeUrl,
                         afterParam
                 );
             } else {
+
+                apiService = ApiClient.getClient().create(ApiInterface.class);
                 call = apiService.getPosts(completeUrl, afterParam);
             }
         } else {
             if (MainActivity.AuthPrefManager.isLoggedIn()) {
+
+                apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
                 call = apiService.searchOAuthPosts(
                         "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                         url,
@@ -149,6 +158,8 @@ public class PostsFragment extends Fragment {
                         afterParam
                 );
             } else {
+
+                apiService = ApiClient.getClient().create(ApiInterface.class);
                 call = apiService.searchPosts(url, sortByParam, afterParam);
             }
         }
@@ -173,9 +184,11 @@ public class PostsFragment extends Fragment {
                         dbHelper.clearTable();
                     }
 
-                    afterParam = response.body().getAfterParam();
-                    postsAdapter.addAll(response.body().getPosts());
-                    dbHelper.insertPosts(response.body().getPosts(), url + "/" + sortByParam);
+                    List<Post> posts = response.body().getPosts();
+                    afterParam = response.body().getAfterId();
+
+                    postsAdapter.addAll(posts);
+                    dbHelper.insertPosts(posts, url + "/" + sortByParam);
 
                     onComplete();
                 } else {

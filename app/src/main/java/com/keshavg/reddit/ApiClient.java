@@ -1,6 +1,16 @@
 package com.keshavg.reddit;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 import okhttp3.Authenticator;
 import okhttp3.OkHttpClient;
@@ -13,20 +23,99 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * Created by keshavgupta on 9/14/16.
  */
 public class ApiClient {
-    public static final String BASE_URL = "http://172.16.44.237:65010/";
-    private static Retrofit retrofit = null;
-
+    public static final String BASE_URL = "https://www.reddit.com/";
     public static final String BASE_URL_OAUTH = "https://oauth.reddit.com/";
-    private static Retrofit retrofitOauth = null;
 
-    public static final String BASE_URL_AUTHENTICATE = "https://www.reddit.com/";
+    private static Retrofit retrofit = null;
+    private static Retrofit retrofitOauth = null;
     private static Retrofit retrofitAuthenticate = null;
+
+    public static class PostDeserializer implements JsonDeserializer<PostResponse> {
+        @Override
+        public PostResponse deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            PostResponse postResponse = new Gson().fromJson(json, PostResponse.class);
+
+            JsonArray jsonArray = json.getAsJsonObject()
+                    .get("data").getAsJsonObject()
+                    .get("children").getAsJsonArray();
+
+            for (int idx = 0; idx < jsonArray.size(); ++idx) {
+                // 1. fixing permalink url
+                postResponse.fixPermalink(idx);
+
+                // 2. setting correct image url; to gif, if available
+                JsonObject jsonObject = jsonArray
+                        .get(idx).getAsJsonObject()
+                        .get("data").getAsJsonObject();
+
+                String image = jsonObject.get("thumbnail").getAsString();
+                if (jsonObject.has("preview")) {
+                    JsonObject variants = jsonObject
+                            .get("preview").getAsJsonObject()
+                            .get("images").getAsJsonArray()
+                            .get(0).getAsJsonObject()
+                            .get("variants").getAsJsonObject();
+
+                    if (variants.has("gif")) {
+                        image = variants
+                                .get("gif").getAsJsonObject()
+                                .get("source").getAsJsonObject()
+                                .get("url").getAsString();
+                    }
+                }
+
+                postResponse.setImage(idx, image);
+            }
+
+            return postResponse;
+        }
+    }
+
+    public static class CommentDeserializer implements JsonDeserializer<CommentResponse> {
+        @Override
+        public CommentResponse deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            CommentResponse commentResponse = new Gson().fromJson(json, CommentResponse.class);
+
+            JsonArray jsonArray = json.getAsJsonObject()
+                    .get("data").getAsJsonObject()
+                    .get("children").getAsJsonArray();
+
+            for (int idx = 0; idx < jsonArray.size(); ++idx) {
+                JsonObject jsonObject = jsonArray
+                        .get(idx).getAsJsonObject()
+                        .get("data").getAsJsonObject();
+
+                if (jsonObject.has("replies")) {
+                    JsonElement jsonElement = jsonObject.get("replies");
+                    try {
+                        // will reach here if jsonelement is a primitive
+                        jsonElement.getAsString();
+                    } catch (UnsupportedOperationException e) {
+                        CommentResponse reply = getGsonConverter()
+                                .fromJson(jsonElement, CommentResponse.class);
+                        commentResponse.setReplyResponse(idx, reply);
+                    }
+                }
+            }
+
+            return commentResponse;
+        }
+    }
+
+    public static Gson getGsonConverter() {
+        final Gson gson = new GsonBuilder()
+                .registerTypeAdapter(PostResponse.class, new PostDeserializer())
+                .registerTypeAdapter(CommentResponse.class, new CommentDeserializer())
+                .create();
+
+        return gson;
+    }
 
     public static Retrofit getClient() {
         if (retrofit == null) {
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(getGsonConverter()))
                     .build();
         }
 
@@ -37,7 +126,7 @@ public class ApiClient {
         if (retrofitOauth == null) {
             retrofitOauth = new Retrofit.Builder()
                     .baseUrl(BASE_URL_OAUTH)
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(getGsonConverter()))
                     .build();
         }
 
@@ -58,9 +147,9 @@ public class ApiClient {
                     }).build();
 
             retrofitAuthenticate = new Retrofit.Builder()
-                    .baseUrl(BASE_URL_AUTHENTICATE)
+                    .baseUrl(BASE_URL)
                     .client(okHttpClient)
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(getGsonConverter()))
                     .build();
         }
 

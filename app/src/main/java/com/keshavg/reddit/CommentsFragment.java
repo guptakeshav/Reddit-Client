@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import java.util.List;
 import java.util.Queue;
 
 import retrofit2.Call;
@@ -101,10 +102,11 @@ public class CommentsFragment extends Fragment {
      * Function to fetch the list of comments from the REST api
      */
     public void fetchComments() {
-        final ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<CommentResponse> call;
+        ApiInterface apiService;
+        Call<List<CommentResponse>> call;
 
         if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
             call = apiService.getOAuthComments(
                     "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                     url,
@@ -112,17 +114,18 @@ public class CommentsFragment extends Fragment {
                     1
             );
         } else {
+            apiService = ApiClient.getClient().create(ApiInterface.class);
             call = apiService.getComments(url, sortByParam, 1);
         }
 
-        call.enqueue(new Callback<CommentResponse>() {
+        call.enqueue(new Callback<List<CommentResponse>>() {
             @Override
-            public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+            public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
                 if (response.isSuccessful()) {
-                    commentsAdapter.addAll(response.body().getComments());
+                    commentsAdapter.addAll(response.body().get(1).getComments());
 
-                    final Queue<String> moreIds = response.body().getMoreIds();
-                    if (!moreIds.isEmpty()) {
+                    final Queue<String> moreIds = response.body().get(1).getMoreIds();
+                    if (moreIds != null && !moreIds.isEmpty()) {
                         button.setVisibility(View.VISIBLE);
                         button.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -139,7 +142,7 @@ public class CommentsFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<CommentResponse> call, Throwable t) {
+            public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
                 showToast(getString(R.string.server_error));
                 onComplete();
             }
@@ -160,10 +163,11 @@ public class CommentsFragment extends Fragment {
         button.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
 
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        ApiInterface apiService;
+        Call<List<CommentResponse>> callMore;
 
-        Call<CommentResponse> callMore;
         if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
             callMore = apiService.getMoreOAuthComments(
                     "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                     url,
@@ -172,10 +176,11 @@ public class CommentsFragment extends Fragment {
                     1
             );
         } else {
+            apiService = ApiClient.getClient().create(ApiInterface.class);
             callMore = apiService.getMoreComments(url, moreIds.peek(), sortByParam, 1);
         }
 
-        callMore.enqueue(new Callback<CommentResponse>() {
+        callMore.enqueue(new Callback<List<CommentResponse>>() {
             private void onUnsuccessfulCall(String message) {
                 showToast(message);
                 progressBar.setVisibility(View.GONE);
@@ -183,9 +188,9 @@ public class CommentsFragment extends Fragment {
             }
 
             @Override
-            public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+            public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
                 if (response.isSuccessful()) {
-                    commentsAdapter.addAll(response.body().getComments());
+                    commentsAdapter.addAll(response.body().get(1).getComments());
 
                     progressBar.setVisibility(View.GONE);
                     moreIds.remove();
@@ -198,7 +203,7 @@ public class CommentsFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<CommentResponse> call, Throwable t) {
+            public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
                 onUnsuccessfulCall(getString(R.string.server_error));
             }
         });
