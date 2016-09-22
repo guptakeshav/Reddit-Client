@@ -311,7 +311,7 @@ public class MainActivity extends AppCompatActivity
                 if (response.isSuccessful()) {
                     List<Subreddit> subreddits = response.body().getSubreddits();
                     for (Subreddit subreddit : subreddits) {
-                        subredditsMenu.add(subreddit.getName());
+                        subredditsMenu.add(subreddit.getSubredditName());
                     }
                 } else {
                     showToast("Subreddits - " + response.message());

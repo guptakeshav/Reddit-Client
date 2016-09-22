@@ -1,24 +1,37 @@
 package com.keshavg.reddit;
 
+import android.text.format.DateUtils;
+
 import com.google.gson.annotations.SerializedName;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Created by keshavgupta on 9/13/16.
  */
 public class Subreddit {
-    @SerializedName("display_name") private String name;
+    @Getter
+    private String name;
+
+    @SerializedName("display_name") private String subredditName;
+    @SerializedName("created_utc") private Long created;
+
+    @Getter
     @SerializedName("description_html") private String description;
 
-    public Subreddit(String name, String description) {
-        this.name = name;
-        this.description = description;
+    @Getter
+    @Setter
+    @SerializedName("user_is_subscriber") private Boolean isSubscribed;
+
+    @Getter
+    private Long subscribers;
+
+    public String getSubredditName() {
+        return "r/" + subredditName;
     }
 
-    public String getName() {
-        return "r/" + name;
-    }
-
-    public String getDescription() {
-        return description;
+    public String getCreated() {
+        return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
     }
 }

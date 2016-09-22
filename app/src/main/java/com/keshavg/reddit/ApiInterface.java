@@ -34,9 +34,9 @@ public interface ApiInterface {
                                                 @Query("raw_json") int value);
 
     @GET("subreddits/search.json")
-    Call<SubredditResponse> getSubreddits(@Query("q") String query,
-                                          @Query("after") String afterParam,
-                                          @Query("raw_json") int value);
+    Call<SubredditResponse> searchSubreddits(@Query("q") String query,
+                                             @Query("after") String afterParam,
+                                             @Query("raw_json") int value);
 
     // TODO: search in subreddits
     @GET("search.json")
@@ -115,4 +115,16 @@ public interface ApiInterface {
     @POST("api/del")
     Call<Void> deleteThing(@Header("Authorization") String authorization,
                            @Field("id") String id);
+
+    @GET("subreddits/search")
+    Call<SubredditResponse> searchOAuthSubreddits(@Header("Authorization") String authorization,
+                                                  @Query("q") String searchQuery,
+                                                  @Query("after") String afterId,
+                                                  @Query("raw_json") int value);
+
+    @FormUrlEncoded
+    @POST("api/subscribe")
+    Call<Void> subscribeSubreddit(@Header("Authorization") String authorization,
+                                  @Field("action") String action,
+                                  @Field("sr") String subredditName);
 }

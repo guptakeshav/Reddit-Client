@@ -38,7 +38,7 @@ public class SubredditsFragment extends Fragment {
     public static SubredditsFragment newInstance(String searchQuery) {
         SubredditsFragment fragment = new SubredditsFragment();
         Bundle args = new Bundle();
-        args.putString("searchQuery", searchQuery);
+        args.putString("SEARCH_QUERY", searchQuery);
         fragment.setArguments(args);
         return fragment;
     }
@@ -47,7 +47,7 @@ public class SubredditsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        searchQuery = getArguments().getString("searchQuery");
+        searchQuery = getArguments().getString("SEARCH_QUERY");
         loadingFlag = false;
     }
 
@@ -110,13 +110,25 @@ public class SubredditsFragment extends Fragment {
             afterParam = "";
         }
 
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<SubredditResponse> call = apiService.getSubreddits(searchQuery, afterParam, 1);
+        ApiInterface apiService;
+        Call<SubredditResponse> call;
+
+        if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+            call = apiService.searchOAuthSubreddits(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    searchQuery,
+                    afterParam,
+                    1
+            );
+        } else {
+            apiService = ApiClient.getClient().create(ApiInterface.class);
+            call = apiService.searchSubreddits(searchQuery, afterParam, 1);
+        }
+
         call.enqueue(new Callback<SubredditResponse>() {
             private void onUnsuccessfulCall(String message) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT)
-                        .show();
-
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
                 onComplete();
             }
 

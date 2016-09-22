@@ -7,13 +7,18 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by keshavgupta on 9/11/16.
@@ -29,16 +34,20 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout linearLayout;
+        ImageButton subscribe;
         TextView name;
+        TextView subscribers;
+        TextView created;
         TextView description;
 
         public ViewHolder(View itemView) {
             super(itemView);
 
-            linearLayout = (LinearLayout) itemView.findViewById(R.id.subreddit);
-            name = (TextView) linearLayout.findViewById(R.id.subreddit_name);
-            description = (TextView) linearLayout.findViewById(R.id.subreddit_description);
+            subscribe = (ImageButton) itemView.findViewById(R.id.subreddit_subscribe);
+            name = (TextView) itemView.findViewById(R.id.subreddit_name);
+            subscribers = (TextView) itemView.findViewById(R.id.subreddit_subscribers);
+            created = (TextView) itemView.findViewById(R.id.subreddit_created);
+            description = (TextView) itemView.findViewById(R.id.subreddit_description);
         }
     }
 
@@ -58,16 +67,31 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, int position) {
         final Subreddit subreddit = objects.get(position);
 
-        holder.name.setText(subreddit.getName());
-        holder.description.setText(Html.fromHtml(subreddit.getDescription()));
+        if (subreddit.getIsSubscribed().equals(false)) {
+            holder.subscribe.setBackgroundColor(activity.getColor(R.color.darkGrey));
+        } else {
+            holder.subscribe.setBackgroundColor(activity.getColor(R.color.colorAccent));
+        }
 
-        holder.linearLayout.setOnClickListener(new View.OnClickListener() {
+        holder.subscribe.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickSubreddit(subreddit.getName());
+                onClickSubscribe(subreddit, holder.subscribe);
+            }
+        });
+
+        holder.name.setText(subreddit.getSubredditName());
+        holder.subscribers.setText(subreddit.getSubscribers() + " subscribers");
+        holder.created.setText(subreddit.getCreated());
+        holder.description.setText(Html.fromHtml(subreddit.getDescription()));
+
+        holder.description.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickSubreddit(subreddit.getSubredditName());
             }
         });
     }
@@ -89,5 +113,56 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
     public void addAll(List<Subreddit> objects) {
         this.objects.addAll(objects);
         notifyDataSetChanged();
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void onClickSubscribe(final Subreddit subreddit, final ImageButton subscribe) {
+        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
+            showToast(activity.getString(R.string.login_error));
+            return;
+        }
+
+        String action;
+        if (subreddit.getIsSubscribed().equals(false)) {
+            subscribe.setBackgroundColor(activity.getColor(R.color.colorAccent));
+            subreddit.setIsSubscribed(true);
+            action = "sub";
+        } else {
+            subscribe.setBackgroundColor(activity.getColor(R.color.darkGrey));
+            subreddit.setIsSubscribed(false);
+            action = "unsub";
+        }
+
+        ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+        Call<Void> call = apiService.subscribeSubreddit(
+                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                action,
+                subreddit.getName()
+        );
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    showToast("Subscribing - " + response.message());
+
+                    if (subreddit.getIsSubscribed().equals(true)) {
+                        subscribe.setBackgroundColor(activity.getColor(R.color.colorAccent));
+                        subreddit.setIsSubscribed(true);
+                    } else {
+                        subscribe.setBackgroundColor(activity.getColor(R.color.darkGrey));
+                        subreddit.setIsSubscribed(false);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast(activity.getString(R.string.server_error));
+            }
+        });
     }
 }
