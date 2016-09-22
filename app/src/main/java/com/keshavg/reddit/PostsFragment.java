@@ -28,7 +28,7 @@ public class PostsFragment extends Fragment {
     private Boolean loadingFlag;
 
     private SwipeRefreshLayout swipeContainer;
-    private ProgressBar progressBarActivity;
+    private ProgressBar progressBar;
     private RecyclerView recList;
     private PostsAdapter postsAdapter;
     private LinearLayoutManager llm;
@@ -126,10 +126,10 @@ public class PostsFragment extends Fragment {
             }
         });
 
-        progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
-        progressBarLoadMore = (ProgressBar) getActivity().findViewById(R.id.progressbar);
+        progressBar = (ProgressBar) rootView.findViewById(R.id.progressbar_fragment);
+        progressBarLoadMore = (ProgressBar) rootView.findViewById(R.id.progressbar_bottom);
 
-        fetchPosts(true, progressBarActivity);
+        fetchPosts(true, progressBar);
     }
 
     /**

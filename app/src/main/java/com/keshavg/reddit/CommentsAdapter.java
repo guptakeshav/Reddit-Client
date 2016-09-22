@@ -100,7 +100,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             this.subcommentsView = (LinearLayout) v.findViewById(R.id.subcomments_list);
 
             this.loadMore = (FrameLayout) v.findViewById(R.id.load_more);
-            this.progressBar = (ProgressBar) this.loadMore.findViewById(R.id.progressbar);
+            this.progressBar = (ProgressBar) this.loadMore.findViewById(R.id.progressbar_bottom);
             this.button = (Button) this.loadMore.findViewById(R.id.button);
         }
     }
@@ -129,7 +129,11 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
     private void setViewData(final ViewHolder viewHolder, final Comment comment) {
         viewHolder.author.setText(comment.getPostedBy());
-        viewHolder.commentBody.setText(Html.fromHtml(comment.getBody()));
+
+        if (comment.getBody() != null) {
+            viewHolder.commentBody.setText(Html.fromHtml(comment.getBody()));
+        }
+
         viewHolder.created.setText(comment.getCreated());
         viewHolder.commentMenu.setVisibility(View.GONE);
         setScoreInformation(viewHolder, comment);

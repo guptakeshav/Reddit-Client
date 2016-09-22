@@ -35,9 +35,9 @@ public class CommentsFragment extends Fragment {
     private CommentsAdapter commentsAdapter;
     private LinearLayoutManager llm;
     private Button button;
-    private ProgressBar progressBar;
+    private ProgressBar progressBarLoadMore;
 
-    private ProgressBar progressBarActivity;
+    private ProgressBar progressBar;
 
     public static CommentsFragment newInstance(String url, String sortBy) {
         CommentsFragment fragment = new CommentsFragment();
@@ -90,9 +90,9 @@ public class CommentsFragment extends Fragment {
         button = (Button) view.findViewById(R.id.button);
         button.setText("Load More");
 
-        progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
-        progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_comments);
-        progressBarActivity.setVisibility(View.VISIBLE);
+        progressBar = (ProgressBar) view.findViewById(R.id.progressbar_fragment);
+        progressBarLoadMore = (ProgressBar) view.findViewById(R.id.progressbar);
+        progressBar.setVisibility(View.VISIBLE);
 
         fetchComments();
     }
@@ -151,7 +151,7 @@ public class CommentsFragment extends Fragment {
             }
 
             private void onComplete() {
-                progressBarActivity.setVisibility(View.GONE);
+                progressBar.setVisibility(View.GONE);
                 swipeContainer.setRefreshing(false);
             }
         });
@@ -164,7 +164,7 @@ public class CommentsFragment extends Fragment {
      */
     private void onClickLoadMore(final Queue<String> moreIds) {
         button.setVisibility(View.GONE);
-        progressBar.setVisibility(View.VISIBLE);
+        progressBarLoadMore.setVisibility(View.VISIBLE);
 
         ApiInterface apiService;
         Call<List<CommentResponse>> callMore;
@@ -186,7 +186,7 @@ public class CommentsFragment extends Fragment {
         callMore.enqueue(new Callback<List<CommentResponse>>() {
             private void onUnsuccessfulCall(String message) {
                 showToast(message);
-                progressBar.setVisibility(View.GONE);
+                progressBarLoadMore.setVisibility(View.GONE);
                 button.setVisibility(View.VISIBLE);
             }
 
@@ -195,7 +195,7 @@ public class CommentsFragment extends Fragment {
                 if (response.isSuccessful()) {
                     commentsAdapter.addAll(response.body().get(1).getComments());
 
-                    progressBar.setVisibility(View.GONE);
+                    progressBarLoadMore.setVisibility(View.GONE);
                     moreIds.remove();
                     if (!moreIds.isEmpty()) {
                         button.setVisibility(View.VISIBLE);

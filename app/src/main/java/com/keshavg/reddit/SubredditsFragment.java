@@ -23,7 +23,7 @@ public class SubredditsFragment extends Fragment {
     private Boolean loadingFlag;
 
     private SwipeRefreshLayout swipeContainer;
-    private ProgressBar progressBarActivity;
+    private ProgressBar progressBar;
     private RecyclerView recList;
     private SubredditsAdapter subredditsAdapter;
     private LinearLayoutManager llm;
@@ -84,9 +84,9 @@ public class SubredditsFragment extends Fragment {
             }
         });
 
-        progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
-        progressBarLoadMore = (ProgressBar) getActivity().findViewById(R.id.progressbar);
-        fetchSubreddits(true, progressBarActivity);
+        progressBar = (ProgressBar) rootView.findViewById(R.id.progressbar_fragment);
+        progressBarLoadMore = (ProgressBar) rootView.findViewById(R.id.progressbar_bottom);
+        fetchSubreddits(true, progressBar);
     }
 
     /**
