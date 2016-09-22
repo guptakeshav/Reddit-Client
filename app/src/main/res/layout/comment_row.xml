@@ -29,7 +29,7 @@
                 android:background="#BDBDBD">
             </View>
 
-            <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            <RelativeLayout
                 android:id="@+id/comment_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -110,17 +110,25 @@
                     android:layout_height="wrap_content"
                     android:text="Reply"
                     style="@style/Widget.AppCompat.Button.Borderless" />
+
+                <Button
+                    android:id="@+id/comment_delete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Delete"
+                    style="@style/Widget.AppCompat.Button.Borderless"
+                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
-    <android.support.v7.widget.RecyclerView
+    <LinearLayout
         android:id="@+id/subcomments_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="4dp"
-        android:nestedScrollingEnabled="false">
-    </android.support.v7.widget.RecyclerView>
+        android:orientation="vertical">
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/load_more"
@@ -128,13 +136,13 @@
         android:layout_height="wrap_content">
 
         <ProgressBar
-            android:id="@+id/progressbar_loadmore"
+            android:id="@+id/progressbar"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:visibility="gone" />
 
         <Button
-            android:id="@+id/button_loadmore"
+            android:id="@+id/button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Load More"

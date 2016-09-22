@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -53,9 +54,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         TextView title;
         TextView author;
         TextView created;
-        ImageView scoreUp;
+        ImageButton scoreUp;
         TextView scoreCount;
-        ImageView scoreDown;
+        ImageButton scoreDown;
         Button commentsCount;
 
         public ViewHolder(View itemView) {
@@ -68,9 +69,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             title = (TextView) postContent.findViewById(R.id.post_title);
             author = (TextView) postContent.findViewById(R.id.post_author);
             created = (TextView) postContent.findViewById(R.id.post_created);
-            scoreUp = (ImageView) itemView.findViewById(R.id.post_score_up);
+            scoreUp = (ImageButton) itemView.findViewById(R.id.post_score_up);
             scoreCount = (TextView) itemView.findViewById(R.id.post_score_count);
-            scoreDown = (ImageView) itemView.findViewById(R.id.post_score_down);
+            scoreDown = (ImageButton) itemView.findViewById(R.id.post_score_down);
             commentsCount = (Button) itemView.findViewById(R.id.post_comments_count);
         }
     }
@@ -93,6 +94,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
     public void addAll(List<Post> objects) {
         this.objects.addAll(objects);
+        notifyDataSetChanged();
+    }
+
+    public void remove(int idx) {
+        this.objects.remove(idx);
         notifyDataSetChanged();
     }
 
@@ -264,9 +270,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
     private void onClickCommentsCount(Post post, ViewHolder holder) {
         Intent i = new Intent(activity, CommentsActivity.class);
-        i.putExtra("Title", post.getTitle());
-        i.putExtra("Url", post.getPermalink());
-        i.putExtra("Image", post.getImage());
+        i.putExtra("TITLE", post.getTitle());
+        i.putExtra("URL", post.getPermalink());
+        i.putExtra("IMAGE", post.getImage());
         activity.startActivity(i,
                 ActivityOptions.makeSceneTransitionAnimation(activity,
                         holder.title,

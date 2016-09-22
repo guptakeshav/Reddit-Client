@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +54,29 @@ public class PostsFragment extends Fragment {
         return fragment;
     }
 
+    private class PostTouchHelper extends ItemTouchHelper.SimpleCallback {
+        // TODO
+        public PostTouchHelper() {
+            super(ItemTouchHelper.UP | ItemTouchHelper.DOWN,
+                    ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
+        }
+
+        @Override
+        public boolean isLongPressDragEnabled() {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+            postsAdapter.remove(viewHolder.getAdapterPosition());
+        }
+
+        @Override
+        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+            return false;
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,6 +114,10 @@ public class PostsFragment extends Fragment {
             }
         });
 
+        ItemTouchHelper.Callback callback = new PostTouchHelper();
+        ItemTouchHelper helper = new ItemTouchHelper(callback);
+        helper.attachToRecyclerView(recList);
+
         swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_container);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -99,7 +127,7 @@ public class PostsFragment extends Fragment {
         });
 
         progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
-        progressBarLoadMore = (ProgressBar) getActivity().findViewById(R.id.progressbar_loadmore);
+        progressBarLoadMore = (ProgressBar) getActivity().findViewById(R.id.progressbar);
 
         fetchPosts(true, progressBarActivity);
     }
@@ -132,7 +160,7 @@ public class PostsFragment extends Fragment {
         ApiInterface apiService;
         Call<PostResponse> call;
 
-        if (isSearch == 0) {
+        if (isSearch == 0) { // not performing search operation
             String completeUrl = url.equals("") ? sortByParam : (url + "/" + sortByParam);
             if (MainActivity.AuthPrefManager.isLoggedIn()) {
 

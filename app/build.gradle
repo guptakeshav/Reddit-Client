@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.keshavg.reddit"
-        minSdkVersion 22
+        minSdkVersion 23
         targetSdkVersion 24
         versionCode 1
         versionName "1.0"
@@ -37,4 +37,6 @@ dependencies {
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
     compile 'com.klinkerapps:sliding-activity:1.4.3'
+    provided 'org.projectlombok:lombok:1.12.6'
+    compile 'com.fiberlink.maas360.android:richtexteditor:0.1.1'
 }

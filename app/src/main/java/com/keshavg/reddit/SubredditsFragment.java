@@ -85,7 +85,7 @@ public class SubredditsFragment extends Fragment {
         });
 
         progressBarActivity = (ProgressBar) getActivity().findViewById(R.id.progressbar_posts);
-        progressBarLoadMore = (ProgressBar) getActivity().findViewById(R.id.progressbar_loadmore);
+        progressBarLoadMore = (ProgressBar) getActivity().findViewById(R.id.progressbar);
         fetchSubreddits(true, progressBarActivity);
     }
 

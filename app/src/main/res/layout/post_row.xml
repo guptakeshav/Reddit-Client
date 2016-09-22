@@ -106,10 +106,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
-                android:layout_gravity="center_vertical"
                 android:layout_weight="0.5">
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/post_score_up"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -119,10 +118,10 @@
                     android:id="@+id/post_score_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
+                    android:layout_centerInParent="true"
                     android:textAppearance="?android:attr/textAppearanceSmall" />
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/post_score_down"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

@@ -16,6 +16,7 @@ import android.widget.Toast;
 import java.util.List;
 import java.util.Queue;
 
+import lombok.Getter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -29,6 +30,8 @@ public class CommentsFragment extends Fragment {
 
     private SwipeRefreshLayout swipeContainer;
     private RecyclerView recList;
+
+    @Getter
     private CommentsAdapter commentsAdapter;
     private LinearLayoutManager llm;
     private Button button;
@@ -75,7 +78,7 @@ public class CommentsFragment extends Fragment {
         });
 
         recList = (RecyclerView) view.findViewById(R.id.recycler_list);
-        commentsAdapter = new CommentsAdapter(getContext(), url, sortByParam);
+        commentsAdapter = new CommentsAdapter(getActivity(), url, sortByParam);
         recList.setAdapter(commentsAdapter);
         llm = new LinearLayoutManager(
                 getActivity(),

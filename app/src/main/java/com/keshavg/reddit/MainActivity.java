@@ -86,6 +86,10 @@ public class MainActivity extends AppCompatActivity
             }
             return false;
         }
+
+        public static String getUsername() {
+            return authPref.getString("USERNAME", "");
+        }
     }
 
     @Override
@@ -375,8 +379,7 @@ public class MainActivity extends AppCompatActivity
         logout.setVisibility(View.VISIBLE);
         username.setVisibility(View.VISIBLE);
 
-        String name = authPref.getString("USERNAME", "");
-        username.setText("Welcome, " + name);
+        username.setText("Welcome, " + AuthPrefManager.getUsername());
     }
 
     private void onClickLogout() {

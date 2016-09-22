@@ -66,6 +66,9 @@ public interface ApiInterface {
     Call<AuthAccessResponse> refreshToken(@Field("grant_type") String grantType,
                                           @Field("refresh_token") String refreshToken);
 
+    @GET("subreddits/mine")
+    Call<SubredditResponse> getOAuthSubreddits();
+
     @GET("api/v1/me")
     Call<User> getUsername(@Header("Authorization") String authorization);
 
@@ -102,8 +105,14 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("api/comment")
-    Call<Void> submitComment(@Header("Authorization") String authorization,
-                             @Field("api_type") String apiType,
-                             @Field("text") String text,
-                             @Field("thing_id") String parentId);
+    Call<SubmitCommentResponse> submitComment(@Header("Authorization") String authorization,
+                                              @Query("raw_json") int value,
+                                              @Field("api_type") String apiType,
+                                              @Field("text") String text,
+                                              @Field("thing_id") String parentId);
+
+    @FormUrlEncoded
+    @POST("api/del")
+    Call<Void> deleteThing(@Header("Authorization") String authorization,
+                           @Field("id") String id);
 }

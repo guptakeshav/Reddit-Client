@@ -86,7 +86,7 @@
     </com.github.clans.fab.FloatingActionMenu>
 
     <ProgressBar
-        android:id="@+id/progressbar_loadmore"
+        android:id="@+id/progressbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.keshavg.reddit">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <application
+    <application tools:replace="android:allowBackup"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -24,24 +25,29 @@
             android:name=".CommentsActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".WebViewActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".SearchActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".ImageViewActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
-            android:theme="@style/Theme.Sliding.DayNight"></activity>
+            android:theme="@style/Theme.Sliding.DayNight" />
         <activity
             android:name=".ProfileActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label=""
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".SubmitCommentActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
             android:theme="@style/AppTheme.NoActionBar">

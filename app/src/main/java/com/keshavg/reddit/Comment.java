@@ -4,44 +4,48 @@ import android.text.format.DateUtils;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Queue;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Created by keshav.g on 29/08/16.
  */
-public class Comment {
+public class Comment implements Serializable {
     /**
      * 1
      */
+    @Getter
     @SerializedName("children") private Queue<String> moreIds;
-
-    public Queue<String> getMoreIds() {
-        return moreIds;
-    }
 
     /**
      * 2
      */
+
+    @Getter
     private String author;
-    @SerializedName("body_html") private String body;
-    @SerializedName("created_utc") private int created;
-    private Boolean likes;
-    private String name;
-    private CommentResponse replyResponse;
-    private int score;
 
-    public String getName() {
-        return name;
-    }
-
-    public String getAuthor() {
+    public String getPostedBy() {
         return "Posted by " + author;
     }
 
-    public String getBody() {
-        return body;
-    }
+    @Getter
+    @SerializedName("body_html") private String body;
+
+    @SerializedName("created_utc") private int created;
+
+    private Boolean likes;
+
+    @Getter
+    private String name;
+
+    @Setter
+    private CommentResponse replyResponse;
+
+    private int score;
 
     public String getCreated() {
         return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
@@ -80,15 +84,25 @@ public class Comment {
         return replyResponse.getMoreIds();
     }
 
-    public void setReplyResponse(CommentResponse replyResponse) {
-        this.replyResponse = replyResponse;
-    }
-
     public String getScore() {
         return score + " points";
     }
 
     public void updateScore(int delta) {
         score += delta;
+    }
+
+    @Override
+    public String toString() {
+        return "Comment{" +
+                "moreIds=" + moreIds +
+                ", author='" + author + '\'' +
+                ", body='" + body + '\'' +
+                ", created=" + created +
+                ", likes=" + likes +
+                ", name='" + name + '\'' +
+                ", replyResponse=" + replyResponse +
+                ", score=" + score +
+                '}';
     }
 }
