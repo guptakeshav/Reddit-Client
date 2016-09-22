@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -20,7 +19,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
+import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +39,7 @@ import static android.R.color.white;
  * Created by keshav.g on 29/08/16.
  */
 public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHolder>
-        implements FastScrollRecyclerView.SectionedAdapter {
+        implements SectionTitleProvider {
     private Map<String, LinearLayout> parentReplies;
     private Activity activity;
     private String url;
@@ -105,9 +104,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         }
     }
 
-    @NonNull
     @Override
-    public String getSectionName(int position) {
+    public String getSectionTitle(int position) {
         return String.valueOf(position);
     }
 

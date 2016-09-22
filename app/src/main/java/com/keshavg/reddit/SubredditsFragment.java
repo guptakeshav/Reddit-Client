@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.futuremind.recyclerviewfastscroll.FastScroller;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -28,6 +30,7 @@ public class SubredditsFragment extends Fragment {
     private SubredditsAdapter subredditsAdapter;
     private LinearLayoutManager llm;
     private ProgressBar progressBarLoadMore;
+    private FastScroller fastScroller;
 
     private String searchQuery;
     private String afterParam;
@@ -75,6 +78,8 @@ public class SubredditsFragment extends Fragment {
                 loadMoreSubreddits();
             }
         });
+        fastScroller = (FastScroller) rootView.findViewById(R.id.fast_scroll);
+        fastScroller.setRecyclerView(recList);
 
         swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_container);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {

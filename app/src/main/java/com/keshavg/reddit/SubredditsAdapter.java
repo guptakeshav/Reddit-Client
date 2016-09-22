@@ -1,7 +1,6 @@
 package com.keshavg.reddit;
 
 import android.app.Activity;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -11,7 +10,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
+import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,7 @@ import retrofit2.Response;
  * Created by keshavgupta on 9/11/16.
  */
 public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.ViewHolder>
-        implements FastScrollRecyclerView.SectionedAdapter {
+        implements SectionTitleProvider {
     private Activity activity;
     private List<Subreddit> objects;
 
@@ -51,9 +50,8 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
         }
     }
 
-    @NonNull
     @Override
-    public String getSectionName(int position) {
+    public String getSectionTitle(int position) {
         return String.valueOf(position);
     }
 
@@ -86,7 +84,10 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
         holder.name.setText(subreddit.getSubredditName());
         holder.subscribers.setText(subreddit.getSubscribers() + " subscribers");
         holder.created.setText(subreddit.getCreated());
-        holder.description.setText(Html.fromHtml(subreddit.getDescription()));
+
+        if (subreddit.getDescription() != null) {
+            holder.description.setText(Html.fromHtml(subreddit.getDescription()));
+        }
 
         holder.description.setOnClickListener(new View.OnClickListener() {
             @Override

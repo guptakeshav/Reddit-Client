@@ -5,7 +5,6 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +21,7 @@ import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
+import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,7 @@ import retrofit2.Response;
  * Created by keshav.g on 23/08/16.
  */
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
-        implements FastScrollRecyclerView.SectionedAdapter {
+        implements SectionTitleProvider {
     private Activity activity;
     private List<Post> objects;
     private RequestManager requestManager;
@@ -76,9 +75,8 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         }
     }
 
-    @NonNull
     @Override
-    public String getSectionName(int position) {
+    public String getSectionTitle(int position) {
         return String.valueOf(position);
     }
 

@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.futuremind.recyclerviewfastscroll.FastScroller;
 
 import java.util.List;
 
@@ -33,6 +34,7 @@ public class PostsFragment extends Fragment {
     private PostsAdapter postsAdapter;
     private LinearLayoutManager llm;
     private ProgressBar progressBarLoadMore;
+    private FastScroller fastScroller;
 
     private String url;
     private String sortByParam;
@@ -113,6 +115,8 @@ public class PostsFragment extends Fragment {
                 loadMorePosts();
             }
         });
+        fastScroller = (FastScroller) rootView.findViewById(R.id.fast_scroll);
+        fastScroller.setRecyclerView(recList);
 
         ItemTouchHelper.Callback callback = new PostTouchHelper();
         ItemTouchHelper helper = new ItemTouchHelper(callback);

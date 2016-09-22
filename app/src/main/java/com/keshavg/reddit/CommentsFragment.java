@@ -13,6 +13,8 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.futuremind.recyclerviewfastscroll.FastScroller;
+
 import java.util.List;
 import java.util.Queue;
 
@@ -30,6 +32,7 @@ public class CommentsFragment extends Fragment {
 
     private SwipeRefreshLayout swipeContainer;
     private RecyclerView recList;
+    private FastScroller fastScroller;
 
     @Getter
     private CommentsAdapter commentsAdapter;
@@ -86,6 +89,8 @@ public class CommentsFragment extends Fragment {
                 false
         );
         recList.setLayoutManager(llm);
+        fastScroller = (FastScroller) view.findViewById(R.id.fast_scroll);
+        fastScroller.setRecyclerView(recList);
 
         button = (Button) view.findViewById(R.id.button);
         button.setText("Load More");
