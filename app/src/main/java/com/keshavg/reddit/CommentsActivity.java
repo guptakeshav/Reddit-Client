@@ -74,7 +74,7 @@ public class CommentsActivity extends AppCompatActivity {
         for (int idx = 0; idx < sortByList.length; ++idx) {
             String sortBy = sortByList[idx];
 
-            Fragment fragment = CommentsFragment.newInstance(url, sortBy);
+            Fragment fragment = CommentsFragment.newInstance(url, sortBy, false);
             fragments.add(fragment);
             adapter.addFragment(fragment, sortBy);
         }

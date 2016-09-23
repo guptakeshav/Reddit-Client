@@ -37,6 +37,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent" />
 
+                    <!--TODO-->
                     <ProgressBar
                         android:id="@+id/progressbar"
                         android:layout_width="fill_parent"
@@ -67,7 +68,7 @@
             android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
             app:fastscroll__handleColor="@color/colorPrimary" />
     </RelativeLayout>
 </FrameLayout>

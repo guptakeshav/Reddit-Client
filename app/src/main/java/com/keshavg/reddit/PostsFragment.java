@@ -6,7 +6,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,43 +39,31 @@ public class PostsFragment extends Fragment {
     private String sortByParam;
     private String afterParam;
     private int isSearch;
+    private Boolean isHiddenPostsShown;
+    private Boolean clearOnHide;
+    private Boolean clearOnUnHide;
 
     private RedditPostsDbHelper dbHelper;
 
     public PostsFragment() {
     }
 
-    public static PostsFragment newInstance(String url, String sortByParam, int isSearch) {
+    public static PostsFragment newInstance(String url,
+                                            String sortByParam,
+                                            int isSearch,
+                                            Boolean isHiddenPostsShown,
+                                            Boolean clearOnHide,
+                                            Boolean clearOnUnHide) {
         PostsFragment fragment = new PostsFragment();
         Bundle args = new Bundle();
         args.putString("URL", url);
         args.putString("SORT_BY", sortByParam);
         args.putInt("IS_SEARCH", isSearch);
+        args.putBoolean("IS_HIDDEN_POSTS_SHOWN", isHiddenPostsShown);
+        args.putBoolean("CLEAR_ON_HIDE", clearOnHide);
+        args.putBoolean("CLEAR_ON_UNHIDE", clearOnUnHide);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    private class PostTouchHelper extends ItemTouchHelper.SimpleCallback {
-        // TODO
-        public PostTouchHelper() {
-            super(ItemTouchHelper.UP | ItemTouchHelper.DOWN,
-                    ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
-        }
-
-        @Override
-        public boolean isLongPressDragEnabled() {
-            return false;
-        }
-
-        @Override
-        public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-            postsAdapter.remove(viewHolder.getAdapterPosition());
-        }
-
-        @Override
-        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-            return false;
-        }
     }
 
     @Override
@@ -87,6 +74,9 @@ public class PostsFragment extends Fragment {
         sortByParam = getArguments().getString("SORT_BY");
         isSearch = getArguments().getInt("IS_SEARCH");
         loadingFlag = false;
+        isHiddenPostsShown = getArguments().getBoolean("IS_HIDDEN_POSTS_SHOWN");
+        clearOnHide = getArguments().getBoolean("CLEAR_ON_HIDE");
+        clearOnUnHide = getArguments().getBoolean("CLEAR_ON_UNHIDE");
 
         dbHelper = new RedditPostsDbHelper(getContext());
     }
@@ -100,7 +90,11 @@ public class PostsFragment extends Fragment {
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
         recList = (RecyclerView) rootView.findViewById(R.id.recycler_list);
-        postsAdapter = new PostsAdapter(getActivity(), Glide.with(getContext()));
+        postsAdapter = new PostsAdapter(
+                getActivity(),
+                Glide.with(getContext()),
+                clearOnHide,
+                clearOnUnHide);
         recList.setAdapter(postsAdapter);
         llm = new LinearLayoutManager(
                 getActivity(),
@@ -117,10 +111,6 @@ public class PostsFragment extends Fragment {
         });
         fastScroller = (FastScroller) rootView.findViewById(R.id.fast_scroll);
         fastScroller.setRecyclerView(recList);
-
-        ItemTouchHelper.Callback callback = new PostTouchHelper();
-        ItemTouchHelper helper = new ItemTouchHelper(callback);
-        helper.attachToRecyclerView(recList);
 
         swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_container);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -140,6 +130,10 @@ public class PostsFragment extends Fragment {
      * Fetching more posts when the end of list has reached
      */
     private void loadMorePosts() {
+        if (afterParam == null) {
+            return;
+        }
+
         int totalItemCount = llm.getItemCount();
         int lastVisibleItem = llm.findLastVisibleItemPosition();
         int visibleThreshold = 2;
@@ -157,7 +151,7 @@ public class PostsFragment extends Fragment {
         loadingFlag = true;
         progressBar.setVisibility(View.VISIBLE);
 
-        if (clearAdapterFlag == true) {
+        if (clearAdapterFlag) {
             afterParam = "";
         }
 
@@ -202,7 +196,7 @@ public class PostsFragment extends Fragment {
 
                 if (clearAdapterFlag == true) {
                     postsAdapter.clear();
-                    postsAdapter.addAll(dbHelper.getPosts(url + "/" + sortByParam));
+                    postsAdapter.addAll(dbHelper.getPosts(url + "/" + sortByParam), isHiddenPostsShown);
                 }
 
                 onComplete();
@@ -211,7 +205,7 @@ public class PostsFragment extends Fragment {
             @Override
             public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
                 if (response.isSuccessful()) {
-                    if (clearAdapterFlag == true) {
+                    if (clearAdapterFlag) {
                         postsAdapter.clear();
                         dbHelper.clearTable();
                     }
@@ -219,7 +213,7 @@ public class PostsFragment extends Fragment {
                     List<Post> posts = response.body().getPosts();
                     afterParam = response.body().getAfterId();
 
-                    postsAdapter.addAll(posts);
+                    postsAdapter.addAll(posts, isHiddenPostsShown);
                     dbHelper.insertPosts(posts, url + "/" + sortByParam);
 
                     onComplete();

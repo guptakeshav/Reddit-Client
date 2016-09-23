@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -38,15 +40,26 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     private Activity activity;
     private List<Post> objects;
     private RequestManager requestManager;
+    private Boolean clearOnHide;
+    private Boolean clearOnUnHide;
 
-    public PostsAdapter(Activity activity, RequestManager requestManager) {
+    public PostsAdapter(Activity activity,
+                        RequestManager requestManager,
+                        Boolean clearOnHide,
+                        Boolean clearOnUnHide) {
         this.activity = activity;
         this.objects = new ArrayList<>();
         this.requestManager = requestManager;
+        this.clearOnHide = clearOnHide;
+        this.clearOnUnHide = clearOnUnHide;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ProgressBar progressBar;
+        Toolbar toolbar;
+        MenuItem share;
+        MenuItem save;
+        MenuItem hide;
         ImageView image;
         TextView subreddit;
         RelativeLayout postContent;
@@ -62,12 +75,19 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             super(itemView);
 
             progressBar = (ProgressBar) itemView.findViewById(R.id.progressbar_image);
+
+            toolbar = (Toolbar) itemView.findViewById(R.id.toolbar);
+            toolbar.inflateMenu(R.menu.post_functions);
+
+            share = toolbar.getMenu().findItem(R.id.share);
+            save = toolbar.getMenu().findItem(R.id.save);
+            hide = toolbar.getMenu().findItem(R.id.hide);
             image = (ImageView) itemView.findViewById(R.id.post_image);
             subreddit = (TextView) itemView.findViewById(R.id.post_subreddit);
             postContent = (RelativeLayout) itemView.findViewById(R.id.post_content);
             title = (TextView) postContent.findViewById(R.id.post_title);
-            author = (TextView) postContent.findViewById(R.id.post_author);
-            created = (TextView) postContent.findViewById(R.id.post_created);
+            author = (TextView) toolbar.findViewById(R.id.post_author);
+            created = (TextView) toolbar.findViewById(R.id.post_created);
             scoreUp = (ImageButton) itemView.findViewById(R.id.post_score_up);
             scoreCount = (TextView) itemView.findViewById(R.id.post_score_count);
             scoreDown = (ImageButton) itemView.findViewById(R.id.post_score_down);
@@ -90,8 +110,13 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         notifyDataSetChanged();
     }
 
-    public void addAll(List<Post> objects) {
-        this.objects.addAll(objects);
+    public void addAll(List<Post> objects, Boolean isHiddenPostsShown) {
+       for (Post post : objects) {
+            if (isHiddenPostsShown || post.getIsHidden() == -1) {
+                this.objects.add(post);
+            }
+        }
+
         notifyDataSetChanged();
     }
 
@@ -111,12 +136,40 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                 .from(parent.getContext())
                 .inflate(R.layout.post_row, parent, false);
 
-        return new ViewHolder(itemView);
+        ViewHolder holder = new ViewHolder(itemView);
+        return holder;
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         final Post post = objects.get(position);
+
+        holder.toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if (item.getTitle().equals("Save") || item.getTitle().equals("Unsave")) {
+                    onClickSave(post, holder.save, position);
+                    return true;
+                } else if (item.getTitle().equals("Hide") || item.getTitle().equals("Unhide")) {
+                    onClickHide(post, holder.hide, position);
+                    return true;
+                }
+
+                return false;
+            }
+        });
+
+        if (post.getIsSaved() == 1) {
+            holder.save.setTitle("Unsave");
+        } else {
+            holder.save.setTitle("Save");
+        }
+
+        if (post.getIsHidden() == 1) {
+            holder.hide.setTitle("Unhide");
+        } else {
+            holder.hide.setTitle("Hide");
+        }
 
         int width = activity.getWindowManager().getDefaultDisplay().getWidth() - dpToPx(20);
         int height = 384;
@@ -156,7 +209,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         holder.subreddit.setText(post.getFormattedSubreddit());
         holder.title.setText(post.getTitle());
         holder.author.setText(post.getPostedBy());
-        setScoreInformation(holder, post.getScore(), post.getLikes());
+        setScoreInformation(holder, post.getScore(), post.getIsLiked());
         holder.created.setText(post.getRelativeCreatedTimeSpan());
         holder.commentsCount.setText(post.getCommentsCount());
 
@@ -210,6 +263,104 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         }
     }
 
+    private void onClickSave(final Post post, final MenuItem save, final int position) {
+        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
+            showToast(activity.getString(R.string.login_error));
+            return;
+        }
+
+        ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+
+        Call<Void> call;
+        if (post.getIsSaved() == 1) {
+            call = apiService.unsaveThing(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    post.getName()
+            );
+        } else {
+            call = apiService.saveThing(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    post.getName()
+            );
+        }
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    if (post.getIsSaved() == 1) {
+                        showToast("Unsaved");
+                        save.setTitle("Save");
+                        post.setIsSaved(-1);
+                    } else {
+                        showToast("Saved");
+                        save.setTitle("Unsave");
+                        post.setIsSaved(1);
+                    }
+                } else {
+                    showToast("Save - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast(activity.getString(R.string.server_error));
+            }
+        });
+    }
+
+    private void onClickHide(final Post post, final MenuItem hide, final int position) {
+        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
+            showToast(activity.getString(R.string.login_error));
+            return;
+        }
+
+        ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+
+        Call<Void> call;
+        if (post.getIsHidden() == 1) {
+            call = apiService.unhideThing(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    post.getName()
+            );
+        } else {
+            call = apiService.hideThing(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    post.getName()
+            );
+        }
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    if (post.getIsHidden() == 1) {
+                        hide.setTitle("Hide");
+                        post.setIsHidden(-1);
+
+                        if (clearOnUnHide) {
+                            remove(position);
+                        }
+                    } else {
+                        hide.setTitle("Unhide");
+                        post.setIsHidden(1);
+
+                        if (clearOnHide) {
+                            remove(position);
+                        }
+                    }
+                } else {
+                    showToast("Save - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast(activity.getString(R.string.server_error));
+            }
+        });
+    }
+
     private void onClickImage(int position) {
         Intent i = new Intent(activity, ImageViewActivity.class);
         i.putExtra("Image", objects.get(position).getImage());
@@ -229,19 +380,18 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             return;
         }
 
-        ApiInterface apiService = ApiClient.getOAuthClient()
-                .create(ApiInterface.class);
+        ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
 
         final Post post = objects.get(position);
-        final int prevLikes = post.getLikes();
-        post.setLikes((post.getLikes() ^ likes) == 0 ? 0 : likes);
-        final int delta = post.getLikes() - prevLikes;
+        final int prevLikes = post.getIsLiked();
+        post.setIsLiked((post.getIsLiked() == likes) ? 0 : likes);
+        final int delta = post.getIsLiked() - prevLikes;
         post.updateScore(delta);
-        setScoreInformation(holder, post.getScore(), post.getLikes());
+        setScoreInformation(holder, post.getScore(), post.getIsLiked());
 
         Call<Void> call = apiService.votePost("bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                 post.getName(),
-                post.getLikes()
+                post.getIsLiked()
         );
         call.enqueue(new Callback<Void>() {
             @Override
@@ -253,9 +403,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                         showToast("Voting - " + response.message());
                     }
 
-                    post.setLikes(prevLikes);
+                    post.setIsLiked(prevLikes);
                     post.updateScore(-delta);
-                    setScoreInformation(holder, post.getScore(), post.getLikes());
+                    setScoreInformation(holder, post.getScore(), post.getIsLiked());
                 }
             }
 

@@ -218,6 +218,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     /**
      * Function to add object to the adapter
      * And update the view
+     * @param index
      * @param comment
      */
     public void add(int index, Comment comment) {
@@ -334,7 +335,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
 
         final int prevLikes = comment.getLikes();
-        comment.setLikes((comment.getLikes() ^ likes) == 0 ? 0 : likes);
+        comment.setLikes((comment.getLikes() == likes) ? 0 : likes);
         final int delta = comment.getLikes() - prevLikes;
         comment.updateScore(delta);
         setScoreInformation(viewHolder, comment);
@@ -390,7 +391,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
         if (MainActivity.AuthPrefManager.isLoggedIn()) {
             apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
-            callMore = apiService.getMoreOAuthComments(
+            callMore = apiService.getOAuthComments(
                     "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                     url,
                     moreIds.peek(),
@@ -399,7 +400,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             );
         } else {
             apiService = ApiClient.getClient().create(ApiInterface.class);
-            callMore = apiService.getMoreComments(url, moreIds.peek(), sortByParam, 1);
+            callMore = apiService.getComments(url, moreIds.peek(), sortByParam, 1);
         }
 
         callMore.enqueue(new Callback<List<CommentResponse>>() {
@@ -457,7 +458,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
-                    viewHolder.commentBody.setText("[deleted]");
+                    viewHolder.commentBody.setText("[removed]");
+                    viewHolder.author.setText("[deleted]");
                 } else {
                     showToast("Deleting - " + response.message());
                 }

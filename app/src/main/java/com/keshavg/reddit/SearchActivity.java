@@ -53,10 +53,14 @@ public class SearchActivity extends AppCompatActivity {
                         return false;
                     }
 
-                    if (type.equals("posts")) {
+                    tabLayout.setVisibility(View.VISIBLE);
+
+                    if (type.equals("POSTS")) {
                         performPostsSearch(v.getText().toString());
-                    } else if (type.equals("subreddits")) {
+                    } else if (type.equals("SUBREDDITS")) {
                         performSubredditsSearch(v.getText().toString());
+                    } else if (type.equals("USERS")) {
+                        performUsersSearch(v.getText().toString());
                     }
 
                     InputMethodManager imm = (InputMethodManager)
@@ -82,13 +86,11 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void performPostsSearch(String searchQuery) {
-        tabLayout.setVisibility(View.VISIBLE);
-
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
 
         String[] sortByList = {"relevance", "top", "new", "comments"};
         for (String sortBy : sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(searchQuery, sortBy, 1), sortBy);
+            adapter.addFragment(PostsFragment.newInstance(searchQuery, sortBy, 1, false, true, false), sortBy);
         }
 
         viewPager.setAdapter(adapter);
@@ -96,10 +98,19 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void performSubredditsSearch(String searchQuery) {
-        tabLayout.setVisibility(View.VISIBLE);
-
         ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
         adapter.addFragment(SubredditsFragment.newInstance(searchQuery), "Subreddits");
+
+        viewPager.setAdapter(adapter);
+        tabLayout.setupWithViewPager(viewPager);
+    }
+
+    private void performUsersSearch(String searchQuery) {
+        ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
+
+        adapter.addFragment(UserOverviewFragment.newInstance(searchQuery), "Overview");
+        adapter.addFragment(PostsFragment.newInstance("user/" + searchQuery + "/submitted", "", 0, true, true, false), "Submitted");
+//        adapter.addFragment(CommentsFragment.newInstance("user/" + searchQuery + "/comments", "hot"), "Comments");
 
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
@@ -112,7 +123,7 @@ public class SearchActivity extends AppCompatActivity {
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
         for (String sortBy : sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(subreddit, sortBy, 0), sortBy);
+            adapter.addFragment(PostsFragment.newInstance(subreddit, sortBy, 0, false, true, false), sortBy);
         }
 
         viewPager.setAdapter(adapter);

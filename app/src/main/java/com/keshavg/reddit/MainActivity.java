@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity
         fab_posts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openSearchActivity("posts");
+                openSearchActivity("POSTS");
             }
         });
 
@@ -120,7 +120,15 @@ public class MainActivity extends AppCompatActivity
         fab_subreddits.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openSearchActivity("subreddits");
+                openSearchActivity("SUBREDDITS");
+            }
+        });
+
+        FloatingActionButton fab_users = (FloatingActionButton) findViewById(R.id.fab_user);
+        fab_users.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openSearchActivity("USERS");
             }
         });
 
@@ -207,19 +215,35 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        prevMenuItem.setChecked(false);
-        item.setChecked(true);
-        prevMenuItem = item;
-
-        if (item.getTitle().equals("frontpage")) {
-            changePosts("");
+        if (item.getTitle().equals("Profile")) {
+            return openProfile(AuthPrefManager.getUsername());
         } else {
-            changePosts(item.getTitle().toString());
+            prevMenuItem.setChecked(false);
+            item.setChecked(true);
+            prevMenuItem = item;
+
+            if (item.getTitle().equals("Frontpage")) {
+                changePosts("");
+            } else {
+                changePosts(item.getTitle().toString());
+            }
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private boolean openProfile(String username) {
+        if (!AuthPrefManager.isLoggedIn()) {
+            showToast(getString(R.string.login_error));
+            return true;
+        }
+
+        Intent i = new Intent(MainActivity.this, ProfileActivity.class);
+        i.putExtra("USERNAME", username);
+        startActivity(i);
+        return false;
     }
 
     @Override
@@ -284,7 +308,7 @@ public class MainActivity extends AppCompatActivity
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
         for (String sortBy : sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(url, sortBy, 0), sortBy);
+            adapter.addFragment(PostsFragment.newInstance(url, sortBy, 0, false, true, false), sortBy);
         }
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
@@ -292,9 +316,10 @@ public class MainActivity extends AppCompatActivity
 
     private void setupNavBar(NavigationView navigationView) {
         menu = navigationView.getMenu();
-        menu.add("frontpage");
-        menu.getItem(0).setChecked(true);
-        prevMenuItem = menu.getItem(0);
+        menu.add("Profile");
+        menu.add("Frontpage");
+        menu.getItem(1).setChecked(true);
+        prevMenuItem = menu.getItem(1);
 
         subredditsMenu = menu.addSubMenu("Subreddits");
         fetchSubredditNames();

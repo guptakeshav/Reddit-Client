@@ -4,26 +4,55 @@ import android.text.format.DateUtils;
 
 import com.google.gson.annotations.SerializedName;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Created by keshav.g on 22/08/16.
  */
 public class Post {
+    @Getter
     private String name;
+
+    @Getter
     private String author;
+
+    @Getter
     @SerializedName("created_utc") private long created;
-    private Boolean likes;
+
+    @SerializedName("saved") private Boolean isSaved;
+
+    @SerializedName("hidden") private Boolean isHidden;
+
+    @SerializedName("likes") private Boolean isLiked;
+
+    @Getter
     @SerializedName("num_comments") private int numComments;
+
+    @Getter
     private String permalink;
+
     private int score;
+
+    @Getter
     private String subreddit;
+
+    @Getter
+    @Setter
     private String image;
+
+    @Getter
     private String title;
+
+    @Getter
     private String url;
 
     public Post(String name,
                 String author,
                 long created,
-                int likes,
+                int isSaved,
+                int isHidden,
+                int isLiked,
                 int numComments,
                 String permalink,
                 int score,
@@ -34,15 +63,9 @@ public class Post {
         this.name = name;
         this.author = author;
         this.created = created;
-
-        if (likes == 1) {
-            this.likes = true;
-        } else if (likes == -1) {
-            this.likes = false;
-        } else {
-            this.likes = null;
-        }
-
+        this.isSaved = convertIntToBool(isSaved);
+        this.isHidden = convertIntToBool(isHidden);
+        this.isLiked = convertIntToBool(isLiked);
         this.numComments = numComments;
         this.permalink = permalink;
         this.score = score;
@@ -52,56 +75,59 @@ public class Post {
         this.url = url;
     }
 
-    public String getName() {
-        return name;
+    private int convertBoolToInt(Boolean bool) {
+        if (bool == null) {
+            return 0;
+        } else if (bool.equals(true)) {
+            return 1;
+        }
+        return - 1;
     }
 
-    public String getAuthor() {
-        return author;
+    private Boolean convertIntToBool(int number) {
+        if (number == 1) {
+            return true;
+        } else if (number == -1) {
+            return false;
+        }
+
+        return null;
     }
 
     public String getPostedBy() {
         return "Posted by " + author;
     }
 
-    public long getCreated() {
-        return created;
-    }
-
     public String getRelativeCreatedTimeSpan() {
         return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
     }
 
-    public int getLikes() {
-        if (likes == null) {
-            return 0;
-        } else if (likes.equals(true)) {
-            return 1;
-        }
-
-        return -1;
+    public int getIsSaved() {
+        return convertBoolToInt(isSaved);
     }
 
-    public void setLikes(int likes) {
-        if (likes == 1) {
-            this.likes = true;
-        } else if (likes == -1) {
-            this.likes = false;
-        } else {
-            this.likes = null;
-        }
+    public void setIsSaved(int saved) {
+        isSaved = convertIntToBool(saved);
     }
 
-    public int getNumComments() {
-        return numComments;
+    public int getIsHidden() {
+        return convertBoolToInt(isHidden);
+    }
+
+    public void setIsHidden(int hidden) {
+        isHidden = convertIntToBool(hidden);
+    }
+
+    public int getIsLiked() {
+        return convertBoolToInt(isLiked);
+    }
+
+    public void setIsLiked(int isLiked) {
+        this.isLiked = convertIntToBool(isLiked);
     }
 
     public String getCommentsCount() {
         return Integer.toString(numComments) + " comments";
-    }
-
-    public String getPermalink() {
-        return permalink;
     }
 
     public void fixPermalink() {
@@ -117,27 +143,7 @@ public class Post {
         this.score += delta;
     }
 
-    public String getSubreddit() {
-        return subreddit;
-    }
-
     public String getFormattedSubreddit() {
         return "r/" + subreddit;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getUrl() {
-        return url;
     }
 }

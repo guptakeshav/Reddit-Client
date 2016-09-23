@@ -39,10 +39,9 @@
         android:id="@+id/fab_menu"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
+        android:layout_gravity="bottom|end"
         android:paddingBottom="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
         fab:menu_backgroundColor="#CCFFFFFF"
         fab:menu_fab_label="Search"
         fab:menu_colorNormal="@color/colorAccent"
@@ -74,6 +73,14 @@
             android:layout_height="wrap_content"
             android:src="@drawable/ic_search"
             fab:fab_label="Subreddits"
+            fab:fab_size="mini" />
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/fab_user"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_search"
+            fab:fab_label="Users"
             fab:fab_size="mini" />
     </com.github.clans.fab.FloatingActionMenu>
 </android.support.design.widget.CoordinatorLayout>

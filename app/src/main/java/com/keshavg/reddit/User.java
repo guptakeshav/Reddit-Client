@@ -1,5 +1,7 @@
 package com.keshavg.reddit;
 
+import android.text.format.DateUtils;
+
 import com.google.gson.annotations.SerializedName;
 
 import lombok.Getter;
@@ -14,7 +16,6 @@ public class User {
     @Getter
     @SerializedName("comment_karma") private String commentKarma;
 
-    @Getter
     @SerializedName("created_utc") private Long created;
 
     @Getter
@@ -22,4 +23,8 @@ public class User {
 
     @Getter
     @SerializedName("has_verified_email") private Boolean hasVerifiedEmail;
+
+    public String getCreated() {
+        return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
+    }
 }

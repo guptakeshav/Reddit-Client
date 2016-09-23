@@ -29,6 +29,8 @@ import retrofit2.Response;
 public class CommentsFragment extends Fragment {
     private String url;
     private String sortByParam;
+    private Boolean isProfileActivity;
+    private Comments comments;
 
     private SwipeRefreshLayout swipeContainer;
     private RecyclerView recList;
@@ -42,11 +44,12 @@ public class CommentsFragment extends Fragment {
 
     private ProgressBar progressBar;
 
-    public static CommentsFragment newInstance(String url, String sortBy) {
+    public static CommentsFragment newInstance(String url, String sortBy, Boolean isProfileActivity) {
         CommentsFragment fragment = new CommentsFragment();
         Bundle args = new Bundle();
         args.putString("URL", url);
         args.putString("SORT_BY", sortBy);
+        args.putBoolean("IS_PROFILE_ACTIVITY", isProfileActivity);
         fragment.setArguments(args);
         return fragment;
     }
@@ -57,6 +60,13 @@ public class CommentsFragment extends Fragment {
 
         url = getArguments().getString("URL");
         sortByParam = getArguments().getString("SORT_BY");
+        isProfileActivity = getArguments().getBoolean("IS_PROFILE_ACTIVITY");
+
+        if (isProfileActivity) {
+            comments = new CommentsForProfile();
+        } else {
+            comments = new CommentsForPost();
+        }
     }
 
     @Nullable
@@ -75,7 +85,7 @@ public class CommentsFragment extends Fragment {
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                fetchComments();
+                comments.fetchComments();
             }
         });
 
@@ -98,126 +108,205 @@ public class CommentsFragment extends Fragment {
         progressBarLoadMore = (ProgressBar) view.findViewById(R.id.progressbar);
         progressBar.setVisibility(View.VISIBLE);
 
-        fetchComments();
+        comments.fetchComments();
     }
 
     private void showToast(String message) {
         Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
-    /**
-     * Function to fetch the list of comments from the REST api
-     */
-    public void fetchComments() {
-        ApiInterface apiService;
-        Call<List<CommentResponse>> call;
+    private abstract class Comments {
+        abstract void fetchComments();
+        abstract void onClickLoadMore(final Queue<String> moreIds);
 
-        if (MainActivity.AuthPrefManager.isLoggedIn()) {
-            apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
-            call = apiService.getOAuthComments(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
-                    url,
-                    sortByParam,
-                    1
-            );
-        } else {
-            apiService = ApiClient.getClient().create(ApiInterface.class);
-            call = apiService.getComments(url, sortByParam, 1);
-        }
+        public void onFetchCommentsSuccessfulResponse(CommentResponse response) {
+            // clearing out the previous content
+            button.setVisibility(View.GONE);
+            commentsAdapter.clear();
 
-        call.enqueue(new Callback<List<CommentResponse>>() {
-            @Override
-            public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
-                if (response.isSuccessful()) {
-                    // clearing out the previous content
-                    button.setVisibility(View.GONE);
-                    commentsAdapter.clear();
+            // add the new content
+            commentsAdapter.addAll(response.getComments());
 
-                    // add the new content
-                    commentsAdapter.addAll(response.body().get(1).getComments());
-
-                    final Queue<String> moreIds = response.body().get(1).getMoreIds();
-                    if (moreIds != null && !moreIds.isEmpty()) {
-                        button.setVisibility(View.VISIBLE);
-                        button.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                onClickLoadMore(moreIds);
-                            }
-                        });
+            final Queue<String> moreIds = response.getMoreIds();
+            if (moreIds != null && !moreIds.isEmpty()) {
+                button.setVisibility(View.VISIBLE);
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        onClickLoadMore(moreIds);
                     }
-                } else {
-                    showToast("Comments - " + response.message());
-                }
-
-                onComplete();
+                });
             }
-
-            @Override
-            public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
-                showToast(getString(R.string.server_error));
-                onComplete();
-            }
-
-            private void onComplete() {
-                progressBar.setVisibility(View.GONE);
-                swipeContainer.setRefreshing(false);
-            }
-        });
-    }
-
-    /**
-     * On click listener for the load more button
-     * Fetches more comments from the REST api and adds to the adapter
-     * @param moreIds
-     */
-    private void onClickLoadMore(final Queue<String> moreIds) {
-        button.setVisibility(View.GONE);
-        progressBarLoadMore.setVisibility(View.VISIBLE);
-
-        ApiInterface apiService;
-        Call<List<CommentResponse>> callMore;
-
-        if (MainActivity.AuthPrefManager.isLoggedIn()) {
-            apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
-            callMore = apiService.getMoreOAuthComments(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
-                    url,
-                    moreIds.peek(),
-                    sortByParam,
-                    1
-            );
-        } else {
-            apiService = ApiClient.getClient().create(ApiInterface.class);
-            callMore = apiService.getMoreComments(url, moreIds.peek(), sortByParam, 1);
         }
 
-        callMore.enqueue(new Callback<List<CommentResponse>>() {
-            private void onUnsuccessfulCall(String message) {
-                showToast(message);
-                progressBarLoadMore.setVisibility(View.GONE);
+        public void onFetchCommentsComplete() {
+            progressBar.setVisibility(View.GONE);
+            swipeContainer.setRefreshing(false);
+        }
+
+        public void onLoadMoreSuccessfulResponse(CommentResponse response, Queue<String> moreIds) {
+            commentsAdapter.addAll(response.getComments());
+
+            progressBarLoadMore.setVisibility(View.GONE);
+            moreIds.remove();
+            if (!moreIds.isEmpty()) {
                 button.setVisibility(View.VISIBLE);
             }
+        }
 
-            @Override
-            public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
-                if (response.isSuccessful()) {
-                    commentsAdapter.addAll(response.body().get(1).getComments());
+        public void onLoadMoreUnsuccess(String message) {
+            showToast(message);
+            progressBarLoadMore.setVisibility(View.GONE);
+            button.setVisibility(View.VISIBLE);
+        }
 
-                    progressBarLoadMore.setVisibility(View.GONE);
-                    moreIds.remove();
-                    if (!moreIds.isEmpty()) {
-                        button.setVisibility(View.VISIBLE);
+    }
+
+    private class CommentsForPost extends Comments {
+        private Call<List<CommentResponse>> getRetrofitCall(String moreId) {
+            ApiInterface apiService;
+            Call<List<CommentResponse>> call;
+            if (MainActivity.AuthPrefManager.isLoggedIn()) {
+                apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+                call = apiService.getOAuthComments(
+                        "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                        url,
+                        moreId,
+                        sortByParam,
+                        1
+                );
+            } else {
+                apiService = ApiClient.getClient().create(ApiInterface.class);
+                call = apiService.getComments(url, moreId, sortByParam, 1);
+            }
+
+            return call;
+        }
+
+        /**
+         * Function to fetch the list of comments from the REST api
+         */
+        public void fetchComments() {
+            Call<List<CommentResponse>> call = getRetrofitCall("");
+            call.enqueue(new Callback<List<CommentResponse>>() {
+                @Override
+                public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
+                    if (response.isSuccessful()) {
+                        onFetchCommentsSuccessfulResponse(response.body().get(1));
+                    } else {
+                        showToast("Comments - " + response.message());
                     }
-                } else {
-                    onUnsuccessfulCall(response.message());
+
+                    onFetchCommentsComplete();
                 }
+
+                @Override
+                public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
+                    showToast(getString(R.string.server_error));
+                    onFetchCommentsComplete();
+                }
+            });
+        }
+
+        /**
+         * On click listener for the load more button
+         * Fetches more comments from the REST api and adds to the adapter
+         * @param moreIds
+         */
+        public void onClickLoadMore(final Queue<String> moreIds) {
+            button.setVisibility(View.GONE);
+            progressBarLoadMore.setVisibility(View.VISIBLE);
+
+            Call<List<CommentResponse>> callMore = getRetrofitCall(moreIds.peek());
+            callMore.enqueue(new Callback<List<CommentResponse>>() {
+                @Override
+                public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
+                    if (response.isSuccessful()) {
+                        onLoadMoreSuccessfulResponse(response.body().get(1), moreIds);
+                    } else {
+                        onLoadMoreUnsuccess(response.message());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
+                    onLoadMoreUnsuccess(getString(R.string.server_error));
+                }
+            });
+        }
+    }
+
+    private class CommentsForProfile extends Comments {
+        private Call<CommentResponse> getRetrofitCall(String moreId) {
+            ApiInterface apiService;
+            Call<CommentResponse> call;
+            if (MainActivity.AuthPrefManager.isLoggedIn()) {
+                apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+                call = apiService.getOAuthProfileComments(
+                        "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                        url,
+                        moreId,
+                        "",
+                        1
+                );
+            } else {
+                apiService = ApiClient.getClient().create(ApiInterface.class);
+                call = apiService.getProfileComments(url, moreId, "", 1);
             }
 
-            @Override
-            public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
-                onUnsuccessfulCall(getString(R.string.server_error));
-            }
-        });
+            return call;
+        }
+
+        /**
+         * Function to fetch the list of comments from the REST api
+         */
+        public void fetchComments() {
+            Call<CommentResponse> call = getRetrofitCall("");
+            call.enqueue(new Callback<CommentResponse>() {
+                @Override
+                public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+                    if (response.isSuccessful()) {
+                        onFetchCommentsSuccessfulResponse(response.body());
+                    } else {
+                        showToast("Comments - " + response.message());
+                    }
+
+                    onFetchCommentsComplete();
+                }
+
+                @Override
+                public void onFailure(Call<CommentResponse> call, Throwable t) {
+                    showToast(getString(R.string.server_error));
+                    onFetchCommentsComplete();
+                }
+            });
+        }
+
+        /**
+         * On click listener for the load more button
+         * Fetches more comments from the REST api and adds to the adapter
+         * @param moreIds
+         */
+        public void onClickLoadMore(final Queue<String> moreIds) {
+            button.setVisibility(View.GONE);
+            progressBarLoadMore.setVisibility(View.VISIBLE);
+
+            Call<CommentResponse> callMore = getRetrofitCall(moreIds.peek());
+            callMore.enqueue(new Callback<CommentResponse>() {
+                @Override
+                public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+                    if (response.isSuccessful()) {
+                        onLoadMoreSuccessfulResponse(response.body(), moreIds);
+                    } else {
+                        onLoadMoreUnsuccess(response.message());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<CommentResponse> call, Throwable t) {
+                    onLoadMoreUnsuccess(getString(R.string.server_error));
+                }
+            });
+        }
     }
 }

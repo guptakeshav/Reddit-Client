@@ -98,6 +98,10 @@ public class SubredditsFragment extends Fragment {
      * Fetching more subreddits when the end of list has reached
      */
     private void loadMoreSubreddits() {
+        if (afterParam == null) {
+            return;
+        }
+
         int totalItemCount = llm.getItemCount();
         int lastVisibleItem = llm.findLastVisibleItemPosition();
         int visibleThreshold = 2;

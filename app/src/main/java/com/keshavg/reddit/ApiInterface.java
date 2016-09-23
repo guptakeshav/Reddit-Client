@@ -15,23 +15,27 @@ import retrofit2.http.Query;
  * Created by keshavgupta on 9/14/16.
  */
 public interface ApiInterface {
+    @GET("user/{username}/about.json")
+    Call<UserResponse> getUserOverview(@Path("username") String username);
+
     @GET("subreddits.json")
     Call<SubredditResponse> getSubredditNames();
 
-    @GET("{urlSortBy}/.json")
+    @GET("{urlSortBy}.json")
     Call<PostResponse> getPosts(@Path("urlSortBy") String urlSortBy,
                                 @Query("after") String afterParam);
 
-    @GET("{url}.json")
+    @GET("{url}/{moreId}.json")
     Call<List<CommentResponse>> getComments(@Path("url") String url,
+                                            @Path("moreId") String moreId,
                                             @Query("sort") String sortByParam,
                                             @Query("raw_json") int value);
 
     @GET("{url}/{moreId}.json")
-    Call<List<CommentResponse>> getMoreComments(@Path("url") String url,
-                                                @Path("moreId") String moreId,
-                                                @Query("sort") String sortByParam,
-                                                @Query("raw_json") int value);
+    Call<CommentResponse> getProfileComments(@Path("url") String url,
+                                             @Path("moreId") String moreId,
+                                             @Query("sort") String sortBy,
+                                             @Query("raw_json") int value);
 
     @GET("subreddits/search.json")
     Call<SubredditResponse> searchSubreddits(@Query("q") String query,
@@ -90,18 +94,19 @@ public interface ApiInterface {
                                         @Query("sort") String sortByParam,
                                         @Query("after") String afterParam);
 
-    @GET("{url}")
+    @GET("{url}/{moreId}")
     Call<List<CommentResponse>> getOAuthComments(@Header("Authorization") String authorization,
                                                  @Path("url") String url,
+                                                 @Path("moreId") String moreId,
                                                  @Query("sort") String sortBy,
                                                  @Query("raw_json") int value);
 
     @GET("{url}/{moreId}")
-    Call<List<CommentResponse>> getMoreOAuthComments(@Header("Authorization") String authorization,
-                                                     @Path("url") String url,
-                                                     @Path("moreId") String moreId,
-                                                     @Query("sort") String sortBy,
-                                                     @Query("raw_json") int value);
+    Call<CommentResponse> getOAuthProfileComments(@Header("Authorization") String authorization,
+                                                  @Path("url") String url,
+                                                  @Path("moreId") String moreId,
+                                                  @Query("sort") String sortBy,
+                                                  @Query("raw_json") int value);
 
     @FormUrlEncoded
     @POST("api/comment")
@@ -110,6 +115,26 @@ public interface ApiInterface {
                                               @Field("api_type") String apiType,
                                               @Field("text") String text,
                                               @Field("thing_id") String parentId);
+
+    @FormUrlEncoded
+    @POST("api/save")
+    Call<Void> saveThing(@Header("Authorization") String authorization,
+                         @Field("id") String id);
+
+    @FormUrlEncoded
+    @POST("api/unsave")
+    Call<Void> unsaveThing(@Header("Authorization") String authorization,
+                           @Field("id") String id);
+
+    @FormUrlEncoded
+    @POST("api/hide")
+    Call<Void> hideThing(@Header("Authorization") String authorization,
+                         @Field("id") String id);
+
+    @FormUrlEncoded
+    @POST("api/unhide")
+    Call<Void> unhideThing(@Header("Authorization") String authorization,
+                           @Field("id") String id);
 
     @FormUrlEncoded
     @POST("api/del")
