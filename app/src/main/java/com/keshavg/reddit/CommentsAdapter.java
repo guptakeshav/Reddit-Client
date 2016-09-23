@@ -11,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -74,7 +73,6 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
         LinearLayout subcommentsView;
 
-        FrameLayout loadMore;
         ProgressBar progressBar;
         Button button;
 
@@ -98,9 +96,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
             this.subcommentsView = (LinearLayout) v.findViewById(R.id.subcomments_list);
 
-            this.loadMore = (FrameLayout) v.findViewById(R.id.load_more);
-            this.progressBar = (ProgressBar) this.loadMore.findViewById(R.id.progressbar_bottom);
-            this.button = (Button) this.loadMore.findViewById(R.id.button);
+            this.progressBar = (ProgressBar) v.findViewById(R.id.progressbar);
+            this.button = (Button) v.findViewById(R.id.button);
         }
     }
 
@@ -292,7 +289,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
      */
     private void onClickCommentCollapse(ViewHolder viewHolder) {
         if (isCollapsed == false) {
-            viewHolder.loadMore.setVisibility(View.GONE);
+            viewHolder.button.setVisibility(View.GONE);
             viewHolder.subcommentsView.setVisibility(View.GONE);
             viewHolder.commentMenu.setVisibility(View.GONE);
             viewHolder.commentBody.setVisibility(View.GONE);
@@ -301,7 +298,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         } else {
             viewHolder.commentBody.setVisibility(View.VISIBLE);
             viewHolder.subcommentsView.setVisibility(View.VISIBLE);
-            viewHolder.loadMore.setVisibility(View.VISIBLE);
+            viewHolder.button.setVisibility(View.VISIBLE);
 
             viewHolder.collapse.setImageDrawable(activity.getDrawable(R.drawable.ic_keyboard_arrow_down));
         }

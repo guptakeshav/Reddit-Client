@@ -7,14 +7,14 @@
     card_view:cardCornerRadius="2dp"
     android:layout_margin="5dp">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
-        android:orientation="vertical">
+        android:layout_marginRight="8dp">
 
         <LinearLayout
+            android:id="@+id/subreddit_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -28,41 +28,41 @@
 
             <TextView
                 android:id="@+id/subreddit_name"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 android:layout_gravity="center_vertical"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
         </LinearLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/subreddit_subscribers"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/subreddit_header"
+            android:textSize="11dp" />
 
-            <TextView
-                android:id="@+id/subreddit_subscribers"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="11dp" />
-
-            <TextView
-                android:id="@+id/subreddit_created"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:textSize="11dp" />
-        </RelativeLayout>
+        <TextView
+            android:id="@+id/subreddit_created"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/subreddit_header"
+            android:layout_alignParentRight="true"
+            android:textSize="11dp" />
 
         <View
+            android:id="@+id/separator"
             android:layout_width="match_parent"
             android:layout_height="0.5dp"
+            android:layout_below="@id/subreddit_subscribers"
             android:background="#BDBDBD" />
 
         <TextView
             android:id="@+id/subreddit_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/separator"
             android:layout_marginTop="8dp"
             android:layout_marginLeft="4dp" />
-    </LinearLayout>
+    </RelativeLayout>
 </android.support.v7.widget.CardView>

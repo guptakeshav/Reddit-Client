@@ -75,7 +75,6 @@ public class CommentsFragment extends Fragment {
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                commentsAdapter.clear();
                 fetchComments();
             }
         });
@@ -130,6 +129,11 @@ public class CommentsFragment extends Fragment {
             @Override
             public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
                 if (response.isSuccessful()) {
+                    // clearing out the previous content
+                    button.setVisibility(View.GONE);
+                    commentsAdapter.clear();
+
+                    // add the new content
                     commentsAdapter.addAll(response.body().get(1).getComments());
 
                     final Queue<String> moreIds = response.body().get(1).getMoreIds();

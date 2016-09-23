@@ -130,23 +130,17 @@
         android:orientation="vertical">
     </LinearLayout>
 
-    <FrameLayout
-        android:id="@+id/load_more"
+    <ProgressBar
+        android:id="@+id/progressbar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/button"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <ProgressBar
-            android:id="@+id/progressbar_bottom"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load More"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:visibility="gone" />
-    </FrameLayout>
+        android:layout_height="wrap_content"
+        android:text="Load More"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:visibility="gone" />
 </LinearLayout>

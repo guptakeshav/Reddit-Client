@@ -68,7 +68,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
     public void onBindViewHolder(final ViewHolder holder, int position) {
         final Subreddit subreddit = objects.get(position);
 
-        if (subreddit.getIsSubscribed().equals(false)) {
+        if (subreddit.getIsSubscribed() != null && subreddit.getIsSubscribed().equals(false)) {
             holder.subscribe.setBackgroundColor(activity.getColor(R.color.darkGrey));
         } else {
             holder.subscribe.setBackgroundColor(activity.getColor(R.color.colorAccent));

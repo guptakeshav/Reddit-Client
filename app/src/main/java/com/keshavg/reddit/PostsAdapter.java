@@ -12,8 +12,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,7 +49,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         ProgressBar progressBar;
         ImageView image;
         TextView subreddit;
-        LinearLayout postContent;
+        RelativeLayout postContent;
         TextView title;
         TextView author;
         TextView created;
@@ -64,7 +64,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             progressBar = (ProgressBar) itemView.findViewById(R.id.progressbar_image);
             image = (ImageView) itemView.findViewById(R.id.post_image);
             subreddit = (TextView) itemView.findViewById(R.id.post_subreddit);
-            postContent = (LinearLayout) itemView.findViewById(R.id.post_content);
+            postContent = (RelativeLayout) itemView.findViewById(R.id.post_content);
             title = (TextView) postContent.findViewById(R.id.post_title);
             author = (TextView) postContent.findViewById(R.id.post_author);
             created = (TextView) postContent.findViewById(R.id.post_created);
