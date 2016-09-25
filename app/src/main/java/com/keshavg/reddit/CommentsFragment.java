@@ -90,7 +90,7 @@ public class CommentsFragment extends Fragment {
         });
 
         recList = (RecyclerView) view.findViewById(R.id.recycler_list);
-        commentsAdapter = new CommentsAdapter(getActivity(), url, sortByParam);
+        commentsAdapter = new CommentsAdapter(getActivity(), url, sortByParam, isProfileActivity);
         recList.setAdapter(commentsAdapter);
         llm = new LinearLayoutManager(
                 getActivity(),

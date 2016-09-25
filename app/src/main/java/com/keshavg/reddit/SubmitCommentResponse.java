@@ -31,11 +31,8 @@ public class SubmitCommentResponse {
 
     private JsonResponse json;
 
-    public List<String> getError() {
-        if (json.getErrors().size() == 0) {
-            return null;
-        }
-        return json.getErrors().get(0);
+    public List<List<String>> getErrors() {
+        return json.getErrors();
     }
 
     public Comment getSubmittedComment() {

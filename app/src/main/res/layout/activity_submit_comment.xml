@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_submit_comment"
     android:layout_width="match_parent"
@@ -38,17 +37,11 @@
         </LinearLayout>
     </android.support.design.widget.AppBarLayout>
 
-    <com.fiberlink.maas360.android.richtexteditor.RichEditText
-        android:id="@+id/rich_edit_text"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-    </com.fiberlink.maas360.android.richtexteditor.RichEditText>
-
-    <com.fiberlink.maas360.android.richtexteditor.RichTextActions
-        android:id="@+id/rich_text_actions"
+    <!--TODO: add formatting buttons-->
+    <EditText
+        android:id="@+id/comment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom">
-    </com.fiberlink.maas360.android.richtexteditor.RichTextActions>
+        android:layout_marginTop="?android:attr/actionBarSize"
+        android:hint="Enter you comment here..." />
 </android.support.design.widget.CoordinatorLayout>

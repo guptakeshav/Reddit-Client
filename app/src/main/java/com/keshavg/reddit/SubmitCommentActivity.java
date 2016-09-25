@@ -5,16 +5,18 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
-import com.fiberlink.maas360.android.richtexteditor.RichEditText;
-import com.fiberlink.maas360.android.richtexteditor.RichTextActions;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SubmitCommentActivity extends AppCompatActivity {
+    private String id;
+    private String comment;
     private String parentId;
 
     @Override
@@ -24,13 +26,26 @@ public class SubmitCommentActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
-            parentId = extras.getString("PARENT_ID");
+
+            if (extras.containsKey("PARENT_ID")) {
+                parentId = extras.getString("PARENT_ID");
+            } else {
+                parentId = null;
+            }
+
+            if (extras.containsKey("ID")) {
+                id = extras.getString("ID");
+                comment = extras.getString("COMMENT");
+            } else {
+                id = null;
+                comment = null;
+            }
         }
 
-        final RichEditText richEditText = (RichEditText) findViewById(R.id.rich_edit_text);
-        final RichTextActions richTextActions = (RichTextActions) findViewById(R.id.rich_text_actions);
-        richEditText.setRichTextActionsView(richTextActions);
-        richEditText.setHint("Enter your comment here...");
+        final EditText text = (EditText) findViewById(R.id.comment);
+        if (id != null) {
+            text.setText(comment);
+        }
 
         final Button submit = (Button) findViewById(R.id.comment_submit);
         final Button discard = (Button) findViewById(R.id.comment_discard);
@@ -38,7 +53,11 @@ public class SubmitCommentActivity extends AppCompatActivity {
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                submitComment(richEditText.getHtml());
+                if (id != null) {
+                    editComment(text.getText().toString());
+                } else {
+                    submitComment(text.getText().toString());
+                }
             }
         });
 
@@ -52,6 +71,51 @@ public class SubmitCommentActivity extends AppCompatActivity {
 
     private void showToast(String message) {
         Toast.makeText(SubmitCommentActivity.this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void editComment(String text) {
+        ApiInterface apiClient = ApiClient.getOAuthClient().create(ApiInterface.class);
+        Call<SubmitCommentResponse> call = apiClient.editComment(
+                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                1,
+                "json",
+                text,
+                id
+        );
+
+        call.enqueue(new Callback<SubmitCommentResponse>() {
+            @Override
+            public void onResponse(Call<SubmitCommentResponse> call, Response<SubmitCommentResponse> response) {
+                if (response.isSuccessful()) {
+                    if (response.body().getErrors().size() == 0) {
+                        Comment editComment = response.body().getSubmittedComment();
+
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("ID", id);
+                        resultIntent.putExtra("COMMENT", editComment);
+
+                        setResult(CommentsActivity.EDIT_COMMENT, resultIntent);
+                        finish();
+                    } else {
+                        for (List<String> error : response.body().getErrors()) {
+                            String errorString = "";
+                            for (String err : error) {
+                                errorString += err + "\n";
+                            }
+
+                            showToast(errorString);
+                        }
+                    }
+                } else {
+                    showToast("Submitting - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SubmitCommentResponse> call, Throwable t) {
+                showToast(getString(R.string.server_error));
+            }
+        });
     }
 
     private void submitComment(String text) {
@@ -68,17 +132,23 @@ public class SubmitCommentActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<SubmitCommentResponse> call, Response<SubmitCommentResponse> response) {
                 if (response.isSuccessful()) {
-                    if (response.body().getError() == null) {
+                    if (response.body().getErrors().size() == 0) {
                         Comment submittedComment = response.body().getSubmittedComment();
 
                         Intent resultIntent = new Intent();
                         resultIntent.putExtra("PARENT_ID", parentId);
                         resultIntent.putExtra("COMMENT", submittedComment);
-                        setResult(RESULT_OK, resultIntent);
+
+                        setResult(CommentsActivity.SUBMIT_COMMENT, resultIntent);
                         finish();
                     } else {
-                        for (String error : response.body().getError()) {
-                            showToast(error);
+                        for (List<String> error : response.body().getErrors()) {
+                            String errorString = "";
+                            for (String err : error) {
+                                errorString += err + "\n";
+                            }
+
+                            showToast(errorString);
                         }
                     }
                 } else {

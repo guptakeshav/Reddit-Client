@@ -117,6 +117,14 @@ public interface ApiInterface {
                                               @Field("thing_id") String parentId);
 
     @FormUrlEncoded
+    @POST("api/editusertext")
+    Call<SubmitCommentResponse> editComment(@Header("Authorization") String authorization,
+                                            @Query("raw_json") int value,
+                                            @Field("api_type") String apiType,
+                                            @Field("text") String text,
+                                            @Field("thing_id") String id);
+
+    @FormUrlEncoded
     @POST("api/save")
     Call<Void> saveThing(@Header("Authorization") String authorization,
                          @Field("id") String id);

@@ -33,25 +33,47 @@ public class Comment implements Serializable {
     }
 
     @Getter
-    @SerializedName("body_html") private String body;
+    private String body;
 
+    @Getter
+    @Setter
+    @SerializedName("body_html") private String htmlBody;
+
+    @Getter
     @SerializedName("created_utc") private int created;
 
+    @Getter
     private Boolean likes;
 
     @Getter
     private String name;
 
+    @Getter
+    @SerializedName("parent_id") private String parentId;
+
+    @Getter
     @Setter
     private CommentResponse replyResponse;
 
+    @Getter
     private int score;
 
-    public String getCreated() {
+    public void setData(Comment comment) {
+        this.author = comment.getAuthor();
+        this.htmlBody = comment.getHtmlBody();
+        this.created = comment.getCreated();
+        this.likes = comment.getLikes();
+        this.name = comment.getName();
+        this.parentId = comment.getParentId();
+        this.replyResponse = comment.getReplyResponse();
+        this.score = comment.getScore();
+    }
+
+    public String getRelativeTime() {
         return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
     }
 
-    public int getLikes() {
+    public int getLikeInt() {
         if (likes == null) {
             return 0;
         } else if (likes.equals(true)) {
@@ -84,25 +106,11 @@ public class Comment implements Serializable {
         return replyResponse.getMoreIds();
     }
 
-    public String getScore() {
+    public String getScoreString() {
         return score + " points";
     }
 
     public void updateScore(int delta) {
         score += delta;
-    }
-
-    @Override
-    public String toString() {
-        return "Comment{" +
-                "moreIds=" + moreIds +
-                ", author='" + author + '\'' +
-                ", body='" + body + '\'' +
-                ", created=" + created +
-                ", likes=" + likes +
-                ", name='" + name + '\'' +
-                ", replyResponse=" + replyResponse +
-                ", score=" + score +
-                '}';
     }
 }

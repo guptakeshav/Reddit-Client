@@ -6,11 +6,15 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -31,28 +35,37 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import static android.R.color.black;
-import static android.R.color.white;
+import static android.R.color.transparent;
+import static android.view.View.GONE;
 
 /**
  * Created by keshav.g on 29/08/16.
  */
 public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHolder>
         implements SectionTitleProvider {
-    private Map<String, LinearLayout> parentReplies;
     private Activity activity;
     private String url;
     private String sortByParam;
+    private Boolean isProfileActivity;
+    private Map<String, View> viewById;
+    private Map<String, LinearLayout> childViewOfCommentById;
+    private Map<String, ViewHolder> viewHolderById;
+    private Map<String, Integer> adapterPositionById;
     private List<Comment> objects;
     private Boolean isCollapsed;
 
-    public CommentsAdapter(Activity activity, String url, String sortByParam) {
-        parentReplies = new HashMap<>();
+    public CommentsAdapter(Activity activity, String url, String sortByParam, Boolean isProfileActivity) {
         this.activity = activity;
         this.url = url;
         this.sortByParam = sortByParam;
-        this.objects = new ArrayList<>();
-        this.isCollapsed = false;
+        this.isProfileActivity = isProfileActivity;
+
+        viewById = new HashMap<>();
+        childViewOfCommentById = new HashMap<>();
+        viewHolderById = new HashMap<>();
+        adapterPositionById = new HashMap<>();
+        objects = new ArrayList<>();
+        isCollapsed = false;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -65,11 +78,14 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         TextView upvotes;
 
         TextView commentBody;
-        LinearLayout commentMenu;
-        Button commentUpvote;
-        Button commentDownvote;
-        Button commentReply;
-        Button commentDelete;
+        Toolbar toolbar;
+        ImageButton commentUpvote;
+        ImageButton commentDownvote;
+        ImageButton commentReply;
+        ImageButton commentEdit;
+        ImageButton commentDelete;
+        MenuItem commentParent;
+        MenuItem commentFullComments;
 
         LinearLayout subcommentsView;
 
@@ -88,11 +104,15 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             this.upvotes = (TextView) this.header.findViewById(R.id.comment_score);
 
             this.commentBody = (TextView) this.comment.findViewById(R.id.comment_body);
-            this.commentMenu = (LinearLayout) this.comment.findViewById(R.id.comment_menu);
-            this.commentUpvote = (Button) this.commentMenu.findViewById(R.id.comment_upvote);
-            this.commentDownvote = (Button) this.commentMenu.findViewById(R.id.comment_downvote);
-            this.commentReply = (Button) this.commentMenu.findViewById(R.id.comment_reply);
-            this.commentDelete = (Button) this.commentMenu.findViewById(R.id.comment_delete);
+            this.toolbar = (Toolbar) this.comment.findViewById(R.id.toolbar);
+            this.toolbar.inflateMenu(R.menu.comment_functions);
+            this.commentUpvote = (ImageButton) this.toolbar.findViewById(R.id.comment_upvote);
+            this.commentDownvote = (ImageButton) this.toolbar.findViewById(R.id.comment_downvote);
+            this.commentReply = (ImageButton) this.toolbar.findViewById(R.id.comment_reply);
+            this.commentEdit = (ImageButton) this.toolbar.findViewById(R.id.comment_edit);
+            this.commentDelete = (ImageButton) this.toolbar.findViewById(R.id.comment_delete);
+            this.commentParent = this.toolbar.getMenu().findItem(R.id.comment_parent);
+            this.commentFullComments = this.toolbar.getMenu().findItem(R.id.comment_full);
 
             this.subcommentsView = (LinearLayout) v.findViewById(R.id.subcomments_list);
 
@@ -119,30 +139,43 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, final int position) {
         final Comment comment = objects.get(position);
+        adapterPositionById.put(comment.getName(), position);
         setViewData(viewHolder, comment);
     }
 
     private void setViewData(final ViewHolder viewHolder, final Comment comment) {
+        viewById.put(comment.getName(), viewHolder.comment);
+        viewHolderById.put(comment.getName(), viewHolder);
+
         viewHolder.author.setText(comment.getPostedBy());
 
-        if (comment.getBody() != null) {
-            viewHolder.commentBody.setText(Html.fromHtml(comment.getBody()));
+        if (comment.getHtmlBody() != null) {
+            viewHolder.commentBody.setText(Html.fromHtml(comment.getHtmlBody()));
         }
 
-        viewHolder.created.setText(comment.getCreated());
-        viewHolder.commentMenu.setVisibility(View.GONE);
+        viewHolder.created.setText(comment.getRelativeTime());
+
+        viewHolder.toolbar.setVisibility(GONE);
+        if (isProfileActivity) {
+            viewHolder.commentReply.setVisibility(GONE);
+            viewHolder.commentFullComments.setVisible(true);
+        } else {
+            viewHolder.commentReply.setVisibility(View.VISIBLE);
+            viewHolder.commentFullComments.setVisible(false);
+        }
+
         setScoreInformation(viewHolder, comment);
 
-        if (!parentReplies.containsKey(comment.getName())) {
+        if (!childViewOfCommentById.containsKey(comment.getName())) {
             // do not repeat this on notifydatasetchanged
             createThreadedComments(viewHolder.subcommentsView, comment.getReplies());
         }
-        parentReplies.put(comment.getName(), viewHolder.subcommentsView);
+        childViewOfCommentById.put(comment.getName(), viewHolder.subcommentsView);
 
         viewHolder.header.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickCommentCollapse(viewHolder);
+                onClickCommentCollapse(viewHolder, comment.getMoreReplyIds() != null);
             }
         });
 
@@ -176,15 +209,49 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
         if (MainActivity.AuthPrefManager.isLoggedIn()) {
             if (comment.getAuthor().equals(MainActivity.AuthPrefManager.getUsername())) {
+                viewHolder.commentEdit.setVisibility(View.VISIBLE);
                 viewHolder.commentDelete.setVisibility(View.VISIBLE);
             }
         } else {
-            viewHolder.commentDelete.setVisibility(View.GONE);
+            viewHolder.commentEdit.setVisibility(GONE);
+            viewHolder.commentDelete.setVisibility(GONE);
         }
+
+        viewHolder.commentEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(activity, SubmitCommentActivity.class);
+                i.putExtra("ID", comment.getName());
+                i.putExtra("COMMENT", comment.getBody());
+                activity.startActivityForResult(i, CommentsActivity.COMMENT_SUBMIT_REQUEST_CODE);
+            }
+        });
+
         viewHolder.commentDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onClickDelete(viewHolder, comment.getName());
+            }
+        });
+
+        if (comment.getParentId().startsWith("t3_")) { // no parent for direct comments to post
+            viewHolder.commentParent.setVisible(false);
+        } else {
+            viewHolder.commentParent.setVisible(true);
+        }
+        viewHolder.commentParent.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                View targetView = viewById.get(comment.getParentId());
+                targetView.getParent().requestChildFocus(targetView, targetView);
+                return true;
+            }
+        });
+
+        viewHolder.commentFullComments.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                return false;
             }
         });
 
@@ -236,7 +303,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         View view = LayoutInflater.from(activity).inflate(R.layout.comment_row, null);
         makeRandomColorLine(view);
         setViewData(new ViewHolder(view), comment);
-        parentReplies.get(parentId).addView(view, 0);
+        childViewOfCommentById.get(parentId).addView(view, 0);
     }
 
     /**
@@ -249,27 +316,29 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         notifyDataSetChanged();
     }
 
+    public void edit(String id, Comment comment) {
+        if (comment.getParentId().startsWith("t3_")) {
+            this.objects.get(adapterPositionById.get(id)).setData(comment);
+        }
+
+        setViewData(viewHolderById.get(id), comment);
+    }
+
     private void showToast(String message) {
         Toast.makeText(activity.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     private void setScoreInformation(ViewHolder viewHolder, Comment comment) {
-        viewHolder.upvotes.setText(comment.getScore());
-        if (comment.getLikes() == 1) {
+        viewHolder.upvotes.setText(comment.getScoreString());
+        if (comment.getLikeInt() == 1) { // TODO
             viewHolder.commentUpvote.setBackgroundColor(activity.getColor(R.color.colorAccent));
-            viewHolder.commentUpvote.setTextColor(activity.getColor(white));
-            viewHolder.commentDownvote.setBackgroundColor(activity.getColor(white));
-            viewHolder.commentDownvote.setTextColor(activity.getColor(black));
-        } else if (comment.getLikes() == -1) {
-            viewHolder.commentUpvote.setBackgroundColor(activity.getColor(white));
-            viewHolder.commentUpvote.setTextColor(activity.getColor(black));
+            viewHolder.commentDownvote.setBackgroundColor(activity.getColor(transparent));
+        } else if (comment.getLikeInt() == -1) {
+            viewHolder.commentUpvote.setBackgroundColor(activity.getColor(transparent));
             viewHolder.commentDownvote.setBackgroundColor(activity.getColor(R.color.colorAccent));
-            viewHolder.commentDownvote.setTextColor(activity.getColor(white));
         } else {
-            viewHolder.commentUpvote.setBackgroundColor(activity.getColor(white));
-            viewHolder.commentUpvote.setTextColor(activity.getColor(black));
-            viewHolder.commentDownvote.setBackgroundColor(activity.getColor(white));
-            viewHolder.commentDownvote.setTextColor(activity.getColor(black));
+            viewHolder.commentUpvote.setBackgroundColor(activity.getColor(transparent));
+            viewHolder.commentDownvote.setBackgroundColor(activity.getColor(transparent));
         }
     }
 
@@ -288,18 +357,21 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
      *
      * @param viewHolder
      */
-    private void onClickCommentCollapse(ViewHolder viewHolder) {
+    private void onClickCommentCollapse(ViewHolder viewHolder, Boolean isPresentMoreIds) {
         if (isCollapsed == false) {
-            viewHolder.button.setVisibility(View.GONE);
-            viewHolder.subcommentsView.setVisibility(View.GONE);
-            viewHolder.commentMenu.setVisibility(View.GONE);
-            viewHolder.commentBody.setVisibility(View.GONE);
+            viewHolder.button.setVisibility(GONE);
+            viewHolder.subcommentsView.setVisibility(GONE);
+            viewHolder.toolbar.setVisibility(GONE);
+            viewHolder.commentBody.setVisibility(GONE);
 
             viewHolder.collapse.setImageDrawable(activity.getDrawable(R.drawable.ic_keyboard_arrow_right));
         } else {
             viewHolder.commentBody.setVisibility(View.VISIBLE);
             viewHolder.subcommentsView.setVisibility(View.VISIBLE);
-            viewHolder.button.setVisibility(View.VISIBLE);
+
+            if (isPresentMoreIds) {
+                viewHolder.button.setVisibility(View.VISIBLE);
+            }
 
             viewHolder.collapse.setImageDrawable(activity.getDrawable(R.drawable.ic_keyboard_arrow_down));
         }
@@ -313,10 +385,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
      * @param viewHolder
      */
     private void onClickComment(ViewHolder viewHolder) {
-        if (viewHolder.commentMenu.getVisibility() == View.VISIBLE) {
-            viewHolder.commentMenu.setVisibility(View.GONE);
+        if (viewHolder.toolbar.getVisibility() == View.VISIBLE) {
+            viewHolder.toolbar.setVisibility(GONE);
         } else {
-            viewHolder.commentMenu.setVisibility(View.VISIBLE);
+            viewHolder.toolbar.setVisibility(View.VISIBLE);
         }
     }
 
@@ -334,16 +406,16 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
         ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
 
-        final int prevLikes = comment.getLikes();
-        comment.setLikes((comment.getLikes() == likes) ? 0 : likes);
-        final int delta = comment.getLikes() - prevLikes;
+        final int prevLikes = comment.getLikeInt();
+        comment.setLikes((comment.getLikeInt() == likes) ? 0 : likes);
+        final int delta = comment.getLikeInt() - prevLikes;
         comment.updateScore(delta);
         setScoreInformation(viewHolder, comment);
 
         Call<Void> call = apiService.votePost(
                 "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                 comment.getName(),
-                comment.getLikes()
+                comment.getLikeInt()
         );
 
         call.enqueue(new Callback<Void>() {
@@ -383,7 +455,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
      * @param moreIds
      */
     private void onClickLoadMore(final ViewHolder viewHolder, final Queue<String> moreIds) {
-        viewHolder.button.setVisibility(View.GONE);
+        viewHolder.button.setVisibility(GONE);
         viewHolder.progressBar.setVisibility(View.VISIBLE);
 
         ApiInterface apiService;
@@ -409,7 +481,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
                 if (response.isSuccessful()) {
                     createThreadedComments(viewHolder.subcommentsView, response.body().get(1).getComments());
 
-                    viewHolder.progressBar.setVisibility(View.GONE);
+                    viewHolder.progressBar.setVisibility(GONE);
                     moreIds.remove();
                     if (moreIds != null && !moreIds.isEmpty()) {
                         viewHolder.button.setVisibility(View.VISIBLE);
@@ -422,7 +494,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             @Override
             public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
                 showToast(activity.getString(R.string.server_error));
-                viewHolder.progressBar.setVisibility(View.GONE);
+                viewHolder.progressBar.setVisibility(GONE);
                 viewHolder.button.setVisibility(View.VISIBLE);
             }
         });

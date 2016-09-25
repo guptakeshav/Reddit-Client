@@ -20,6 +20,8 @@ import lombok.Setter;
 public class CommentsActivity extends AppCompatActivity {
     @Setter
     public static final int COMMENT_SUBMIT_REQUEST_CODE = 1;
+    public static final int SUBMIT_COMMENT = 100;
+    public static final int EDIT_COMMENT = 101;
 
     private String url;
     private String title;
@@ -99,7 +101,7 @@ public class CommentsActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == COMMENT_SUBMIT_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
+            if (resultCode == SUBMIT_COMMENT) {
                 int position = tabLayout.getSelectedTabPosition();
 
                 String parentId = data.getStringExtra("PARENT_ID");
@@ -112,6 +114,14 @@ public class CommentsActivity extends AppCompatActivity {
                     ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
                             .add(parentId, submittedComment);
                 }
+            } else if (resultCode == EDIT_COMMENT) {
+                int position = tabLayout.getSelectedTabPosition();
+
+                String id = data.getStringExtra("ID");
+                Comment editComment = (Comment) data.getSerializableExtra("COMMENT");
+
+                ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
+                        .edit(id, editComment);
             }
         }
     }
