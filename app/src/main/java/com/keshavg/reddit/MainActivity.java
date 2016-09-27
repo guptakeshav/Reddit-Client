@@ -90,6 +90,10 @@ public class MainActivity extends AppCompatActivity
         public static String getUsername() {
             return authPref.getString("USERNAME", "");
         }
+
+        public static Boolean isSessionExpired() {
+            return false; // TODO
+        }
     }
 
     @Override
@@ -161,7 +165,12 @@ public class MainActivity extends AppCompatActivity
         });
 
         if (AuthPrefManager.isLoggedIn()) {
-            showLoggedIn();
+            if (AuthPrefManager.isSessionExpired()) {
+                AuthPrefManager.clearPreferences();
+                showToast(getString(R.string.session_expire_error));
+            } else {
+                showLoggedIn();
+            }
         }
 
         changePosts("");
@@ -198,13 +207,23 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        } else if (id == R.id.reload_app) {
+        if (id == R.id.reload_app) {
             reloadApp();
+        } else if (id == R.id.create_post) {
+            createPost();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void createPost() {
+        if (!AuthPrefManager.isLoggedIn()) {
+            showToast(getString(R.string.login_error));
+            return;
+        }
+
+        Intent i = new Intent(MainActivity.this, SubmitPostActivity.class);
+        startActivity(i);
     }
 
     private void reloadApp() {
@@ -352,7 +371,7 @@ public class MainActivity extends AppCompatActivity
 
     private void openSearchActivity(String type) {
         Intent i = new Intent(MainActivity.this, SearchActivity.class);
-        i.putExtra("Type", type);
+        i.putExtra("TYPE", type);
         MainActivity.this.startActivity(i);
         fam.close(true);
     }

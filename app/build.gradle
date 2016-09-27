@@ -37,6 +37,7 @@ dependencies {
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
     compile 'com.klinkerapps:sliding-activity:1.4.3'
     provided 'org.projectlombok:lombok:1.12.6'
-    compile 'com.fiberlink.maas360.android:richtexteditor:0.1.1'
     compile 'com.futuremind.recyclerfastscroll:fastscroll:0.2.4'
+    compile 'gun0912.ted:tedbottompicker:1.0.3'
+    compile 'es.guiguegon:gallerymodule:1.3.1'
 }

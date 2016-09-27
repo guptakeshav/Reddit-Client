@@ -76,6 +76,24 @@ public interface ApiInterface {
     @GET("api/v1/me")
     Call<User> getUsername(@Header("Authorization") String authorization);
 
+    @FormUrlEncoded
+    @POST("api/new_captcha")
+    Call<CaptchaRepsonse> getNewCaptcha(@Header("Authorization") String authorization,
+                                        @Field("api_type") String apiType);
+
+    @FormUrlEncoded
+    @POST("api/submit")
+    Call<SubmitPostResponse> createPost(@Header("Authorization") String authorization,
+                                        @Field("api_type") String apiType,
+                                        @Field("kind") String kind,
+                                        @Field("title") String title,
+                                        @Field("sr") String subreddit,
+                                        @Field("iden") String captchaIden,
+                                        @Field("captcha") String captcha,
+                                        @Field("text") String text,
+                                        @Field("url") String url,
+                                        @Field("sendreplies") Boolean sendReplies);
+
     @GET("{urlSortBy}")
     Call<PostResponse> getOAuthPosts(@Header("Authorization") String authorization,
                                      @Path("urlSortBy") String urlSortBy,
