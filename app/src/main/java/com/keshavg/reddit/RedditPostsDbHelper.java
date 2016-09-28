@@ -15,7 +15,7 @@ import java.util.List;
 public class RedditPostsDbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "Reddit.db";
-    public static final int DATABASE_VERSION = 55;
+    public static final int DATABASE_VERSION = 60;
 
     public RedditPostsDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -31,6 +31,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
                 "isHidden integer, " +
                 "isSaved integer, " +
                 "isLiked integer, " +
+                "isNsfw integer, " +
                 "numComments integer, " +
                 "permalink text, " +
                 "score integer, " +
@@ -63,6 +64,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
             values.put("isHidden", post.getIsHidden());
             values.put("isSaved", post.getIsSaved());
             values.put("isLiked", post.getIsLiked());
+            values.put("isNsfw", post.getIsNsfw());
             values.put("numComments", post.getNumComments());
             values.put("permalink", post.getPermalink());
             values.put("score", post.getScore());
@@ -87,6 +89,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
                 "isHidden",
                 "isSaved",
                 "isLiked",
+                "isNsfw",
                 "numComments",
                 "permalink",
                 "score",
@@ -119,6 +122,7 @@ public class RedditPostsDbHelper extends SQLiteOpenHelper {
                     cursor.getInt(cursor.getColumnIndex("isSaved")),
                     cursor.getInt(cursor.getColumnIndex("isHidden")),
                     cursor.getInt(cursor.getColumnIndex("isLiked")),
+                    cursor.getInt(cursor.getColumnIndex("isNsfw")),
                     cursor.getInt(cursor.getColumnIndex("numComments")),
                     cursor.getString(cursor.getColumnIndex("permalink")),
                     cursor.getInt(cursor.getColumnIndex("score")),

@@ -167,6 +167,16 @@ public interface ApiInterface {
     Call<Void> deleteThing(@Header("Authorization") String authorization,
                            @Field("id") String id);
 
+    @FormUrlEncoded
+    @POST("api/marknsfw")
+    Call<Void> markNsfw(@Header("Authorization") String authorization,
+                        @Field("id") String id);
+
+    @FormUrlEncoded
+    @POST("api/unmarknsfw")
+    Call<Void> unmarkNsfw(@Header("Authorization") String authorization,
+                          @Field("id") String id);
+
     @GET("subreddits/search")
     Call<SubredditResponse> searchOAuthSubreddits(@Header("Authorization") String authorization,
                                                   @Query("q") String searchQuery,

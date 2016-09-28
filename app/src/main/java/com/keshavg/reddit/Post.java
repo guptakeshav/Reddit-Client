@@ -26,6 +26,8 @@ public class Post {
 
     @SerializedName("likes") private Boolean isLiked;
 
+    @SerializedName("over_18") private Boolean isNsfw;
+
     @Getter
     @SerializedName("num_comments") private int numComments;
 
@@ -53,6 +55,7 @@ public class Post {
                 int isSaved,
                 int isHidden,
                 int isLiked,
+                int isNsfw,
                 int numComments,
                 String permalink,
                 int score,
@@ -66,6 +69,7 @@ public class Post {
         this.isSaved = convertIntToBool(isSaved);
         this.isHidden = convertIntToBool(isHidden);
         this.isLiked = convertIntToBool(isLiked);
+        this.isNsfw = convertIntToBool(isNsfw);
         this.numComments = numComments;
         this.permalink = permalink;
         this.score = score;
@@ -120,6 +124,14 @@ public class Post {
 
     public int getIsLiked() {
         return convertBoolToInt(isLiked);
+    }
+
+    public int getIsNsfw() {
+        return convertBoolToInt(isNsfw);
+    }
+
+    public void setIsNsfw(int nsfw) {
+        isNsfw = convertIntToBool(nsfw);
     }
 
     public void setIsLiked(int isLiked) {

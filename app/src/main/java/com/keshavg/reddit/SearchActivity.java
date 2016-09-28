@@ -35,6 +35,10 @@ public class SearchActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
             searchType = extras.getString("TYPE");
+
+            if (extras.containsKey("SEARCH_QUERY")) {
+                searchQuery = extras.getString("SEARCH_QUERY");
+            }
         }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -80,6 +84,17 @@ public class SearchActivity extends AppCompatActivity {
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById((R.id.viewpager));
         adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
+
+        if (searchQuery != null) {
+            if (searchType.equals("USERS")) {
+                tabLayout.setVisibility(View.VISIBLE);
+                editText.setText(searchQuery);
+                performUsersSearch();
+            } else if (searchType.equals("SUBREDDITS")) {
+                tabLayout.setVisibility(View.VISIBLE);
+                showSubredditPosts("r/" + searchQuery);
+            }
+        }
     }
 
     @Override

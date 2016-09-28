@@ -2,9 +2,11 @@ package com.keshavg.reddit;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -48,24 +50,30 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                         Boolean clearOnHide,
                         Boolean clearOnUnHide) {
         this.activity = activity;
-        this.objects = new ArrayList<>();
         this.requestManager = requestManager;
         this.clearOnHide = clearOnHide;
         this.clearOnUnHide = clearOnUnHide;
+
+        this.objects = new ArrayList<>();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ProgressBar progressBar;
         Toolbar toolbar;
+        MenuItem goToAuthor;
+        MenuItem goToSubreddit;
         MenuItem share;
         MenuItem save;
         MenuItem hide;
+        MenuItem delete;
+        MenuItem markNsfw;
         ImageView image;
         TextView subreddit;
         RelativeLayout postContent;
         TextView title;
         TextView author;
         TextView created;
+        TextView nsfw;
         ImageButton scoreUp;
         TextView scoreCount;
         ImageButton scoreDown;
@@ -79,15 +87,20 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             toolbar = (Toolbar) itemView.findViewById(R.id.toolbar);
             toolbar.inflateMenu(R.menu.post_functions);
 
+            goToAuthor = toolbar.getMenu().findItem(R.id.go_to_author);
+            goToSubreddit = toolbar.getMenu().findItem(R.id.go_to_subreddit);
             share = toolbar.getMenu().findItem(R.id.share);
             save = toolbar.getMenu().findItem(R.id.save);
             hide = toolbar.getMenu().findItem(R.id.hide);
+            delete = toolbar.getMenu().findItem(R.id.delete);
+            markNsfw = toolbar.getMenu().findItem(R.id.nsfw);
             image = (ImageView) itemView.findViewById(R.id.post_image);
             subreddit = (TextView) itemView.findViewById(R.id.post_subreddit);
             postContent = (RelativeLayout) itemView.findViewById(R.id.post_content);
             title = (TextView) postContent.findViewById(R.id.post_title);
             author = (TextView) toolbar.findViewById(R.id.post_author);
             created = (TextView) toolbar.findViewById(R.id.post_created);
+            nsfw = (TextView) toolbar.findViewById(R.id.post_nsfw);
             scoreUp = (ImageButton) itemView.findViewById(R.id.post_score_up);
             scoreCount = (TextView) itemView.findViewById(R.id.post_score_count);
             scoreDown = (ImageButton) itemView.findViewById(R.id.post_score_down);
@@ -147,17 +160,85 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         holder.toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                if (item.getTitle().equals("Save") || item.getTitle().equals("Unsave")) {
-                    onClickSave(post, holder.save, position);
+                if (item.getItemId() == R.id.go_to_author) {
+                    Intent i = new Intent(activity, SearchActivity.class);
+                    i.putExtra("TYPE", "USERS");
+                    i.putExtra("SEARCH_QUERY", post.getAuthor());
+                    activity.startActivity(i);
+                } else if (item.getItemId() == R.id.go_to_subreddit) {
+                    Intent i = new Intent(activity, SearchActivity.class);
+                    i.putExtra("TYPE", "SUBREDDITS");
+                    i.putExtra("SEARCH_QUERY", post.getSubreddit());
+                    activity.startActivity(i);
+                } else if (item.getItemId() == R.id.save) {
+                    onClickSave(post, holder.save);
                     return true;
-                } else if (item.getTitle().equals("Hide") || item.getTitle().equals("Unhide")) {
+                } else if (item.getItemId() == R.id.hide) {
                     onClickHide(post, holder.hide, position);
+                    return true;
+                } else if (item.getItemId() == R.id.delete) {
+                    AlertDialog alertDialog = new AlertDialog.Builder(activity)
+                            .setTitle(item.getTitle())
+                            .setMessage("Are you sure?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    onClickDelete(post.getName(), position);
+                                    dialog.dismiss();
+                                }
+                            })
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            })
+                            .create();
+
+                    alertDialog.show();
+                    return true;
+                } else if (item.getItemId() == R.id.nsfw) {
+                    AlertDialog alertDialog = new AlertDialog.Builder(activity)
+                            .setTitle(item.getTitle())
+                            .setMessage("Are you sure?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    onClickNsfw(holder, post, holder.markNsfw, position);
+                                    dialog.dismiss();
+                                }
+                            })
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            })
+                            .create();
+
+                    alertDialog.show();
                     return true;
                 }
 
                 return false;
             }
         });
+
+        if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            holder.save.setVisible(true);
+            holder.hide.setVisible(true);
+
+            if (MainActivity.AuthPrefManager.getUsername().equals(post.getAuthor())) {
+                holder.delete.setVisible(true);
+                holder.markNsfw.setVisible(true);
+            } else {
+                holder.markNsfw.setVisible(false);
+                holder.delete.setVisible(false);
+            }
+        } else {
+            holder.hide.setVisible(false);
+            holder.save.setVisible(false);
+        }
 
         if (post.getIsSaved() == 1) {
             holder.save.setTitle("Unsave");
@@ -169,6 +250,14 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             holder.hide.setTitle("Unhide");
         } else {
             holder.hide.setTitle("Hide");
+        }
+
+        if (post.getIsNsfw() == 1) {
+            holder.markNsfw.setTitle("Unmark NSFW");
+            holder.nsfw.setVisibility(View.VISIBLE);
+        } else {
+            holder.markNsfw.setTitle("Mark NSFW");
+            holder.nsfw.setVisibility(View.GONE);
         }
 
         int width = activity.getWindowManager().getDefaultDisplay().getWidth() - dpToPx(20);
@@ -249,6 +338,10 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         });
     }
 
+    private void showToast(String message) {
+        Toast.makeText(activity.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
     private void setScoreInformation(ViewHolder holder, String score, int likes) {
         holder.scoreCount.setText(score);
         if (likes == 1) {
@@ -263,12 +356,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         }
     }
 
-    private void onClickSave(final Post post, final MenuItem save, final int position) {
-        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
-            showToast(activity.getString(R.string.login_error));
-            return;
-        }
-
+    private void onClickSave(final Post post, final MenuItem save) {
         ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
 
         Call<Void> call;
@@ -310,11 +398,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     }
 
     private void onClickHide(final Post post, final MenuItem hide, final int position) {
-        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
-            showToast(activity.getString(R.string.login_error));
-            return;
-        }
-
         ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
 
         Call<Void> call;
@@ -351,6 +434,71 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                     }
                 } else {
                     showToast("Save - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast(activity.getString(R.string.server_error));
+            }
+        });
+    }
+
+    private void onClickDelete(String id, final int position) {
+        ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+        Call<Void> call = apiService.deleteThing(
+                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                id
+        );
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    remove(position);
+                } else {
+                    showToast("Delete - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast(activity.getString(R.string.server_error));
+            }
+        });
+    }
+
+    private void onClickNsfw(final ViewHolder viewHolder, final Post post, final MenuItem nsfw, final int position) {
+        ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+
+        Call<Void> call;
+        if (post.getIsNsfw() == 1) {
+            call = apiService.unmarkNsfw(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    post.getName()
+            );
+        } else {
+            call = apiService.markNsfw(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    post.getName()
+            );
+        }
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    if (post.getIsNsfw() == 1) {
+                        nsfw.setTitle("Mark NSFW");
+                        post.setIsNsfw(-1);
+                        viewHolder.nsfw.setVisibility(View.GONE);
+                    } else {
+                        nsfw.setTitle("Unmark NSFW");
+                        post.setIsNsfw(1);
+                        viewHolder.nsfw.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    showToast("NSFW - " + response.message());
                 }
             }
 
@@ -427,9 +575,5 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                         "comment_transition"
                 ).toBundle()
         );
-    }
-
-    private void showToast(String message) {
-        Toast.makeText(activity.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 }

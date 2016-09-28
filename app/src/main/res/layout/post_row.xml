@@ -23,16 +23,28 @@
 
                 <TextView
                     android:id="@+id/post_author"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="12dp" />
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/post_nsfw"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@id/post_author"
+                    android:layout_marginStart="8dp"
+                    android:text="NSFW"
+                    android:textStyle="bold"
+                    android:textSize="12sp"
+                    android:textColor="#B71C1C"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/post_created"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
-                    android:textSize="12dp"
+                    android:textSize="12sp"
                     android:textColor="#BDBDBD" />
             </RelativeLayout>
         </android.support.v7.widget.Toolbar>
@@ -51,9 +63,9 @@
                 android:id="@+id/overlay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right"
+                android:layout_gravity="end"
                 android:layout_marginTop="10dp"
-                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"
                 android:background="@drawable/rounded_corners">
 
                 <TextView
@@ -63,7 +75,7 @@
                     android:padding="8dp"
                     android:textAlignment="center"
                     android:textColor="#FFFFFF"
-                    android:textSize="12dp" />
+                    android:textSize="12sp" />
             </FrameLayout>
         </FrameLayout>
 
@@ -87,7 +99,7 @@
                 android:id="@+id/post_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="16dp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:textAlignment="center"
                 android:transitionName="comment_transition" />
@@ -122,7 +134,7 @@
                     android:id="@+id/post_score_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_toRightOf="@id/post_score_up"
+                    android:layout_toEndOf="@id/post_score_up"
                     android:layout_centerInParent="true"
                     android:layout_marginLeft="12dp"
                     android:layout_marginRight="12dp"
@@ -132,7 +144,7 @@
                     android:id="@+id/post_score_down"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_toRightOf="@id/post_score_count"
+                    android:layout_toEndOf="@id/post_score_count"
                     android:src="@drawable/ic_keyboard_arrow_down" />
             </RelativeLayout>
 
@@ -141,8 +153,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:drawableLeft="@drawable/ic_question_answer"
-                android:drawableRight="@drawable/ic_keyboard_arrow_right"
+                android:drawableStart="@drawable/ic_question_answer"
+                android:drawableEnd="@drawable/ic_keyboard_arrow_right"
                 android:drawablePadding="8dp"
                 style="@style/Widget.AppCompat.Button.Borderless.Colored" />
         </RelativeLayout>
