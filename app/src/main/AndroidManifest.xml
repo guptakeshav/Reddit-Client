@@ -36,9 +36,19 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".SearchActivity"
+            android:launchMode="singleTop"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/searchable"/>
+        </activity>
         <activity
             android:name=".ImageViewActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -61,6 +71,10 @@
             android:label=""
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
+        <provider
+            android:authorities="com.keshavg.reddit.SearchSuggestionsProvider"
+            android:name=".SearchSuggestionsProvider">
+        </provider>
     </application>
 
 </manifest>

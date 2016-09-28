@@ -7,9 +7,9 @@
 
     <string name="refresh_posts">Refresh</string>
     <string name="create_post">Create Post</string>
+    <string name="clear_history">Clear History</string>
 
     <string name="server_error">Network error</string>
-    <string name="empty_search">Please enter atleast a single character in the search query</string>
     <string name="login_error">You must be logged in to perform this function</string>
     <string name="session_expire_error">Session expired. Please log in again.</string>
     <string name="archive_error">This is an archived post. You won\'t be able to vote or comment.</string>

@@ -1,26 +1,24 @@
 package com.keshavg.reddit;
 
+import android.app.SearchManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.provider.SearchRecentSuggestions;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.view.KeyEvent;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import static android.view.View.GONE;
 
 public class SearchActivity extends AppCompatActivity {
+    private SearchRecentSuggestions suggestions;
     private String searchType;
 
-    private EditText editText;
+    private SearchView editText;
     private String searchQuery;
 
     private TabLayout tabLayout;
@@ -41,45 +39,23 @@ public class SearchActivity extends AppCompatActivity {
             }
         }
 
+        suggestions = new SearchRecentSuggestions(
+                this,
+                SearchSuggestionsProvider.AUTHORITY,
+                SearchSuggestionsProvider.MODE
+        );
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        editText = (EditText) findViewById(R.id.search_text);
-        editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-
-                    if (v.getText().toString().trim().matches("")) {
-                        Toast.makeText(getApplicationContext(),
-                                getResources().getText(R.string.empty_search),
-                                Toast.LENGTH_SHORT)
-                                .show();
-                        return false;
-                    }
-
-                    tabLayout.setVisibility(View.VISIBLE);
-                    searchQuery = v.getText().toString();
-
-                    if (searchType.equals("POSTS")) {
-                        performPostsSearch();
-                    } else if (searchType.equals("SUBREDDITS")) {
-                        performSubredditsSearch();
-                    } else if (searchType.equals("USERS")) {
-                        performUsersSearch();
-                    }
-
-                    InputMethodManager imm = (InputMethodManager)
-                            SearchActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(editText.getWindowToken(), 0);
-                }
-
-                return false;
-            }
-        });
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        editText = (SearchView) findViewById(R.id.search_text);
+        editText.setSubmitButtonEnabled(true);
+        editText.setIconifiedByDefault(false);
+        editText.setSearchableInfo( searchManager.getSearchableInfo(getComponentName()) );
 
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById((R.id.viewpager));
@@ -87,10 +63,8 @@ public class SearchActivity extends AppCompatActivity {
 
         if (searchQuery != null) {
             if (searchType.equals("USERS")) {
-                tabLayout.setVisibility(View.VISIBLE);
-                editText.setText(searchQuery);
-                performUsersSearch();
-            } else if (searchType.equals("SUBREDDITS")) {
+                editText.setQuery(searchQuery, true);
+            } else if (searchType.equals("SUBREDDIT_POSTS")) {
                 tabLayout.setVisibility(View.VISIBLE);
                 showSubredditPosts("r/" + searchQuery);
             }
@@ -98,25 +72,46 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed() {
-        if (adapter.getCount() > 0) {
-            editText.setText(null);
-            tabLayout.setVisibility(GONE);
-            adapter.clear();
-            viewPager.setAdapter(adapter);
-            tabLayout.setupWithViewPager(viewPager);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
+        } else if (item.getItemId() == R.id.clear_history) {
+            suggestions.clearHistory();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.search_toolbar, menu);
+        return true;
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        final String queryAction = intent.getAction();
+        if (Intent.ACTION_SEARCH.equals(queryAction) || Intent.ACTION_VIEW.equals(queryAction)) {
+            tabLayout.setVisibility(View.VISIBLE);
+
+            searchQuery = intent.getDataString(); // from search-bar
+            if (searchQuery == null) {
+                searchQuery = intent.getStringExtra(SearchManager.QUERY); // from suggestions
+                editText.setQuery(searchQuery, false);
+            }
+
+            suggestions.saveRecentQuery(searchQuery, null);
+
+            if (searchType.equals("POSTS")) {
+                performPostsSearch();
+            } else if (searchType.equals("SUBREDDITS")) {
+                performSubredditsSearch();
+            } else if (searchType.equals("USERS")) {
+                performUsersSearch();
+            }
+        }
     }
 
     private void performPostsSearch() {
@@ -124,7 +119,9 @@ public class SearchActivity extends AppCompatActivity {
 
         String[] sortByList = {"relevance", "top", "new", "comments"};
         for (String sortBy : sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(searchQuery, sortBy, 1, false, true, false), sortBy);
+            adapter.addFragment(
+                    PostsFragment.newInstance(searchQuery, sortBy, 1, false, true, false),
+                    sortBy);
         }
 
         viewPager.setAdapter(adapter);
@@ -134,7 +131,9 @@ public class SearchActivity extends AppCompatActivity {
     private void performSubredditsSearch() {
         adapter.clear();
 
-        adapter.addFragment(SubredditsFragment.newInstance(searchQuery), "Subreddits");
+        adapter.addFragment(
+                SubredditsFragment.newInstance(searchQuery),
+                "Subreddits");
 
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
@@ -143,10 +142,18 @@ public class SearchActivity extends AppCompatActivity {
     private void performUsersSearch() {
         adapter.clear();
 
-        adapter.addFragment(UserOverviewFragment.newInstance(searchQuery), "Overview");
-        adapter.addFragment(PostsFragment.newInstance("user/" + searchQuery + "/submitted", "", 0, true, true, false), "Submitted");
-        adapter.addFragment(CommentsFragment.newInstance("user/" + searchQuery + "/comments", "", true), "Comments");
-        adapter.addFragment(CommentsFragment.newInstance("user/" + searchQuery + "/gilded", "", true), "Gilded");
+        adapter.addFragment(
+                UserOverviewFragment.newInstance(searchQuery),
+                "Overview");
+        adapter.addFragment(
+                PostsFragment.newInstance("user/" + searchQuery + "/submitted", "", 0, true, true, false),
+                "Submitted");
+        adapter.addFragment(
+                CommentsFragment.newInstance("user/" + searchQuery + "/comments", "", true),
+                "Comments");
+        adapter.addFragment(
+                CommentsFragment.newInstance("user/" + searchQuery + "/gilded", "", true),
+                "Gilded");
 
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
@@ -154,11 +161,13 @@ public class SearchActivity extends AppCompatActivity {
 
     public void showSubredditPosts(String subreddit) {
         adapter.clear();
-        editText.setText(subreddit);
+        editText.setQuery(subreddit, false);
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
         for (String sortBy : sortByList) {
-            adapter.addFragment(PostsFragment.newInstance(subreddit, sortBy, 0, false, true, false), sortBy);
+            adapter.addFragment(
+                    PostsFragment.newInstance(subreddit, sortBy, 0, false, true, false),
+                    sortBy);
         }
 
         viewPager.setAdapter(adapter);

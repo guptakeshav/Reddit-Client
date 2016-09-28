@@ -167,7 +167,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                     activity.startActivity(i);
                 } else if (item.getItemId() == R.id.go_to_subreddit) {
                     Intent i = new Intent(activity, SearchActivity.class);
-                    i.putExtra("TYPE", "SUBREDDITS");
+                    i.putExtra("TYPE", "SUBREDDIT_POSTS");
                     i.putExtra("SEARCH_QUERY", post.getSubreddit());
                     activity.startActivity(i);
                 } else if (item.getItemId() == R.id.save) {
