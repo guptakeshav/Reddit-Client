@@ -1,13 +1,12 @@
 package com.keshavg.reddit;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
-import android.util.Log;
 import android.view.View;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -18,8 +17,6 @@ import android.widget.Switch;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
@@ -46,7 +43,7 @@ public class SubmitPostActivity extends AppCompatActivity {
     private Switch aSwitch;
     private String kind;
     private TextInputEditText title;
-    private TextInputEditText subreddit;
+    private AutoCompleteTextView subreddit;
     private TextInputEditText text;
     private TextInputEditText url;
     private Button uploadImgButton;
@@ -65,7 +62,7 @@ public class SubmitPostActivity extends AppCompatActivity {
         kind = "self"; // according to initial switch position
 
         title = (TextInputEditText) findViewById(R.id.title);
-        subreddit = (TextInputEditText) findViewById(R.id.subreddit);
+        subreddit = (AutoCompleteTextView) findViewById(R.id.subreddit);
         text = (TextInputEditText) findViewById(R.id.text);
         url = (TextInputEditText) findViewById(R.id.url);
         uploadImgButton = (Button) findViewById(R.id.upload_img);
@@ -74,6 +71,11 @@ public class SubmitPostActivity extends AppCompatActivity {
         captcha = (ImageView) findViewById(R.id.captcha);
         captchaText = (TextInputEditText) findViewById(R.id.captcha_text);
         refreshCaptcha = (ImageButton) findViewById(R.id.refresh_captcha);
+
+        SubredditAutocompleteAdapter adapter = new SubredditAutocompleteAdapter(
+                getApplicationContext(),
+                R.layout.textview);
+        subreddit.setAdapter(adapter);
 
         Button submit = (Button) findViewById(R.id.submit);
         Button discard = (Button) findViewById(R.id.discard);
@@ -169,9 +171,9 @@ public class SubmitPostActivity extends AppCompatActivity {
         byte[] bytes = new byte[(int)length];
 
         int offset = 0;
-        int numRead = 0;
+        int numRead;
         while (offset < bytes.length
-                && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+                && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
             offset += numRead;
         }
 
@@ -229,23 +231,23 @@ public class SubmitPostActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     captchIden = response.body().getIden();
 
-                    GlideUrl glideUrl = new GlideUrl(
-                            ApiClient.BASE_URL_OAUTH + "captcha/" + captchIden,
-                            new LazyHeaders.Builder()
-                                .addHeader("Authorization",
-                                        "bearer " + MainActivity.AuthPrefManager.getAccessToken())
-                            .build());
-
                     Glide.with(SubmitPostActivity.this)
-                            .load(glideUrl)
-                            .listener(new RequestListener<GlideUrl, GlideDrawable>() {
+                            .load(ApiClient.BASE_URL + "captcha/" + captchIden)
+                            .listener(new RequestListener<String, GlideDrawable>() {
                                 @Override
-                                public boolean onException(Exception e, GlideUrl model, Target<GlideDrawable> target, boolean isFirstResource) {
+                                public boolean onException(Exception e,
+                                                           String model,
+                                                           Target<GlideDrawable> target,
+                                                           boolean isFirstResource) {
                                     return false;
                                 }
 
                                 @Override
-                                public boolean onResourceReady(GlideDrawable resource, GlideUrl model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                                public boolean onResourceReady(GlideDrawable resource,
+                                                               String model,
+                                                               Target<GlideDrawable> target,
+                                                               boolean isFromMemoryCache,
+                                                               boolean isFirstResource) {
                                     progressBar.setVisibility(GONE);
                                     return false;
                                 }

@@ -81,7 +81,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
             }
         });
 
-        holder.name.setText(subreddit.getSubredditName());
+        holder.name.setText(subreddit.getSubreddit());
         holder.subscribers.setText(subreddit.getSubscribers() + " subscribers");
         holder.created.setText(subreddit.getCreated());
 
@@ -92,7 +92,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
         holder.description.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickSubreddit(subreddit.getSubredditName());
+                onClickSubreddit(subreddit.getSubreddit());
             }
         });
     }

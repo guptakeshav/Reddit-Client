@@ -73,6 +73,11 @@ public interface ApiInterface {
     @GET("subreddits/mine")
     Call<SubredditResponse> getOAuthSubreddits();
 
+    @FormUrlEncoded
+    @POST("api/search_reddit_names")
+    Call<NamesList> getRedditNames(@Header("Authorization") String authorization,
+                                   @Field("query") String query);
+
     @GET("api/v1/me")
     Call<User> getUsername(@Header("Authorization") String authorization);
 

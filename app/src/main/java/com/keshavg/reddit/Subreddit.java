@@ -14,7 +14,7 @@ public class Subreddit {
     @Getter
     private String name;
 
-    @SerializedName("display_name") private String subredditName;
+    @SerializedName("display_name") private String displayName;
     @SerializedName("created_utc") private Long created;
 
     @Getter
@@ -27,8 +27,8 @@ public class Subreddit {
     @Getter
     private Long subscribers;
 
-    public String getSubredditName() {
-        return "r/" + subredditName;
+    public String getSubreddit() {
+        return "r/" + displayName;
     }
 
     public String getCreated() {

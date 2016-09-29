@@ -355,7 +355,7 @@ public class MainActivity extends AppCompatActivity
                 if (response.isSuccessful()) {
                     List<Subreddit> subreddits = response.body().getSubreddits();
                     for (Subreddit subreddit : subreddits) {
-                        subredditsMenu.add(subreddit.getSubredditName());
+                        subredditsMenu.add(subreddit.getSubreddit());
                     }
                 } else {
                     showToast("Subreddits - " + response.message());
@@ -372,7 +372,7 @@ public class MainActivity extends AppCompatActivity
     private void openSearchActivity(String type) {
         Intent i = new Intent(MainActivity.this, SearchActivity.class);
         i.putExtra("TYPE", type);
-        MainActivity.this.startActivity(i);
+        startActivity(i);
         fam.close(true);
     }
 

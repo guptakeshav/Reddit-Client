@@ -59,6 +59,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ProgressBar progressBar;
+
         Toolbar toolbar;
         MenuItem goToAuthor;
         MenuItem goToSubreddit;
@@ -67,6 +68,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         MenuItem hide;
         MenuItem delete;
         MenuItem markNsfw;
+
         ImageView image;
         TextView subreddit;
         RelativeLayout postContent;
@@ -94,6 +96,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             hide = toolbar.getMenu().findItem(R.id.hide);
             delete = toolbar.getMenu().findItem(R.id.delete);
             markNsfw = toolbar.getMenu().findItem(R.id.nsfw);
+
             image = (ImageView) itemView.findViewById(R.id.post_image);
             subreddit = (TextView) itemView.findViewById(R.id.post_subreddit);
             postContent = (RelativeLayout) itemView.findViewById(R.id.post_content);
@@ -157,7 +160,62 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         final Post post = objects.get(position);
 
+        setToolbar(holder, position, post);
+
+        setPostImage(holder, post);
+
+        holder.subreddit.setText(post.getFormattedSubreddit());
+        holder.title.setText(post.getTitle());
+        holder.author.setText(post.getPostedBy());
+
+        setScoreInformation(holder, post.getScore(), post.getIsLiked());
+
+        holder.created.setText(post.getRelativeCreatedTimeSpan());
+        holder.commentsCount.setText(post.getCommentsCount());
+
+        holder.image.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onClickImage(position);
+            }
+        });
+
+        holder.postContent.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onClickContent(post);
+            }
+        });
+
+        holder.scoreUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickVote(position, 1, holder);
+            }
+        });
+
+        holder.scoreDown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickVote(position, -1, holder);
+            }
+        });
+
+        holder.commentsCount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onClickCommentsCount(post, holder);
+            }
+        });
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(activity.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void setToolbar(final ViewHolder holder, final int position, final Post post) {
         holder.toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 if (item.getItemId() == R.id.go_to_author) {
@@ -218,6 +276,8 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
                     alertDialog.show();
                     return true;
+                } else if (item.getItemId() == R.id.share) {
+                    startShareIntent(post);
                 }
 
                 return false;
@@ -259,7 +319,23 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             holder.markNsfw.setTitle("Mark NSFW");
             holder.nsfw.setVisibility(View.GONE);
         }
+    }
 
+    private void startShareIntent(Post post) {
+        Intent sendIntent = new Intent();
+
+        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT,
+                post.getTitle() +
+                        "\n\n" +
+                        ApiClient.BASE_URL + post.getPermalink());
+        sendIntent.setType("text/plain");
+
+        Intent chooser = Intent.createChooser(sendIntent, "Share with...");
+        activity.startActivity(chooser);
+    }
+
+    private void setPostImage(final ViewHolder holder, Post post) {
         int width = activity.getWindowManager().getDefaultDisplay().getWidth() - dpToPx(20);
         int height = 384;
 
@@ -294,52 +370,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         } else {
             holder.image.setImageBitmap(null);
         }
-
-        holder.subreddit.setText(post.getFormattedSubreddit());
-        holder.title.setText(post.getTitle());
-        holder.author.setText(post.getPostedBy());
-        setScoreInformation(holder, post.getScore(), post.getIsLiked());
-        holder.created.setText(post.getRelativeCreatedTimeSpan());
-        holder.commentsCount.setText(post.getCommentsCount());
-
-        holder.image.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickImage(position);
-            }
-        });
-
-        holder.postContent.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickContent(post);
-            }
-        });
-
-        holder.scoreUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickVote(position, 1, holder);
-            }
-        });
-
-        holder.scoreDown.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickVote(position, -1, holder);
-            }
-        });
-
-        holder.commentsCount.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickCommentsCount(post, holder);
-            }
-        });
-    }
-
-    private void showToast(String message) {
-        Toast.makeText(activity.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     private void setScoreInformation(ViewHolder holder, String score, int likes) {
