@@ -1,5 +1,6 @@
 package com.keshavg.reddit.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
@@ -12,12 +13,15 @@ import com.keshavg.reddit.adapters.ViewPagerFragmentAdapter;
 import com.keshavg.reddit.fragments.CommentsFragment;
 import com.keshavg.reddit.fragments.PostsFragment;
 import com.keshavg.reddit.fragments.UserOverviewFragment;
+import com.keshavg.reddit.interfaces.PerformFunction;
+import com.keshavg.reddit.services.LoginService;
 
 public class ProfileActivity extends AppCompatActivity {
     private String username;
 
     private TabLayout tabLayout;
     private ViewPager viewPager;
+    private ViewPagerFragmentAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +43,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
+        adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
 
         setUpViewPager();
     }
@@ -52,8 +57,26 @@ public class ProfileActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == LoginService.AUTH_CODE_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                LoginService.fetchAccessToken(
+                        getApplicationContext(),
+                        data.getStringExtra(LoginService.AUTH_CODE),
+                        new PerformFunction() {
+                            @Override
+                            public void execute() {
+                                setUpViewPager();
+                            }
+                        }
+                );
+            }
+        }
+    }
+
     private void setUpViewPager() {
-        ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
+        adapter.clear();
 
         adapter.addFragment(UserOverviewFragment.newInstance(username), "Overview");
         adapter.addFragment(CommentsFragment.newInstance("user/" + username + "/comments", "", true), "Comments");

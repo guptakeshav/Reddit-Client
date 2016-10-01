@@ -22,6 +22,7 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.adapters.SubredditAutocompleteAdapter;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.CaptchaRepsonse;
 import com.keshavg.reddit.models.SubmitPostResponse;
 import com.keshavg.reddit.models.UploadImageResponse;
@@ -229,7 +230,7 @@ public class SubmitPostActivity extends AppCompatActivity {
 
         RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
         Call<CaptchaRepsonse> call = apiService.getNewCaptcha(
-                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                "bearer " + AuthSharedPrefHelper.getAccessToken(),
                 "json"
         );
 
@@ -282,7 +283,7 @@ public class SubmitPostActivity extends AppCompatActivity {
     private void onClickSubmit() {
         RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
         Call<SubmitPostResponse> call = apiService.createPost(
-                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                "bearer " + AuthSharedPrefHelper.getAccessToken(),
                 "json",
                 kind,
                 title.getText().toString(),

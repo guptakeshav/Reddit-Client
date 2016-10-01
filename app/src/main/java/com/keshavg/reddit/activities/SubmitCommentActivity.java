@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.keshavg.reddit.R;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.Comment;
 import com.keshavg.reddit.models.SubmitCommentResponse;
 import com.keshavg.reddit.network.RedditApiClient;
@@ -86,7 +87,7 @@ public class SubmitCommentActivity extends AppCompatActivity {
     private void editComment(String text) {
         RedditApiInterface apiClient = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
         Call<SubmitCommentResponse> call = apiClient.editComment(
-                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                "bearer " + AuthSharedPrefHelper.getAccessToken(),
                 1,
                 "json",
                 text,
@@ -131,7 +132,7 @@ public class SubmitCommentActivity extends AppCompatActivity {
     private void submitComment(String text) {
         RedditApiInterface apiClient = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
         Call<SubmitCommentResponse> call = apiClient.submitComment(
-                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                "bearer " + AuthSharedPrefHelper.getAccessToken(),
                 1,
                 "json",
                 text,

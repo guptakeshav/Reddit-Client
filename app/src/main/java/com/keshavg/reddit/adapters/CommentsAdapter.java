@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -24,12 +25,13 @@ import android.widget.Toast;
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.activities.CommentsActivity;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.activities.SubmitCommentActivity;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.Comment;
 import com.keshavg.reddit.models.CommentResponse;
 import com.keshavg.reddit.network.RedditApiClient;
 import com.keshavg.reddit.network.RedditApiInterface;
+import com.keshavg.reddit.utils.ValidateUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,6 +61,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private Map<String, Integer> adapterPositionById;
     private List<Comment> objects;
     private Boolean isCollapsed;
+    private CoordinatorLayout coordinatorLayout;
 
     public CommentsAdapter(Activity activity, String url, String sortByParam, Boolean isProfileActivity) {
         this.activity = activity;
@@ -72,6 +75,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         adapterPositionById = new HashMap<>();
         objects = new ArrayList<>();
         isCollapsed = false;
+
+        coordinatorLayout = (CoordinatorLayout) activity.findViewById(R.id.coordinator_layout);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -213,8 +218,8 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             }
         });
 
-        if (MainActivity.AuthPrefManager.isLoggedIn()) {
-            if (comment.getAuthor().equals(MainActivity.AuthPrefManager.getUsername())) {
+        if (AuthSharedPrefHelper.isLoggedIn()) {
+            if (comment.getAuthor().equals(AuthSharedPrefHelper.getUsername())) {
                 viewHolder.commentEdit.setVisibility(View.VISIBLE);
                 viewHolder.commentDelete.setVisibility(View.VISIBLE);
             }
@@ -410,53 +415,48 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
      * @param viewHolder
      */
     private void onClickVote(final Comment comment, int likes, final ViewHolder viewHolder) {
-        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
-            showToast(activity.getString(R.string.login_error));
-            return;
-        }
+        if (ValidateUtil.loginValidation(coordinatorLayout, activity)) {
 
-        RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
+            RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
 
-        final int prevLikes = comment.getLikeInt();
-        comment.setLikes((comment.getLikeInt() == likes) ? 0 : likes);
-        final int delta = comment.getLikeInt() - prevLikes;
-        comment.updateScore(delta);
-        setScoreInformation(viewHolder, comment);
+            final int prevLikes = comment.getLikeInt();
+            comment.setLikes((comment.getLikeInt() == likes) ? 0 : likes);
+            final int delta = comment.getLikeInt() - prevLikes;
+            comment.updateScore(delta);
+            setScoreInformation(viewHolder, comment);
 
-        Call<Void> call = apiService.votePost(
-                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
-                comment.getName(),
-                comment.getLikeInt()
-        );
+            Call<Void> call = apiService.votePost(
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
+                    comment.getName(),
+                    comment.getLikeInt()
+            );
 
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (!response.isSuccessful()) {
-                    showToast("Comments Voting - " + response.message());
+            call.enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    if (!response.isSuccessful()) {
+                        showToast("Comments Voting - " + response.message());
 
-                    comment.setLikes(prevLikes);
-                    comment.updateScore(-delta);
-                    setScoreInformation(viewHolder, comment);
+                        comment.setLikes(prevLikes);
+                        comment.updateScore(-delta);
+                        setScoreInformation(viewHolder, comment);
+                    }
                 }
-            }
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
-            }
-        });
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    showToast(activity.getString(R.string.server_error));
+                }
+            });
+        }
     }
 
     private void onClickReply(final String parentId) {
-        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
-            showToast(activity.getString(R.string.login_error));
-            return;
+        if (ValidateUtil.loginValidation(coordinatorLayout, activity)) {
+            Intent i = new Intent(activity, SubmitCommentActivity.class);
+            i.putExtra(SubmitCommentActivity.PARENT_ID, parentId);
+            activity.startActivityForResult(i, CommentsActivity.COMMENT_SUBMIT_REQUEST_CODE);
         }
-
-        Intent i = new Intent(activity, SubmitCommentActivity.class);
-        i.putExtra(SubmitCommentActivity.PARENT_ID, parentId);
-        activity.startActivityForResult(i, CommentsActivity.COMMENT_SUBMIT_REQUEST_CODE);
     }
 
     /**
@@ -472,10 +472,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         RedditApiInterface apiService;
         Call<List<CommentResponse>> callMore;
 
-        if (MainActivity.AuthPrefManager.isLoggedIn()) {
+        if (AuthSharedPrefHelper.isLoggedIn()) {
             apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
             callMore = apiService.getOAuthComments(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     url,
                     moreIds.peek(),
                     sortByParam,
@@ -533,7 +533,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private void deleteComment(final ViewHolder viewHolder, String id) {
         RedditApiInterface apiClient = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
         Call<Void> call = apiClient.deleteThing(
-                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                "bearer " + AuthSharedPrefHelper.getAccessToken(),
                 id
         );
 

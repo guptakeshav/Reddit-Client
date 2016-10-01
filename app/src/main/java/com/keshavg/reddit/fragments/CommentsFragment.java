@@ -15,8 +15,8 @@ import android.widget.Toast;
 
 import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.adapters.CommentsAdapter;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.CommentResponse;
 import com.keshavg.reddit.network.RedditApiClient;
 import com.keshavg.reddit.network.RedditApiInterface;
@@ -172,10 +172,11 @@ public class CommentsFragment extends Fragment {
         private Call<List<CommentResponse>> getRetrofitCall(String moreId) {
             RedditApiInterface apiService;
             Call<List<CommentResponse>> call;
-            if (MainActivity.AuthPrefManager.isLoggedIn()) {
+
+            if (AuthSharedPrefHelper.isLoggedIn()) {
                 apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
                 call = apiService.getOAuthComments(
-                        "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                        "bearer " + AuthSharedPrefHelper.getAccessToken(),
                         url,
                         moreId,
                         sortByParam,
@@ -246,10 +247,10 @@ public class CommentsFragment extends Fragment {
         private Call<CommentResponse> getRetrofitCall(String moreId) {
             RedditApiInterface apiService;
             Call<CommentResponse> call;
-            if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            if (AuthSharedPrefHelper.isLoggedIn()) {
                 apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
                 call = apiService.getOAuthProfileComments(
-                        "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                        "bearer " + AuthSharedPrefHelper.getAccessToken(),
                         url,
                         moreId,
                         "",

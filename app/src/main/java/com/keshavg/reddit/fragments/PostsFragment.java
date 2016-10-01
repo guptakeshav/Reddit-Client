@@ -15,8 +15,8 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.adapters.PostsAdapter;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.db.PostsDbHelper;
 import com.keshavg.reddit.models.Post;
 import com.keshavg.reddit.models.PostResponse;
@@ -174,11 +174,11 @@ public class PostsFragment extends Fragment {
 
         if (isSearch == 0) { // not performing search operation
             String completeUrl = url.equals("") ? sortByParam : (url + "/" + sortByParam);
-            if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            if (AuthSharedPrefHelper.isLoggedIn()) {
 
                 apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
                 call = apiService.getOAuthPosts(
-                        "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                        "bearer " + AuthSharedPrefHelper.getAccessToken(),
                         completeUrl,
                         afterParam
                 );
@@ -188,11 +188,11 @@ public class PostsFragment extends Fragment {
                 call = apiService.getPosts(completeUrl, afterParam);
             }
         } else {
-            if (MainActivity.AuthPrefManager.isLoggedIn()) {
+            if (AuthSharedPrefHelper.isLoggedIn()) {
 
                 apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
                 call = apiService.searchOAuthPosts(
-                        "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                        "bearer " + AuthSharedPrefHelper.getAccessToken(),
                         url,
                         sortByParam,
                         afterParam

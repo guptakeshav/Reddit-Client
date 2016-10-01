@@ -15,8 +15,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.adapters.UserTrophyAdapter;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.AddFriend;
 import com.keshavg.reddit.models.User;
 import com.keshavg.reddit.models.UserResponse;
@@ -98,13 +98,13 @@ public class UserOverviewFragment extends Fragment {
         RedditApiInterface apiService;
         Call<UserResponse> call;
 
-        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
+        if (!AuthSharedPrefHelper.isLoggedIn()) {
             apiService = RedditApiClient.getClient().create(RedditApiInterface.class);
             call = apiService.getUserOverview(username);
         } else {
             apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
             call = apiService.getOAuthUserOverview(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     username
             );
         }
@@ -120,7 +120,7 @@ public class UserOverviewFragment extends Fragment {
                     postKarma.setText(user.getPostKarma());
                     commentKarma.setText(user.getCommentKarma());
 
-                    if (!user.getUsername().equals(MainActivity.AuthPrefManager.getUsername())) {
+                    if (!user.getUsername().equals(AuthSharedPrefHelper.getUsername())) {
                         addFriend.setVisibility(View.VISIBLE);
                     } else {
                         addFriend.setVisibility(View.GONE);
@@ -159,14 +159,14 @@ public class UserOverviewFragment extends Fragment {
         if (!user.getIsFriend()) {
             addFriend.setColorFilter(getResources().getColor(R.color.colorAccent));
             call = apiService.addFriend(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     username,
                     new AddFriend(username)
             );
         } else {
             addFriend.setColorFilter(getResources().getColor(android.R.color.black));
             call = apiService.removeFriend(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     username
             );
         }

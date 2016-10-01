@@ -5,6 +5,7 @@ import android.app.ActivityOptions;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -28,13 +29,14 @@ import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.activities.CommentsActivity;
 import com.keshavg.reddit.activities.ImageViewActivity;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.activities.SearchActivity;
 import com.keshavg.reddit.activities.WebViewActivity;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.Post;
 import com.keshavg.reddit.network.RedditApiClient;
 import com.keshavg.reddit.network.RedditApiInterface;
 import com.keshavg.reddit.utils.DeviceUtil;
+import com.keshavg.reddit.utils.ValidateUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,7 @@ import retrofit2.Response;
  */
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         implements SectionTitleProvider {
+    private CoordinatorLayout coordinatorLayout;
     private Activity activity;
     private List<Post> objects;
     private RequestManager requestManager;
@@ -64,6 +67,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         this.clearOnUnHide = clearOnUnHide;
 
         this.objects = new ArrayList<>();
+        this.coordinatorLayout = (CoordinatorLayout) activity.findViewById(R.id.coordinator_layout);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -225,13 +229,13 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             public boolean onMenuItemClick(MenuItem item) {
                 if (item.getItemId() == R.id.go_to_author) {
                     Intent i = new Intent(activity, SearchActivity.class);
-                    i.putExtra("TYPE", "USERS");
-                    i.putExtra("SEARCH_QUERY", post.getAuthor());
+                    i.putExtra(SearchActivity.TYPE, SearchActivity.USERS);
+                    i.putExtra(SearchActivity.SEARCH_QUERY, post.getAuthor());
                     activity.startActivity(i);
                 } else if (item.getItemId() == R.id.go_to_subreddit) {
                     Intent i = new Intent(activity, SearchActivity.class);
-                    i.putExtra("TYPE", "SUBREDDIT_POSTS");
-                    i.putExtra("SEARCH_QUERY", post.getSubreddit());
+                    i.putExtra(SearchActivity.TYPE, SearchActivity.SUBREDDIT_POSTS);
+                    i.putExtra(SearchActivity.SEARCH_QUERY, post.getFormattedSubreddit());
                     activity.startActivity(i);
                 } else if (item.getItemId() == R.id.save) {
                     onClickSave(post, holder.save);
@@ -289,11 +293,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
             }
         });
 
-        if (MainActivity.AuthPrefManager.isLoggedIn()) {
+        if (AuthSharedPrefHelper.isLoggedIn()) {
             holder.save.setVisible(true);
             holder.hide.setVisible(true);
 
-            if (MainActivity.AuthPrefManager.getUsername().equals(post.getAuthor())) {
+            if (AuthSharedPrefHelper.getUsername().equals(post.getAuthor())) {
                 holder.delete.setVisible(true);
                 holder.markNsfw.setVisible(true);
             } else {
@@ -400,12 +404,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         Call<Void> call;
         if (post.getIsSaved() == 1) {
             call = apiService.unsaveThing(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     post.getName()
             );
         } else {
             call = apiService.saveThing(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     post.getName()
             );
         }
@@ -441,12 +445,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         Call<Void> call;
         if (post.getIsHidden() == 1) {
             call = apiService.unhideThing(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     post.getName()
             );
         } else {
             call = apiService.hideThing(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     post.getName()
             );
         }
@@ -485,7 +489,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     private void onClickDelete(String id, final int position) {
         RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
         Call<Void> call = apiService.deleteThing(
-                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                "bearer " + AuthSharedPrefHelper.getAccessToken(),
                 id
         );
 
@@ -512,12 +516,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         Call<Void> call;
         if (post.getIsNsfw() == 1) {
             call = apiService.unmarkNsfw(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     post.getName()
             );
         } else {
             call = apiService.markNsfw(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     post.getName()
             );
         }
@@ -561,45 +565,43 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     }
 
     private void onClickVote(int position, final int likes, final ViewHolder holder) {
-        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
-            showToast(activity.getString(R.string.login_error));
-            return;
-        }
+        if (ValidateUtil.loginValidation(coordinatorLayout, activity)) {
 
-        RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
+            RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
 
-        final Post post = objects.get(position);
-        final int prevLikes = post.getIsLiked();
-        post.setIsLiked((post.getIsLiked() == likes) ? 0 : likes);
-        final int delta = post.getIsLiked() - prevLikes;
-        post.updateScore(delta);
-        setScoreInformation(holder, post.getScore(), post.getIsLiked());
+            final Post post = objects.get(position);
+            final int prevLikes = post.getIsLiked();
+            post.setIsLiked((post.getIsLiked() == likes) ? 0 : likes);
+            final int delta = post.getIsLiked() - prevLikes;
+            post.updateScore(delta);
+            setScoreInformation(holder, post.getScore(), post.getIsLiked());
 
-        Call<Void> call = apiService.votePost("bearer " + MainActivity.AuthPrefManager.getAccessToken(),
-                post.getName(),
-                post.getIsLiked()
-        );
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (!response.isSuccessful()) {
-                    if (response.code() == 400) {
-                        showToast(activity.getString(R.string.archive_error));
-                    } else {
-                        showToast("Voting - " + response.message());
+            Call<Void> call = apiService.votePost("bearer " + AuthSharedPrefHelper.getAccessToken(),
+                    post.getName(),
+                    post.getIsLiked()
+            );
+            call.enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    if (!response.isSuccessful()) {
+                        if (response.code() == 400) {
+                            showToast(activity.getString(R.string.archive_error));
+                        } else {
+                            showToast("Voting - " + response.message());
+                        }
+
+                        post.setIsLiked(prevLikes);
+                        post.updateScore(-delta);
+                        setScoreInformation(holder, post.getScore(), post.getIsLiked());
                     }
-
-                    post.setIsLiked(prevLikes);
-                    post.updateScore(-delta);
-                    setScoreInformation(holder, post.getScore(), post.getIsLiked());
                 }
-            }
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
-            }
-        });
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    showToast(activity.getString(R.string.server_error));
+                }
+            });
+        }
     }
 
     private void onClickCommentsCount(Post post, ViewHolder holder) {

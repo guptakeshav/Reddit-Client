@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout
+    android:id="@+id/coordinator_layout"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -57,7 +58,8 @@
         fab:menu_openDirection="up"
         fab:fab_shadowColor="#66000000"
         fab:menu_labels_ellipsize="end"
-        fab:menu_labels_singleLine="true">
+        fab:menu_labels_singleLine="true"
+        app:layout_behavior="com.keshavg.reddit.behaviors.FloatingActionMenuBehavior">
 
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fab_posts"

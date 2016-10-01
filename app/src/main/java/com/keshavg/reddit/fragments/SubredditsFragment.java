@@ -14,8 +14,8 @@ import android.widget.Toast;
 
 import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.adapters.SubredditsAdapter;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.SubredditResponse;
 import com.keshavg.reddit.network.RedditApiClient;
 import com.keshavg.reddit.network.RedditApiInterface;
@@ -128,10 +128,10 @@ public class SubredditsFragment extends Fragment {
         RedditApiInterface apiService;
         Call<SubredditResponse> call;
 
-        if (MainActivity.AuthPrefManager.isLoggedIn()) {
+        if (AuthSharedPrefHelper.isLoggedIn()) {
             apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
             call = apiService.searchOAuthSubreddits(
-                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
                     searchQuery,
                     afterParam,
                     1

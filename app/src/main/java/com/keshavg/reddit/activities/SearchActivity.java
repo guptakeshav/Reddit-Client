@@ -20,9 +20,18 @@ import com.keshavg.reddit.fragments.CommentsFragment;
 import com.keshavg.reddit.fragments.PostsFragment;
 import com.keshavg.reddit.fragments.SubredditsFragment;
 import com.keshavg.reddit.fragments.UserOverviewFragment;
+import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.providers.SearchSuggestionsProvider;
+import com.keshavg.reddit.services.LoginService;
 
 public class SearchActivity extends AppCompatActivity {
+    public static final String SEARCH_QUERY = "SEARCH_QUERY";
+    public static final String TYPE = "TYPE";
+    public static final String POSTS = "POSTS";
+    public static final String SUBREDDITS = "SUBREDDITS";
+    public static final String USERS = "USERS";
+    public static final String SUBREDDIT_POSTS = "SUBREDDIT_POSTS";
+
     private SearchRecentSuggestions suggestions;
     private String searchType;
 
@@ -40,10 +49,10 @@ public class SearchActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
-            searchType = extras.getString("TYPE");
+            searchType = extras.getString(TYPE);
 
-            if (extras.containsKey("SEARCH_QUERY")) {
-                searchQuery = extras.getString("SEARCH_QUERY");
+            if (extras.containsKey(SEARCH_QUERY)) {
+                searchQuery = extras.getString(SEARCH_QUERY);
             }
         }
 
@@ -70,11 +79,7 @@ public class SearchActivity extends AppCompatActivity {
         adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
 
         if (searchQuery != null) {
-            if (searchType.equals("USERS")) {
-                editText.setQuery(searchQuery, true);
-            } else if (searchType.equals("SUBREDDIT_POSTS")) {
-                showSubredditPosts("r/" + searchQuery);
-            }
+            doSearch();
         }
     }
 
@@ -101,35 +106,58 @@ public class SearchActivity extends AppCompatActivity {
 
         final String queryAction = intent.getAction();
         if (Intent.ACTION_SEARCH.equals(queryAction) || Intent.ACTION_VIEW.equals(queryAction)) {
-            preSearch();
-
             searchQuery = intent.getDataString(); // from search-bar
             if (searchQuery == null) {
                 searchQuery = intent.getStringExtra(SearchManager.QUERY); // from suggestions
-                editText.setQuery(searchQuery, false);
             }
             suggestions.saveRecentQuery(searchQuery, null);
 
-            if (searchType.equals("POSTS")) {
-                performPostsSearch();
-            } else if (searchType.equals("SUBREDDITS")) {
-                performSubredditsSearch();
-            } else if (searchType.equals("USERS")) {
-                performUsersSearch();
-            }
+            doSearch();
+        }
+    }
 
-            postSearch();
+    private void doSearch() {
+        preSearch();
+
+        if (searchType.equals(POSTS)) {
+            performPostsSearch();
+        } else if (searchType.equals(SUBREDDITS)) {
+            performSubredditsSearch();
+        } else if (searchType.equals(USERS)) {
+            performUsersSearch();
+        } else if (searchType.equals(SUBREDDIT_POSTS)) {
+            showSubredditPosts(searchQuery);
+        }
+
+        postSearch();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == LoginService.AUTH_CODE_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                LoginService.fetchAccessToken(
+                        getApplicationContext(),
+                        data.getStringExtra(LoginService.AUTH_CODE),
+                        new PerformFunction() {
+                            @Override
+                            public void execute() {
+                                doSearch();
+                            }
+                        }
+                );
+            }
         }
     }
 
     private void preSearch() {
         adapter.clear();
+        editText.setQuery(searchQuery, false);
         tabLayout.setVisibility(View.VISIBLE);
     }
 
     private void postSearch() {
         editText.clearFocus();
-
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
     }
@@ -166,7 +194,6 @@ public class SearchActivity extends AppCompatActivity {
 
     public void showSubredditPosts(String subreddit) {
         preSearch();
-
         editText.setQuery(subreddit, false);
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
@@ -175,7 +202,6 @@ public class SearchActivity extends AppCompatActivity {
                     PostsFragment.newInstance(subreddit, sortBy, 0, false, true, false),
                     sortBy);
         }
-
         postSearch();
     }
 }

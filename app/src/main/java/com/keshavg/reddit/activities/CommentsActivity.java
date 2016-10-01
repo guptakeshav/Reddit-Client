@@ -15,7 +15,9 @@ import android.widget.TextView;
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.adapters.ViewPagerFragmentAdapter;
 import com.keshavg.reddit.fragments.CommentsFragment;
+import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.models.Comment;
+import com.keshavg.reddit.services.LoginService;
 import com.keshavg.reddit.utils.Constants;
 
 import java.util.ArrayList;
@@ -37,6 +39,7 @@ public class CommentsActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
     private ViewPager viewPager;
+    private ViewPagerFragmentAdapter adapter;
     private List<Fragment> fragments;
 
     @Override
@@ -73,11 +76,12 @@ public class CommentsActivity extends AppCompatActivity {
             }
         });
 
+        adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
         setUpViewPager();
     }
 
     private void setUpViewPager() {
-        ViewPagerFragmentAdapter adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
+        adapter.clear();
 
         String[] sortByList = {"best", "top", "new", "controversial", "old", "qa&a"};
         for (String sortBy : sortByList) {
@@ -128,6 +132,19 @@ public class CommentsActivity extends AppCompatActivity {
 
                 ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
                         .edit(id, editComment);
+            }
+        } else if (requestCode == LoginService.AUTH_CODE_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                LoginService.fetchAccessToken(
+                        getApplicationContext(),
+                        data.getStringExtra(LoginService.AUTH_CODE),
+                        new PerformFunction() {
+                            @Override
+                            public void execute() {
+                                setUpViewPager();
+                            }
+                        }
+                );
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.keshavg.reddit.adapters;
 
 import android.app.Activity;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -12,11 +13,12 @@ import android.widget.Toast;
 
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.activities.SearchActivity;
+import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.Subreddit;
 import com.keshavg.reddit.network.RedditApiClient;
 import com.keshavg.reddit.network.RedditApiInterface;
+import com.keshavg.reddit.utils.ValidateUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +32,14 @@ import retrofit2.Response;
  */
 public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.ViewHolder>
         implements SectionTitleProvider {
+    private CoordinatorLayout coordinatorLayout;
     private Activity activity;
     private List<Subreddit> objects;
 
     public SubredditsAdapter(Activity activity) {
         this.activity = activity;
         this.objects = new ArrayList<>();
+        this.coordinatorLayout = (CoordinatorLayout) activity.findViewById(R.id.coordinator_layout);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -127,49 +131,47 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
     }
 
     private void onClickSubscribe(final Subreddit subreddit, final ImageButton subscribe) {
-        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
-            showToast(activity.getString(R.string.login_error));
-            return;
-        }
+        if (ValidateUtil.loginValidation(coordinatorLayout, activity)) {
 
-        String action;
-        if (subreddit.getIsSubscribed().equals(false)) {
-            subscribe.setColorFilter(activity.getColor(R.color.colorAccent));
-            subreddit.setIsSubscribed(true);
-            action = "sub";
-        } else {
-            subscribe.setColorFilter(activity.getColor(android.R.color.black));
-            subreddit.setIsSubscribed(false);
-            action = "unsub";
-        }
+            String action;
+            if (subreddit.getIsSubscribed().equals(false)) {
+                subscribe.setColorFilter(activity.getColor(R.color.colorAccent));
+                subreddit.setIsSubscribed(true);
+                action = "sub";
+            } else {
+                subscribe.setColorFilter(activity.getColor(android.R.color.black));
+                subreddit.setIsSubscribed(false);
+                action = "unsub";
+            }
 
-        RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-        Call<Void> call = apiService.subscribeSubreddit(
-                "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
-                action,
-                subreddit.getName()
-        );
+            RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
+            Call<Void> call = apiService.subscribeSubreddit(
+                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
+                    action,
+                    subreddit.getName()
+            );
 
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (!response.isSuccessful()) {
-                    showToast("Subscribing - " + response.message());
+            call.enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    if (!response.isSuccessful()) {
+                        showToast("Subscribing - " + response.message());
 
-                    if (subreddit.getIsSubscribed().equals(true)) {
-                        subscribe.setColorFilter(activity.getColor(R.color.colorAccent));
-                        subreddit.setIsSubscribed(true);
-                    } else {
-                        subscribe.setColorFilter(activity.getColor(android.R.color.black));
-                        subreddit.setIsSubscribed(false);
+                        if (subreddit.getIsSubscribed().equals(true)) {
+                            subscribe.setColorFilter(activity.getColor(R.color.colorAccent));
+                            subreddit.setIsSubscribed(true);
+                        } else {
+                            subscribe.setColorFilter(activity.getColor(android.R.color.black));
+                            subreddit.setIsSubscribed(false);
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
-            }
-        });
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    showToast(activity.getString(R.string.server_error));
+                }
+            });
+        }
     }
 }
