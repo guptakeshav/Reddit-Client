@@ -249,7 +249,12 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         viewHolder.commentFullComments.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                return false;
+                Intent i = new Intent(activity, CommentsActivity.class);
+                i.putExtra(CommentsActivity.TITLE, comment.getPostTitle());
+                i.putExtra(CommentsActivity.URL, comment.getFullCommentLink());
+                activity.startActivity(i);
+
+                return true;
             }
         });
 
@@ -442,7 +447,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         }
 
         Intent i = new Intent(activity, SubmitCommentActivity.class);
-        i.putExtra("PARENT_ID", parentId);
+        i.putExtra(SubmitCommentActivity.PARENT_ID, parentId);
         activity.startActivityForResult(i, CommentsActivity.COMMENT_SUBMIT_REQUEST_CODE);
     }
 

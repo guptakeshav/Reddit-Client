@@ -15,8 +15,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SubmitCommentActivity extends AppCompatActivity {
+    public static final String ID = "ID";
+    public static final String PARENT_ID = "PARENT_ID";
+    public static final String COMMENT = "COMMENT";
+
     private String id;
-    private String comment;
+    private String commentBody;
     private String parentId;
 
     @Override
@@ -27,28 +31,28 @@ public class SubmitCommentActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
 
-            if (extras.containsKey("PARENT_ID")) {
-                parentId = extras.getString("PARENT_ID");
+            if (extras.containsKey(PARENT_ID)) {
+                parentId = extras.getString(PARENT_ID);
             } else {
                 parentId = null;
             }
 
-            if (extras.containsKey("ID")) {
-                id = extras.getString("ID");
-                comment = extras.getString("COMMENT");
+            if (extras.containsKey(ID)) {
+                id = extras.getString(ID);
+                commentBody = extras.getString(COMMENT);
             } else {
                 id = null;
-                comment = null;
+                commentBody = null;
             }
         }
 
         final EditText text = (EditText) findViewById(R.id.comment);
         if (id != null) {
-            text.setText(comment);
+            text.setText(commentBody);
         }
 
-        final Button submit = (Button) findViewById(R.id.comment_submit);
-        final Button discard = (Button) findViewById(R.id.comment_discard);
+        Button submit = (Button) findViewById(R.id.comment_submit);
+        Button discard = (Button) findViewById(R.id.comment_discard);
 
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,10 +95,10 @@ public class SubmitCommentActivity extends AppCompatActivity {
                         Comment editComment = response.body().getSubmittedComment();
 
                         Intent resultIntent = new Intent();
-                        resultIntent.putExtra("ID", id);
-                        resultIntent.putExtra("COMMENT", editComment);
+                        resultIntent.putExtra(ID, id);
+                        resultIntent.putExtra(COMMENT, editComment);
 
-                        setResult(CommentsActivity.EDIT_COMMENT, resultIntent);
+                        setResult(CommentsActivity.RESULT_EDIT_COMMENT, resultIntent);
                         finish();
                     } else {
                         for (List<String> error : response.body().getErrors()) {
@@ -136,10 +140,10 @@ public class SubmitCommentActivity extends AppCompatActivity {
                         Comment submittedComment = response.body().getSubmittedComment();
 
                         Intent resultIntent = new Intent();
-                        resultIntent.putExtra("PARENT_ID", parentId);
-                        resultIntent.putExtra("COMMENT", submittedComment);
+                        resultIntent.putExtra(PARENT_ID, parentId);
+                        resultIntent.putExtra(COMMENT, submittedComment);
 
-                        setResult(CommentsActivity.SUBMIT_COMMENT, resultIntent);
+                        setResult(CommentsActivity.RESULT_SUBMIT_COMMENT, resultIntent);
                         finish();
                     } else {
                         for (List<String> error : response.body().getErrors()) {

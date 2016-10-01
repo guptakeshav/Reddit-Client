@@ -26,6 +26,9 @@ public class Comment implements Serializable {
      */
 
     @Getter
+    @SerializedName("link_id") private String postId;
+
+    @Getter
     private String author;
 
     public String getPostedBy() {
@@ -58,7 +61,14 @@ public class Comment implements Serializable {
     @Getter
     private int score;
 
+    @Getter
+    private String subreddit;
+
+    @Getter
+    @SerializedName("link_title") private String postTitle;
+
     public void setData(Comment comment) {
+        this.postId = comment.getPostId();
         this.author = comment.getAuthor();
         this.htmlBody = comment.getHtmlBody();
         this.created = comment.getCreated();
@@ -67,6 +77,13 @@ public class Comment implements Serializable {
         this.parentId = comment.getParentId();
         this.replyResponse = comment.getReplyResponse();
         this.score = comment.getScore();
+        this.subreddit = comment.getSubreddit();
+        this.postTitle = comment.getPostTitle();
+    }
+
+    public String getFullCommentLink() {
+        String id = postId.substring(3, postId.length());
+        return "/r/" + subreddit + "/comments/" + id + "/";
     }
 
     public String getRelativeTime() {
