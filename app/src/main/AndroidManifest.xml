@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme"
         tools:replace="android:allowBackup">
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -25,17 +25,17 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".CommentsActivity"
+            android:name=".activities.CommentsActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".WebViewActivity"
+            android:name=".activities.WebViewActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".SearchActivity"
+            android:name=".activities.SearchActivity"
             android:launchMode="singleTop"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
@@ -50,30 +50,30 @@
                 android:resource="@xml/searchable"/>
         </activity>
         <activity
-            android:name=".ImageViewActivity"
+            android:name=".activities.ImageViewActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
             android:theme="@style/Theme.Sliding.DayNight" />
         <activity
-            android:name=".ProfileActivity"
+            android:name=".activities.ProfileActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".SubmitCommentActivity"
+            android:name=".activities.SubmitCommentActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
-            android:name=".SubmitPostActivity"
+            android:name=".activities.SubmitPostActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label=""
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <provider
-            android:authorities="com.keshavg.reddit.SearchSuggestionsProvider"
-            android:name=".SearchSuggestionsProvider">
+            android:authorities="com.keshavg.reddit.providers.SearchSuggestionsProvider"
+            android:name=".providers.SearchSuggestionsProvider">
         </provider>
     </application>
 
