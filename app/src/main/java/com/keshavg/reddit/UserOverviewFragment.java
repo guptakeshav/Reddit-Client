@@ -3,9 +3,14 @@ package com.keshavg.reddit;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,12 +23,18 @@ import retrofit2.Response;
  */
 
 public class UserOverviewFragment extends Fragment {
-    private String name;
+    private String username;
 
-    private TextView username;
+    private ProgressBar progressBar;
+    private LinearLayout userOverview;
+
+    private TextView usernameView;
+    private ImageButton addFriend;
     private TextView joined;
     private TextView postKarma;
     private TextView commentKarma;
+    private TextView noTrophyAvaiable;
+    private RecyclerView trophyCase;
 
     public static UserOverviewFragment newInstance(String username) {
         UserOverviewFragment fragment = new UserOverviewFragment();
@@ -37,7 +48,7 @@ public class UserOverviewFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        name = getArguments().getString("USERNAME");
+        username = getArguments().getString("USERNAME");
     }
 
     @Nullable
@@ -48,10 +59,23 @@ public class UserOverviewFragment extends Fragment {
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        username = (TextView) view.findViewById(R.id.username);
+        progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
+        userOverview = (LinearLayout) view.findViewById(R.id.user_overview);
+
+        usernameView = (TextView) view.findViewById(R.id.username);
+        addFriend = (ImageButton) view.findViewById(R.id.add_friend);
         joined = (TextView) view.findViewById(R.id.joined);
         postKarma = (TextView) view.findViewById(R.id.post_karma);
         commentKarma = (TextView) view.findViewById(R.id.comment_karma);
+        noTrophyAvaiable = (TextView) view.findViewById(R.id.no_trophy_available);
+
+        trophyCase = (RecyclerView) view.findViewById(R.id.trophy_list);
+        LinearLayoutManager llm = new LinearLayoutManager(
+                getActivity(),
+                LinearLayoutManager.VERTICAL,
+                false
+        );
+        trophyCase.setLayoutManager(llm);
 
         fetchUserData();
     }
@@ -61,18 +85,51 @@ public class UserOverviewFragment extends Fragment {
     }
 
     private void fetchUserData() {
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<UserResponse> call = apiService.getUserOverview(name);
+        ApiInterface apiService;
+        Call<UserResponse> call;
+
+        if (!MainActivity.AuthPrefManager.isLoggedIn()) {
+            apiService = ApiClient.getClient().create(ApiInterface.class);
+            call = apiService.getUserOverview(username);
+        } else {
+            apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+            call = apiService.getOAuthUserOverview(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    username
+            );
+        }
 
         call.enqueue(new Callback<UserResponse>() {
             @Override
             public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
                 if (response.isSuccessful()) {
-                    User user = response.body().getUser();
-                    username.setText(user.getName());
+                    final User user = response.body().getUser();
+
+                    usernameView.setText(user.getName());
                     joined.setText("Redditor since " + user.getCreated());
                     postKarma.setText(user.getPostKarma());
                     commentKarma.setText(user.getCommentKarma());
+
+                    if (!user.getName().equals(MainActivity.AuthPrefManager.getUsername())) {
+                        addFriend.setVisibility(View.VISIBLE);
+                    } else {
+                        addFriend.setVisibility(View.GONE);
+                    }
+
+                    addFriend.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            onClickAddFriend(user);
+                        }
+                    });
+
+                    if (user.getIsFriend()) {
+                        addFriend.setColorFilter(getResources().getColor(R.color.colorAccent));
+                    } else {
+                        addFriend.setColorFilter(getResources().getColor(android.R.color.black));
+                    }
+
+                    fetchUserTrophies();
                 } else {
                     showToast("Overivew - " + response.message());
                 }
@@ -81,6 +138,80 @@ public class UserOverviewFragment extends Fragment {
             @Override
             public void onFailure(Call<UserResponse> call, Throwable t) {
                 showToast(getContext().getString(R.string.server_error));
+            }
+        });
+    }
+
+    private void onClickAddFriend(final User user) {
+        ApiInterface apiService = ApiClient.getOAuthClient().create(ApiInterface.class);
+
+        Call<Void> call;
+        if (!user.getIsFriend()) {
+            addFriend.setColorFilter(getResources().getColor(R.color.colorAccent));
+            call = apiService.addFriend(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    username,
+                    new AddFriend(username)
+            );
+        } else {
+            addFriend.setColorFilter(getResources().getColor(android.R.color.black));
+            call = apiService.removeFriend(
+                    "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
+                    username
+            );
+        }
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    if (!user.getIsFriend()) {
+                        addFriend.setColorFilter(getResources().getColor(android.R.color.black));
+                    } else {
+                        addFriend.setColorFilter(getResources().getColor(R.color.colorAccent));
+                    }
+
+                    showToast("Friend - " + response.message());
+                } else {
+                    user.setIsFriend(!user.getIsFriend());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast(getString(R.string.server_error));
+            }
+        });
+    }
+
+    private void fetchUserTrophies() {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<UserTrophyResponse> call = apiService.getUserTrophies(username);
+
+        call.enqueue(new Callback<UserTrophyResponse>() {
+            @Override
+            public void onResponse(Call<UserTrophyResponse> call, Response<UserTrophyResponse> response) {
+                if (response.isSuccessful()) {
+
+                    if (response.body().getTrophyList().size() > 0) {
+                        noTrophyAvaiable.setVisibility(View.GONE);
+                        UserTrophyAdapter adapter = new UserTrophyAdapter(
+                                getActivity(),
+                                response.body().getTrophyList()
+                        );
+                        trophyCase.setAdapter(adapter);
+                    }
+
+                    progressBar.setVisibility(View.GONE);
+                    userOverview.setVisibility(View.VISIBLE);
+                } else {
+                    showToast("User Trophies - " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserTrophyResponse> call, Throwable t) {
+                showToast(getResources().getString(R.string.server_error));
             }
         });
     }

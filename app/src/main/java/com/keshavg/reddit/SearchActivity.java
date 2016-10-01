@@ -65,7 +65,6 @@ public class SearchActivity extends AppCompatActivity {
             if (searchType.equals("USERS")) {
                 editText.setQuery(searchQuery, true);
             } else if (searchType.equals("SUBREDDIT_POSTS")) {
-                tabLayout.setVisibility(View.VISIBLE);
                 showSubredditPosts("r/" + searchQuery);
             }
         }
@@ -94,14 +93,13 @@ public class SearchActivity extends AppCompatActivity {
 
         final String queryAction = intent.getAction();
         if (Intent.ACTION_SEARCH.equals(queryAction) || Intent.ACTION_VIEW.equals(queryAction)) {
-            tabLayout.setVisibility(View.VISIBLE);
+            preSearch();
 
             searchQuery = intent.getDataString(); // from search-bar
             if (searchQuery == null) {
                 searchQuery = intent.getStringExtra(SearchManager.QUERY); // from suggestions
                 editText.setQuery(searchQuery, false);
             }
-
             suggestions.saveRecentQuery(searchQuery, null);
 
             if (searchType.equals("POSTS")) {
@@ -111,37 +109,39 @@ public class SearchActivity extends AppCompatActivity {
             } else if (searchType.equals("USERS")) {
                 performUsersSearch();
             }
+
+            postSearch();
         }
     }
 
-    private void performPostsSearch() {
+    private void preSearch() {
         adapter.clear();
+        tabLayout.setVisibility(View.VISIBLE);
+    }
 
+    private void postSearch() {
+        editText.clearFocus();
+
+        viewPager.setAdapter(adapter);
+        tabLayout.setupWithViewPager(viewPager);
+    }
+
+    private void performPostsSearch() {
         String[] sortByList = {"relevance", "top", "new", "comments"};
         for (String sortBy : sortByList) {
             adapter.addFragment(
                     PostsFragment.newInstance(searchQuery, sortBy, 1, false, true, false),
                     sortBy);
         }
-
-        viewPager.setAdapter(adapter);
-        tabLayout.setupWithViewPager(viewPager);
     }
 
     private void performSubredditsSearch() {
-        adapter.clear();
-
         adapter.addFragment(
                 SubredditsFragment.newInstance(searchQuery),
                 "Subreddits");
-
-        viewPager.setAdapter(adapter);
-        tabLayout.setupWithViewPager(viewPager);
     }
 
     private void performUsersSearch() {
-        adapter.clear();
-
         adapter.addFragment(
                 UserOverviewFragment.newInstance(searchQuery),
                 "Overview");
@@ -154,13 +154,11 @@ public class SearchActivity extends AppCompatActivity {
         adapter.addFragment(
                 CommentsFragment.newInstance("user/" + searchQuery + "/gilded", "", true),
                 "Gilded");
-
-        viewPager.setAdapter(adapter);
-        tabLayout.setupWithViewPager(viewPager);
     }
 
     public void showSubredditPosts(String subreddit) {
-        adapter.clear();
+        preSearch();
+
         editText.setQuery(subreddit, false);
 
         String[] sortByList = {"hot", "new", "rising", "controversial", "top"};
@@ -170,7 +168,6 @@ public class SearchActivity extends AppCompatActivity {
                     sortBy);
         }
 
-        viewPager.setAdapter(adapter);
-        tabLayout.setupWithViewPager(viewPager);
+        postSearch();
     }
 }

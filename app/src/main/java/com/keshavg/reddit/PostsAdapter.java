@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
@@ -26,6 +25,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
+import com.keshavg.reddit.utils.DeviceUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,11 +139,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     public void remove(int idx) {
         this.objects.remove(idx);
         notifyDataSetChanged();
-    }
-
-    public static int dpToPx(int dp)
-    {
-        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
     }
 
     @Override
@@ -336,7 +331,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     }
 
     private void setPostImage(final ViewHolder holder, Post post) {
-        int width = activity.getWindowManager().getDefaultDisplay().getWidth() - dpToPx(20);
+        int width = activity.getWindowManager().getDefaultDisplay().getWidth() - DeviceUtil.dpToPx(20);
         int height = 384;
 
         if (post.getImage().startsWith("http")) {
@@ -375,14 +370,14 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     private void setScoreInformation(ViewHolder holder, String score, int likes) {
         holder.scoreCount.setText(score);
         if (likes == 1) {
-            holder.scoreUp.setBackgroundColor(activity.getColor(R.color.colorAccent));
-            holder.scoreDown.setBackgroundColor(activity.getColor(android.R.color.white));
+            holder.scoreUp.setColorFilter(activity.getColor(R.color.colorAccent));
+            holder.scoreDown.setColorFilter(activity.getColor(android.R.color.black));
         } else if (likes == -1) {
-            holder.scoreUp.setBackgroundColor(activity.getColor(android.R.color.white));
-            holder.scoreDown.setBackgroundColor(activity.getColor(R.color.colorAccent));
+            holder.scoreUp.setColorFilter(activity.getColor(android.R.color.black));
+            holder.scoreDown.setColorFilter(activity.getColor(R.color.colorAccent));
         } else {
-            holder.scoreUp.setBackgroundColor(activity.getColor(android.R.color.white));
-            holder.scoreDown.setBackgroundColor(activity.getColor(android.R.color.white));
+            holder.scoreUp.setColorFilter(activity.getColor(android.R.color.black));
+            holder.scoreDown.setColorFilter(activity.getColor(android.R.color.black));
         }
     }
 

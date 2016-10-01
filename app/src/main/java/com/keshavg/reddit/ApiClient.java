@@ -30,47 +30,6 @@ public class ApiClient {
     private static Retrofit retrofitOauth = null;
     private static Retrofit retrofitAuthenticate = null;
 
-    public static class PostDeserializer implements JsonDeserializer<PostResponse> {
-        @Override
-        public PostResponse deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            PostResponse postResponse = new Gson().fromJson(json, PostResponse.class);
-
-            JsonArray jsonArray = json.getAsJsonObject()
-                    .get("data").getAsJsonObject()
-                    .get("children").getAsJsonArray();
-
-            for (int idx = 0; idx < jsonArray.size(); ++idx) {
-                // 1. fixing permalink url
-                postResponse.fixPermalink(idx);
-
-                // 2. setting correct image url; to gif, if available
-                JsonObject jsonObject = jsonArray
-                        .get(idx).getAsJsonObject()
-                        .get("data").getAsJsonObject();
-
-                String image = jsonObject.get("thumbnail").getAsString();
-                if (jsonObject.has("preview")) {
-                    JsonObject variants = jsonObject
-                            .get("preview").getAsJsonObject()
-                            .get("images").getAsJsonArray()
-                            .get(0).getAsJsonObject()
-                            .get("variants").getAsJsonObject();
-
-                    if (variants.has("gif")) {
-                        image = variants
-                                .get("gif").getAsJsonObject()
-                                .get("source").getAsJsonObject()
-                                .get("url").getAsString();
-                    }
-                }
-
-                postResponse.setImage(idx, image);
-            }
-
-            return postResponse;
-        }
-    }
-
     public static class CommentDeserializer implements JsonDeserializer<CommentResponse> {
         @Override
         public CommentResponse deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
@@ -104,7 +63,6 @@ public class ApiClient {
 
     public static Gson getGsonConverter() {
         final Gson gson = new GsonBuilder()
-                .registerTypeAdapter(PostResponse.class, new PostDeserializer())
                 .registerTypeAdapter(CommentResponse.class, new CommentDeserializer())
                 .create();
 

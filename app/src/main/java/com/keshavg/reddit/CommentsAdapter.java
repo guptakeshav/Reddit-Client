@@ -8,7 +8,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,7 +34,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import static android.R.color.transparent;
 import static android.view.View.GONE;
 
 /**
@@ -330,15 +328,15 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
     private void setScoreInformation(ViewHolder viewHolder, Comment comment) {
         viewHolder.upvotes.setText(comment.getScoreString());
-        if (comment.getLikeInt() == 1) { // TODO
-            viewHolder.commentUpvote.setBackgroundColor(activity.getColor(R.color.colorAccent));
-            viewHolder.commentDownvote.setBackgroundColor(activity.getColor(transparent));
+        if (comment.getLikeInt() == 1) {
+            viewHolder.commentUpvote.setColorFilter(activity.getColor(R.color.colorAccent));
+            viewHolder.commentDownvote.setColorFilter(activity.getColor(android.R.color.black));
         } else if (comment.getLikeInt() == -1) {
-            viewHolder.commentUpvote.setBackgroundColor(activity.getColor(transparent));
-            viewHolder.commentDownvote.setBackgroundColor(activity.getColor(R.color.colorAccent));
+            viewHolder.commentUpvote.setColorFilter(activity.getColor(android.R.color.black));
+            viewHolder.commentDownvote.setColorFilter(activity.getColor(R.color.colorAccent));
         } else {
-            viewHolder.commentUpvote.setBackgroundColor(activity.getColor(transparent));
-            viewHolder.commentDownvote.setBackgroundColor(activity.getColor(transparent));
+            viewHolder.commentUpvote.setColorFilter(activity.getColor(android.R.color.black));
+            viewHolder.commentDownvote.setColorFilter(activity.getColor(android.R.color.black));
         }
     }
 

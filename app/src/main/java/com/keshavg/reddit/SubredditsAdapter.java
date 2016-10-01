@@ -69,9 +69,9 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
         final Subreddit subreddit = objects.get(position);
 
         if (subreddit.getIsSubscribed() != null && subreddit.getIsSubscribed().equals(false)) {
-            holder.subscribe.setBackgroundColor(activity.getColor(R.color.darkGrey));
+            holder.subscribe.setColorFilter(activity.getColor(android.R.color.black));
         } else {
-            holder.subscribe.setBackgroundColor(activity.getColor(R.color.colorAccent));
+            holder.subscribe.setColorFilter(activity.getColor(R.color.colorAccent));
         }
 
         holder.subscribe.setOnClickListener(new View.OnClickListener() {
@@ -128,11 +128,11 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
 
         String action;
         if (subreddit.getIsSubscribed().equals(false)) {
-            subscribe.setBackgroundColor(activity.getColor(R.color.colorAccent));
+            subscribe.setColorFilter(activity.getColor(R.color.colorAccent));
             subreddit.setIsSubscribed(true);
             action = "sub";
         } else {
-            subscribe.setBackgroundColor(activity.getColor(R.color.darkGrey));
+            subscribe.setColorFilter(activity.getColor(android.R.color.black));
             subreddit.setIsSubscribed(false);
             action = "unsub";
         }
@@ -151,10 +151,10 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
                     showToast("Subscribing - " + response.message());
 
                     if (subreddit.getIsSubscribed().equals(true)) {
-                        subscribe.setBackgroundColor(activity.getColor(R.color.colorAccent));
+                        subscribe.setColorFilter(activity.getColor(R.color.colorAccent));
                         subreddit.setIsSubscribed(true);
                     } else {
-                        subscribe.setBackgroundColor(activity.getColor(R.color.darkGrey));
+                        subscribe.setColorFilter(activity.getColor(android.R.color.black));
                         subreddit.setIsSubscribed(false);
                     }
                 }

@@ -4,13 +4,54 @@ import android.text.format.DateUtils;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Created by keshav.g on 22/08/16.
  */
 public class Post {
+    private class Preview {
+        private class Types {
+            private class Image {
+
+                @Getter
+                private String url;
+            }
+
+            private class ImageTypes {
+
+                @Getter
+                private Image gif;
+            }
+
+            @Getter
+            private Image source;
+
+            @Getter
+            private ImageTypes variants;
+        }
+
+        private List<Types> images;
+
+        public String getImageUrl() {
+            return images.get(0).getSource().getUrl();
+        }
+
+        public String getGifUrl() {
+            if (images.get(0).getVariants().getGif() != null) {
+                return images.get(0).getVariants().getGif().getUrl();
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * JSON model member variables
+     */
+
     @Getter
     private String name;
 
@@ -39,15 +80,24 @@ public class Post {
     @Getter
     private String subreddit;
 
-    @Getter
-    @Setter
-    private String image;
+    private Preview preview;
 
     @Getter
     private String title;
 
     @Getter
     private String url;
+
+    /**
+     * Extra member variables
+     */
+
+    @Getter
+    private String image;
+
+    /**
+     * Constructor
+     */
 
     public Post(String name,
                 String author,
@@ -79,6 +129,10 @@ public class Post {
         this.url = url;
     }
 
+    /**
+     * Utility functions
+     */
+
     private int convertBoolToInt(Boolean bool) {
         if (bool == null) {
             return 0;
@@ -97,6 +151,10 @@ public class Post {
 
         return null;
     }
+
+    /**
+     * Getters and Setters
+     */
 
     public String getPostedBy() {
         return "Posted by " + author;
@@ -142,11 +200,6 @@ public class Post {
         return Integer.toString(numComments) + " comments";
     }
 
-    public void fixPermalink() {
-        int idx = permalink.lastIndexOf('/');
-        permalink = permalink.substring(0, idx);
-    }
-
     public String getScore() {
         return Integer.toString(score);
     }
@@ -157,5 +210,26 @@ public class Post {
 
     public String getFormattedSubreddit() {
         return "r/" + subreddit;
+    }
+
+    /**
+     * Fixing the model
+     */
+
+    public void fixPermalink() {
+        int idx = permalink.lastIndexOf('/');
+        permalink = permalink.substring(0, idx);
+    }
+
+    public void fixImage() {
+        if (preview != null) {
+            if (preview.getGifUrl() != null) {
+                image = preview.getGifUrl();
+            } else {
+                image = preview.getImageUrl();
+            }
+        } else {
+            image = "";
+        }
     }
 }

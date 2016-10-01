@@ -45,11 +45,15 @@ public class PostResponse {
         return posts;
     }
 
-    public void fixPermalink(int idx) {
-        data.getResponses().get(idx).getPost().fixPermalink();
+    public void fixPermalink() {
+        for (Post post : getPosts()) {
+            post.fixPermalink();
+        }
     }
 
-    public void setImage(int idx, String thumbnail) {
-        data.getResponses().get(idx).getPost().setImage(thumbnail);
+    public void fixImage() {
+        for (Post post : getPosts()) {
+            post.fixImage();
+        }
     }
 }

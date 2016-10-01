@@ -115,7 +115,7 @@ public class SubredditsFragment extends Fragment {
         loadingFlag = true;
         progressBar.setVisibility(View.VISIBLE);
 
-        if (clearAdapterFlag == true) {
+        if (clearAdapterFlag) {
             afterParam = "";
         }
 
@@ -137,14 +137,14 @@ public class SubredditsFragment extends Fragment {
 
         call.enqueue(new Callback<SubredditResponse>() {
             private void onUnsuccessfulCall(String message) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
                 onComplete();
             }
 
             @Override
             public void onResponse(Call<SubredditResponse> call, Response<SubredditResponse> response) {
                 if (response.isSuccessful()) {
-                    if (clearAdapterFlag == true) {
+                    if (clearAdapterFlag) {
                         subredditsAdapter.clear();
                     }
 

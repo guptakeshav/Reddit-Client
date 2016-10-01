@@ -3,11 +3,14 @@ package com.keshavg.reddit;
 import java.util.List;
 
 import retrofit2.Call;
+import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -17,6 +20,9 @@ import retrofit2.http.Query;
 public interface ApiInterface {
     @GET("user/{username}/about.json")
     Call<UserResponse> getUserOverview(@Path("username") String username);
+
+    @GET("user/{username}/trophies.json")
+    Call<UserTrophyResponse> getUserTrophies(@Path("username") String username);
 
     @GET("subreddits.json")
     Call<SubredditResponse> getSubredditNames();
@@ -193,4 +199,17 @@ public interface ApiInterface {
     Call<Void> subscribeSubreddit(@Header("Authorization") String authorization,
                                   @Field("action") String action,
                                   @Field("sr") String subredditName);
+
+    @GET("user/{username}/about")
+    Call<UserResponse> getOAuthUserOverview(@Header("Authorization") String authorization,
+                                            @Path("username") String username);
+
+    @PUT("api/v1/me/friends/{username}")
+    Call<Void> addFriend(@Header("Authorization") String authorization,
+                         @Path("username") String username,
+                         @Body AddFriend friend);
+
+    @DELETE("api/v1/me/friends/{username}")
+    Call<Void> removeFriend(@Header("Authorization") String authorization,
+                            @Path("username") String username);
 }

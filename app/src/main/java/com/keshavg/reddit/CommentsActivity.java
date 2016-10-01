@@ -15,10 +15,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Setter;
-
 public class CommentsActivity extends AppCompatActivity {
-    @Setter
     public static final int COMMENT_SUBMIT_REQUEST_CODE = 1;
     public static final int SUBMIT_COMMENT = 100;
     public static final int EDIT_COMMENT = 101;

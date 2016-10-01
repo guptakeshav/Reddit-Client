@@ -194,7 +194,7 @@ public class PostsFragment extends Fragment {
             private void onUnsuccessfulCall(String message) {
                 showToast(message);
 
-                if (clearAdapterFlag == true) {
+                if (clearAdapterFlag) {
                     postsAdapter.clear();
                     postsAdapter.addAll(dbHelper.getPosts(url + "/" + sortByParam), isHiddenPostsShown);
                 }
@@ -209,6 +209,9 @@ public class PostsFragment extends Fragment {
                         postsAdapter.clear();
                         dbHelper.clearTable();
                     }
+
+                    response.body().fixPermalink();
+                    response.body().fixImage();
 
                     List<Post> posts = response.body().getPosts();
                     afterParam = response.body().getAfterId();
@@ -236,6 +239,6 @@ public class PostsFragment extends Fragment {
     }
 
     private void showToast(String message) {
-        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
     }
 }
