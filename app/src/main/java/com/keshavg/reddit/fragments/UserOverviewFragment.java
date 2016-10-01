@@ -14,15 +14,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
+import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.adapters.UserTrophyAdapter;
 import com.keshavg.reddit.models.AddFriend;
 import com.keshavg.reddit.models.User;
 import com.keshavg.reddit.models.UserResponse;
 import com.keshavg.reddit.models.UserTrophyResponse;
+import com.keshavg.reddit.network.RedditApiClient;
+import com.keshavg.reddit.network.RedditApiInterface;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -115,12 +115,12 @@ public class UserOverviewFragment extends Fragment {
                 if (response.isSuccessful()) {
                     final User user = response.body().getUser();
 
-                    usernameView.setText(user.getName());
+                    usernameView.setText(user.getUsername());
                     joined.setText("Redditor since " + user.getCreated());
                     postKarma.setText(user.getPostKarma());
                     commentKarma.setText(user.getCommentKarma());
 
-                    if (!user.getName().equals(MainActivity.AuthPrefManager.getUsername())) {
+                    if (!user.getUsername().equals(MainActivity.AuthPrefManager.getUsername())) {
                         addFriend.setVisibility(View.VISIBLE);
                     } else {
                         addFriend.setVisibility(View.GONE);

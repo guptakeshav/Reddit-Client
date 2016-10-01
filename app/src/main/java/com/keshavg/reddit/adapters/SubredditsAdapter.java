@@ -11,12 +11,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
+import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.activities.SearchActivity;
 import com.keshavg.reddit.models.Subreddit;
+import com.keshavg.reddit.network.RedditApiClient;
+import com.keshavg.reddit.network.RedditApiInterface;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +87,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
             }
         });
 
-        holder.name.setText(subreddit.getSubreddit());
+        holder.name.setText(subreddit.getSubredditName());
         holder.subscribers.setText(subreddit.getSubscribers() + " subscribers");
         holder.created.setText(subreddit.getCreated());
 
@@ -98,7 +98,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
         holder.description.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickSubreddit(subreddit.getSubreddit());
+                onClickSubreddit(subreddit.getSubredditName());
             }
         });
     }

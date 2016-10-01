@@ -62,7 +62,7 @@ public class Comment implements Serializable {
     private int score;
 
     @Getter
-    private String subreddit;
+    private String subredditName;
 
     @Getter
     @SerializedName("link_title") private String postTitle;
@@ -77,13 +77,13 @@ public class Comment implements Serializable {
         this.parentId = comment.getParentId();
         this.replyResponse = comment.getReplyResponse();
         this.score = comment.getScore();
-        this.subreddit = comment.getSubreddit();
+        this.subredditName = comment.getSubredditName();
         this.postTitle = comment.getPostTitle();
     }
 
     public String getFullCommentLink() {
         String id = postId.substring(3, postId.length());
-        return "/r/" + subreddit + "/comments/" + id + "/";
+        return "/r/" + subredditName + "/comments/" + id + "/";
     }
 
     public String getRelativeTime() {

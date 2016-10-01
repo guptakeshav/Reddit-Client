@@ -22,14 +22,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
-import com.keshavg.reddit.models.CommentResponse;
+import com.keshavg.reddit.R;
 import com.keshavg.reddit.activities.CommentsActivity;
 import com.keshavg.reddit.activities.MainActivity;
-import com.keshavg.reddit.R;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
 import com.keshavg.reddit.activities.SubmitCommentActivity;
 import com.keshavg.reddit.models.Comment;
+import com.keshavg.reddit.models.CommentResponse;
+import com.keshavg.reddit.network.RedditApiClient;
+import com.keshavg.reddit.network.RedditApiInterface;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -9,10 +9,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
 import com.keshavg.reddit.models.Comment;
 import com.keshavg.reddit.models.SubmitCommentResponse;
+import com.keshavg.reddit.network.RedditApiClient;
+import com.keshavg.reddit.network.RedditApiInterface;
 
 import java.util.List;
 

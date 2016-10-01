@@ -20,7 +20,9 @@ import com.keshavg.reddit.R;
 import com.klinker.android.sliding.SlidingActivity;
 
 public class ImageViewActivity extends SlidingActivity {
-    private String image;
+    public static final String IMAGE_URL = "IMAGE_URL";
+
+    private String imageUrl;
 
     @Override
     public void init(Bundle savedInstanceState) {
@@ -28,7 +30,7 @@ public class ImageViewActivity extends SlidingActivity {
 
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
-            image = extras.getString("Image");
+            imageUrl = extras.getString(IMAGE_URL);
         }
 
         enableFullscreen();
@@ -41,19 +43,26 @@ public class ImageViewActivity extends SlidingActivity {
         final ImageView gifView = (ImageView) findViewById(R.id.gif_view);
         final SubsamplingScaleImageView imageView = (SubsamplingScaleImageView) findViewById(R.id.image_view);
 
-        if (image.contains(".gif")) {
+        if (imageUrl.contains(".gif")) {
             gifView.setVisibility(View.VISIBLE);
             GlideDrawableImageViewTarget glideDrawableImageViewTarget = new GlideDrawableImageViewTarget(gifView);
             Glide.with(ImageViewActivity.this)
-                    .load(image)
+                    .load(imageUrl)
                     .listener(new RequestListener<String, GlideDrawable>() {
                         @Override
-                        public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                        public boolean onException(Exception e,
+                                                   String model,
+                                                   Target<GlideDrawable> target,
+                                                   boolean isFirstResource) {
                             return false;
                         }
 
                         @Override
-                        public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                        public boolean onResourceReady(GlideDrawable resource,
+                                                       String model,
+                                                       Target<GlideDrawable> target,
+                                                       boolean isFromMemoryCache,
+                                                       boolean isFirstResource) {
                             progressBar.setVisibility(View.GONE);
                             return false;
                         }
@@ -62,23 +71,31 @@ public class ImageViewActivity extends SlidingActivity {
         } else {
             imageView.setVisibility(View.VISIBLE);
             Glide.with(ImageViewActivity.this)
-                    .load(image)
+                    .load(imageUrl)
                     .asBitmap()
                     .listener(new RequestListener<String, Bitmap>() {
                         @Override
-                        public boolean onException(Exception e, String model, Target<Bitmap> target, boolean isFirstResource) {
+                        public boolean onException(Exception e,
+                                                   String model,
+                                                   Target<Bitmap> target,
+                                                   boolean isFirstResource) {
                             return false;
                         }
 
                         @Override
-                        public boolean onResourceReady(Bitmap resource, String model, Target<Bitmap> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                        public boolean onResourceReady(Bitmap resource,
+                                                       String model,
+                                                       Target<Bitmap> target,
+                                                       boolean isFromMemoryCache,
+                                                       boolean isFirstResource) {
                             progressBar.setVisibility(View.GONE);
                             return false;
                         }
                     })
                     .into(new SimpleTarget<Bitmap>() {
                         @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        public void onResourceReady(Bitmap resource,
+                                                    GlideAnimation<? super Bitmap> glideAnimation) {
                             imageView.setImage(ImageSource.bitmap(resource));
                         }
                     });

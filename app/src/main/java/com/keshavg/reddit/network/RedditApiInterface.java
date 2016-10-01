@@ -4,7 +4,7 @@ import com.keshavg.reddit.models.AddFriend;
 import com.keshavg.reddit.models.AuthAccessResponse;
 import com.keshavg.reddit.models.CaptchaRepsonse;
 import com.keshavg.reddit.models.CommentResponse;
-import com.keshavg.reddit.models.NamesList;
+import com.keshavg.reddit.models.NameListResponse;
 import com.keshavg.reddit.models.PostResponse;
 import com.keshavg.reddit.models.SubmitCommentResponse;
 import com.keshavg.reddit.models.SubmitPostResponse;
@@ -94,8 +94,8 @@ public interface RedditApiInterface {
 
     @FormUrlEncoded
     @POST("api/search_reddit_names")
-    Call<NamesList> getRedditNames(@Header("Authorization") String authorization,
-                                   @Field("query") String query);
+    Call<NameListResponse> getRedditNames(@Header("Authorization") String authorization,
+                                          @Field("query") String query);
 
     @GET("api/v1/me")
     Call<User> getUsername(@Header("Authorization") String authorization);

@@ -12,7 +12,7 @@ import lombok.Setter;
  */
 public class User {
     @Getter
-    private String name;
+    @SerializedName("name") private String username;
 
     @Getter
     @SerializedName("comment_karma") private String commentKarma;

@@ -15,12 +15,12 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.providers.SearchSuggestionsProvider;
 import com.keshavg.reddit.adapters.ViewPagerFragmentAdapter;
 import com.keshavg.reddit.fragments.CommentsFragment;
 import com.keshavg.reddit.fragments.PostsFragment;
 import com.keshavg.reddit.fragments.SubredditsFragment;
 import com.keshavg.reddit.fragments.UserOverviewFragment;
+import com.keshavg.reddit.providers.SearchSuggestionsProvider;
 
 public class SearchActivity extends AppCompatActivity {
     private SearchRecentSuggestions suggestions;

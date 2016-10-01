@@ -14,9 +14,9 @@ import android.widget.TextView;
 
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.adapters.ViewPagerFragmentAdapter;
-import com.keshavg.reddit.utils.Constants;
 import com.keshavg.reddit.fragments.CommentsFragment;
 import com.keshavg.reddit.models.Comment;
+import com.keshavg.reddit.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;

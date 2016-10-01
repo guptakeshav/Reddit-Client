@@ -26,14 +26,14 @@ import android.widget.Toast;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
 import com.keshavg.reddit.adapters.ViewPagerFragmentAdapter;
 import com.keshavg.reddit.fragments.PostsFragment;
 import com.keshavg.reddit.models.AuthAccessResponse;
 import com.keshavg.reddit.models.Subreddit;
 import com.keshavg.reddit.models.SubredditResponse;
 import com.keshavg.reddit.models.User;
+import com.keshavg.reddit.network.RedditApiClient;
+import com.keshavg.reddit.network.RedditApiInterface;
 
 import java.util.List;
 
@@ -364,7 +364,7 @@ public class MainActivity extends AppCompatActivity
                 if (response.isSuccessful()) {
                     List<Subreddit> subreddits = response.body().getSubreddits();
                     for (Subreddit subreddit : subreddits) {
-                        subredditsMenu.add(subreddit.getSubreddit());
+                        subredditsMenu.add(subreddit.getSubredditName());
                     }
                 } else {
                     showToast("Subreddits - " + response.message());
@@ -413,7 +413,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful()) {
-                    AuthPrefManager.add("USERNAME", response.body().getName());
+                    AuthPrefManager.add("USERNAME", response.body().getUsername());
                     showLoggedIn();
                 } else {
                     showToast("Username - " + response.message());

@@ -70,12 +70,13 @@ public class Post {
     @SerializedName("over_18") private Boolean isNsfw;
 
     @Getter
-    @SerializedName("num_comments") private int numComments;
+    @SerializedName("num_comments") private long numComments;
 
     @Getter
     private String permalink;
 
-    private int score;
+    @Getter
+    private long score;
 
     @Getter
     private String subreddit;
@@ -106,9 +107,9 @@ public class Post {
                 int isHidden,
                 int isLiked,
                 int isNsfw,
-                int numComments,
+                long numComments,
                 String permalink,
-                int score,
+                long score,
                 String subreddit,
                 String image,
                 String title,
@@ -184,6 +185,10 @@ public class Post {
         return convertBoolToInt(isLiked);
     }
 
+    public void setIsLiked(int isLiked) {
+        this.isLiked = convertIntToBool(isLiked);
+    }
+
     public int getIsNsfw() {
         return convertBoolToInt(isNsfw);
     }
@@ -192,16 +197,8 @@ public class Post {
         isNsfw = convertIntToBool(nsfw);
     }
 
-    public void setIsLiked(int isLiked) {
-        this.isLiked = convertIntToBool(isLiked);
-    }
-
     public String getCommentsCount() {
-        return Integer.toString(numComments) + " comments";
-    }
-
-    public String getScore() {
-        return Integer.toString(score);
+        return Long.toString(numComments) + " comments";
     }
 
     public void updateScore(int delta) {

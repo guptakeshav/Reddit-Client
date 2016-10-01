@@ -14,14 +14,14 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
+import com.keshavg.reddit.R;
 import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.adapters.PostsAdapter;
 import com.keshavg.reddit.db.PostsDbHelper;
-import com.keshavg.reddit.R;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
 import com.keshavg.reddit.models.Post;
 import com.keshavg.reddit.models.PostResponse;
+import com.keshavg.reddit.network.RedditApiClient;
+import com.keshavg.reddit.network.RedditApiInterface;
 
 import java.util.List;
 
@@ -33,15 +33,19 @@ import retrofit2.Response;
  * Created by keshav.g on 22/08/16.
  */
 public class PostsFragment extends Fragment {
+    private static final String URL = "URL";
+    private static final String SORT_BY = "SORT_BY";
+    private static final String IS_SEARCH = "IS_SEARCH";
+    private static final String IS_HIDDEN_POSTS_SHOWN = "IS_HIDDEN_POSTS_SHOWN";
+    private static final String CLEAR_ON_HIDE = "CLEAR_ON_HIDE";
+    private static final String CLEAR_ON_UNHIDE = "CLEAR_ON_UNHIDE";
+
     private Boolean loadingFlag;
 
     private SwipeRefreshLayout swipeContainer;
-    private ProgressBar progressBar;
-    private RecyclerView recList;
     private PostsAdapter postsAdapter;
     private LinearLayoutManager llm;
     private ProgressBar progressBarLoadMore;
-    private FastScroller fastScroller;
 
     private String url;
     private String sortByParam;
@@ -64,13 +68,14 @@ public class PostsFragment extends Fragment {
                                             Boolean clearOnUnHide) {
         PostsFragment fragment = new PostsFragment();
         Bundle args = new Bundle();
-        args.putString("URL", url);
-        args.putString("SORT_BY", sortByParam);
-        args.putInt("IS_SEARCH", isSearch);
-        args.putBoolean("IS_HIDDEN_POSTS_SHOWN", isHiddenPostsShown);
-        args.putBoolean("CLEAR_ON_HIDE", clearOnHide);
-        args.putBoolean("CLEAR_ON_UNHIDE", clearOnUnHide);
+        args.putString(URL, url);
+        args.putString(SORT_BY, sortByParam);
+        args.putInt(IS_SEARCH, isSearch);
+        args.putBoolean(IS_HIDDEN_POSTS_SHOWN, isHiddenPostsShown);
+        args.putBoolean(CLEAR_ON_HIDE, clearOnHide);
+        args.putBoolean(CLEAR_ON_UNHIDE, clearOnUnHide);
         fragment.setArguments(args);
+
         return fragment;
     }
 
@@ -78,13 +83,13 @@ public class PostsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        url = getArguments().getString("URL");
-        sortByParam = getArguments().getString("SORT_BY");
-        isSearch = getArguments().getInt("IS_SEARCH");
+        url = getArguments().getString(URL);
+        sortByParam = getArguments().getString(SORT_BY);
+        isSearch = getArguments().getInt(IS_SEARCH);
         loadingFlag = false;
-        isHiddenPostsShown = getArguments().getBoolean("IS_HIDDEN_POSTS_SHOWN");
-        clearOnHide = getArguments().getBoolean("CLEAR_ON_HIDE");
-        clearOnUnHide = getArguments().getBoolean("CLEAR_ON_UNHIDE");
+        isHiddenPostsShown = getArguments().getBoolean(IS_HIDDEN_POSTS_SHOWN);
+        clearOnHide = getArguments().getBoolean(CLEAR_ON_HIDE);
+        clearOnUnHide = getArguments().getBoolean(CLEAR_ON_UNHIDE);
 
         dbHelper = new PostsDbHelper(getContext());
     }
@@ -97,7 +102,7 @@ public class PostsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View rootView, Bundle savedInstanceState) {
-        recList = (RecyclerView) rootView.findViewById(R.id.recycler_list);
+        RecyclerView recList = (RecyclerView) rootView.findViewById(R.id.recycler_list);
         postsAdapter = new PostsAdapter(
                 getActivity(),
                 Glide.with(getContext()),
@@ -117,7 +122,7 @@ public class PostsFragment extends Fragment {
                 loadMorePosts();
             }
         });
-        fastScroller = (FastScroller) rootView.findViewById(R.id.fast_scroll);
+        FastScroller fastScroller = (FastScroller) rootView.findViewById(R.id.fast_scroll);
         fastScroller.setRecyclerView(recList);
 
         swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_container);
@@ -128,7 +133,7 @@ public class PostsFragment extends Fragment {
             }
         });
 
-        progressBar = (ProgressBar) rootView.findViewById(R.id.progressbar_fragment);
+        ProgressBar progressBar = (ProgressBar) rootView.findViewById(R.id.progressbar_fragment);
         progressBarLoadMore = (ProgressBar) rootView.findViewById(R.id.progressbar_bottom);
 
         fetchPosts(true, progressBar);
@@ -154,6 +159,7 @@ public class PostsFragment extends Fragment {
     /**
      * Function to fetch the list of posts from the REST api
      * @param clearAdapterFlag
+     * @param progressBar
      */
     public void fetchPosts(final Boolean clearAdapterFlag, final ProgressBar progressBar) {
         loadingFlag = true;
@@ -204,7 +210,7 @@ public class PostsFragment extends Fragment {
 
                 if (clearAdapterFlag) {
                     postsAdapter.clear();
-                    postsAdapter.addAll(dbHelper.getPosts(url + "/" + sortByParam), isHiddenPostsShown);
+                    postsAdapter.addAll(dbHelper.getPosts(url + ":" + sortByParam), isHiddenPostsShown);
                 }
 
                 onComplete();
@@ -215,7 +221,7 @@ public class PostsFragment extends Fragment {
                 if (response.isSuccessful()) {
                     if (clearAdapterFlag) {
                         postsAdapter.clear();
-                        dbHelper.clearTable();
+                        dbHelper.removePosts(url + ":" + sortByParam);
                     }
 
                     response.body().fixPermalink();
@@ -225,7 +231,7 @@ public class PostsFragment extends Fragment {
                     afterParam = response.body().getAfterId();
 
                     postsAdapter.addAll(posts, isHiddenPostsShown);
-                    dbHelper.insertPosts(posts, url + "/" + sortByParam);
+                    dbHelper.insertPosts(posts, url + ":" + sortByParam);
 
                     onComplete();
                 } else {

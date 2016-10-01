@@ -27,7 +27,7 @@ public class Subreddit {
     @Getter
     private Long subscribers;
 
-    public String getSubreddit() {
+    public String getSubredditName() {
         return "r/" + displayName;
     }
 

@@ -13,12 +13,12 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.futuremind.recyclerviewfastscroll.FastScroller;
-import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.R;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
+import com.keshavg.reddit.activities.MainActivity;
 import com.keshavg.reddit.adapters.SubredditsAdapter;
 import com.keshavg.reddit.models.SubredditResponse;
+import com.keshavg.reddit.network.RedditApiClient;
+import com.keshavg.reddit.network.RedditApiInterface;
 
 import retrofit2.Call;
 import retrofit2.Callback;

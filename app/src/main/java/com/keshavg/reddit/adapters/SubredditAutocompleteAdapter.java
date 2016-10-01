@@ -6,9 +6,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Filter;
 
 import com.keshavg.reddit.activities.MainActivity;
+import com.keshavg.reddit.models.NameListResponse;
 import com.keshavg.reddit.network.RedditApiClient;
 import com.keshavg.reddit.network.RedditApiInterface;
-import com.keshavg.reddit.models.NamesList;
 
 import java.util.List;
 
@@ -35,7 +35,7 @@ public class SubredditAutocompleteAdapter extends ArrayAdapter<String> {
 
                 if (constraint != null) {
                     RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-                    Call<NamesList> call = apiService.getRedditNames(
+                    Call<NameListResponse> call = apiService.getRedditNames(
                             "bearer " + MainActivity.AuthPrefManager.getAccessToken(),
                             constraint.toString()
                     );

@@ -25,15 +25,15 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.futuremind.recyclerviewfastscroll.SectionTitleProvider;
+import com.keshavg.reddit.R;
 import com.keshavg.reddit.activities.CommentsActivity;
 import com.keshavg.reddit.activities.ImageViewActivity;
 import com.keshavg.reddit.activities.MainActivity;
-import com.keshavg.reddit.R;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
 import com.keshavg.reddit.activities.SearchActivity;
 import com.keshavg.reddit.activities.WebViewActivity;
 import com.keshavg.reddit.models.Post;
+import com.keshavg.reddit.network.RedditApiClient;
+import com.keshavg.reddit.network.RedditApiInterface;
 import com.keshavg.reddit.utils.DeviceUtil;
 
 import java.util.ArrayList;
@@ -156,17 +156,16 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                 .from(parent.getContext())
                 .inflate(R.layout.post_row, parent, false);
 
-        ViewHolder holder = new ViewHolder(itemView);
-        return holder;
+        return new ViewHolder(itemView);
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, final int position) {
+    public void onBindViewHolder(final ViewHolder holder, int position) {
         final Post post = objects.get(position);
 
-        setToolbar(holder, position, post);
+        setToolbar(holder);
 
-        setPostImage(holder, post);
+        setPostImage(holder);
 
         holder.subreddit.setText(post.getFormattedSubreddit());
         holder.title.setText(post.getTitle());
@@ -180,7 +179,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         holder.image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                onClickImage(position);
+                onClickImage(holder.getAdapterPosition());
             }
         });
 
@@ -194,14 +193,14 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         holder.scoreUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickVote(position, 1, holder);
+                onClickVote(holder.getAdapterPosition(), 1, holder);
             }
         });
 
         holder.scoreDown.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickVote(position, -1, holder);
+                onClickVote(holder.getAdapterPosition(), -1, holder);
             }
         });
 
@@ -214,10 +213,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     }
 
     private void showToast(String message) {
-        Toast.makeText(activity.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
     }
 
-    private void setToolbar(final ViewHolder holder, final int position, final Post post) {
+    private void setToolbar(final ViewHolder holder) {
+        final Post post = objects.get(holder.getAdapterPosition());
+
         holder.toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
 
             @Override
@@ -236,7 +237,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                     onClickSave(post, holder.save);
                     return true;
                 } else if (item.getItemId() == R.id.hide) {
-                    onClickHide(post, holder.hide, position);
+                    onClickHide(post, holder.hide, holder.getAdapterPosition());
                     return true;
                 } else if (item.getItemId() == R.id.delete) {
                     AlertDialog alertDialog = new AlertDialog.Builder(activity)
@@ -245,7 +246,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    onClickDelete(post.getName(), position);
+                                    onClickDelete(post.getName(), holder.getAdapterPosition());
                                     dialog.dismiss();
                                 }
                             })
@@ -266,7 +267,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    onClickNsfw(holder, post, holder.markNsfw, position);
+                                    onClickNsfw(holder, post, holder.markNsfw, holder.getAdapterPosition());
                                     dialog.dismiss();
                                 }
                             })
@@ -339,7 +340,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         activity.startActivity(chooser);
     }
 
-    private void setPostImage(final ViewHolder holder, Post post) {
+    private void setPostImage(final ViewHolder holder) {
+        Post post = objects.get(holder.getAdapterPosition());
+
         int width = activity.getWindowManager().getDefaultDisplay().getWidth() - DeviceUtil.dpToPx(20);
         int height = 384;
 
@@ -376,8 +379,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         }
     }
 
-    private void setScoreInformation(ViewHolder holder, String score, int likes) {
-        holder.scoreCount.setText(score);
+    private void setScoreInformation(ViewHolder holder, long score, int likes) {
+        holder.scoreCount.setText(Long.toString(score));
+
         if (likes == 1) {
             holder.scoreUp.setColorFilter(activity.getColor(R.color.colorAccent));
             holder.scoreDown.setColorFilter(activity.getColor(android.R.color.black));
@@ -545,7 +549,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
     private void onClickImage(int position) {
         Intent i = new Intent(activity, ImageViewActivity.class);
-        i.putExtra("Image", objects.get(position).getImage());
+        i.putExtra(ImageViewActivity.IMAGE_URL, objects.get(position).getImage());
         activity.startActivity(i);
     }
 
@@ -600,8 +604,8 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
     private void onClickCommentsCount(Post post, ViewHolder holder) {
         Intent i = new Intent(activity, CommentsActivity.class);
-        i.putExtra("TITLE", post.getTitle());
-        i.putExtra("URL", post.getPermalink());
+        i.putExtra(CommentsActivity.TITLE, post.getTitle());
+        i.putExtra(CommentsActivity.URL, post.getPermalink());
         i.putExtra("IMAGE", post.getImage());
         activity.startActivity(i,
                 ActivityOptions.makeSceneTransitionAnimation(activity,

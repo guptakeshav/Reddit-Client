@@ -5,6 +5,8 @@ import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+
 /**
  * Created by keshavgupta on 9/14/16.
  */
@@ -18,16 +20,11 @@ public class PostResponse {
             }
         }
 
+        @Getter
         @SerializedName("children") private List<Response> responses;
+
+        @Getter
         @SerializedName("after") private String afterId;
-
-        public List<Response> getResponses() {
-            return responses;
-        }
-
-        public String getAfterId() {
-            return afterId;
-        }
     }
 
     private Data data;

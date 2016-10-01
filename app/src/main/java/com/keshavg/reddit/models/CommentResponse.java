@@ -6,29 +6,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
+import lombok.Getter;
+
 /**
  * Created by keshavgupta on 9/14/16.
  */
 public class CommentResponse {
     private class Data {
         private class Response {
+            @Getter
             private String kind;
+
+            @Getter
             @SerializedName("data") private Comment comment;
-
-            public String getKind() {
-                return kind;
-            }
-
-            public Comment getComment() {
-                return comment;
-            }
         }
 
+        @Getter
         @SerializedName("children") private List<Response> responses;
-
-        public List<Response> getResponses() {
-            return responses;
-        }
     }
 
     private Data data;
