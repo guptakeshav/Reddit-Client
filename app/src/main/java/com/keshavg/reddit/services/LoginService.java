@@ -94,7 +94,7 @@ public class LoginService {
 
             @Override
             public void onFailure(Call<AuthAccessResponse> call, Throwable t) {
-                showToast(context, context.getString(R.string.server_error));
+                showToast(context, context.getString(R.string.error_server_connect));
             }
         });
     }
@@ -118,7 +118,7 @@ public class LoginService {
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                showToast(context, context.getString(R.string.server_error));
+                showToast(context, context.getString(R.string.error_server_connect));
             }
         });
     }
@@ -142,7 +142,7 @@ public class LoginService {
 
             @Override
             public void onFailure(Call<AuthAccessResponse> call, Throwable t) {
-                showToast(context, context.getString(R.string.server_error));
+                showToast(context, context.getString(R.string.error_server_connect));
             }
         });
     }

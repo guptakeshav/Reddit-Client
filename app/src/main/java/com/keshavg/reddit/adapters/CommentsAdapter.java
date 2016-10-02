@@ -445,7 +445,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
-                    showToast(activity.getString(R.string.server_error));
+                    showToast(activity.getString(R.string.error_server_connect));
                 }
             });
         }
@@ -504,7 +504,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
             @Override
             public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
+                showToast(activity.getString(R.string.error_server_connect));
                 viewHolder.progressBar.setVisibility(GONE);
                 viewHolder.button.setVisibility(View.VISIBLE);
             }
@@ -550,7 +550,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
+                showToast(activity.getString(R.string.error_server_connect));
             }
         });
     }

@@ -241,7 +241,7 @@ public class PostsFragment extends Fragment {
 
             @Override
             public void onFailure(Call<PostResponse> call, Throwable t) {
-                onUnsuccessfulCall(getString(R.string.server_error));
+                onUnsuccessfulCall(getString(R.string.error_server_connect));
             }
 
             private void onComplete() {

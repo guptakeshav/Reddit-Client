@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.keshavg.reddit.services.UserInfoService;
+
 import static android.content.Context.MODE_PRIVATE;
 
 /**
@@ -54,7 +56,7 @@ public class AuthSharedPrefHelper {
     }
 
     public static String getUsername() {
-        return authPref.getString("USERNAME", "");
+        return authPref.getString(UserInfoService.USERNAME, "");
     }
 
     public static Boolean isSessionExpired() {

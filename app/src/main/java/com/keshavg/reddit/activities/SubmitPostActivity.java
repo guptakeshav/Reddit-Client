@@ -220,7 +220,7 @@ public class SubmitPostActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<UploadImageResponse> call, Throwable t) {
-                showToast(getString(R.string.server_error));
+                showToast(getString(R.string.error_server_connect));
             }
         });
     }
@@ -269,7 +269,7 @@ public class SubmitPostActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<CaptchaRepsonse> call, Throwable t) {
-                showToast(getString(R.string.server_error));
+                showToast(getString(R.string.error_server_connect));
             }
         });
     }
@@ -323,7 +323,7 @@ public class SubmitPostActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<SubmitPostResponse> call, Throwable t) {
-                showToast(getString(R.string.server_error));
+                showToast(getString(R.string.error_server_connect));
             }
         });
     }

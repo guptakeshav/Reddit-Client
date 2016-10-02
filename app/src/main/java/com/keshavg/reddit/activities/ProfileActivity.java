@@ -17,6 +17,8 @@ import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.services.LoginService;
 
 public class ProfileActivity extends AppCompatActivity {
+    public static final String USERNAME = "USERNAME";
+
     private String username;
 
     private TabLayout tabLayout;
@@ -30,7 +32,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             Bundle extras = getIntent().getExtras();
-            username = extras.getString("USERNAME");
+            username = extras.getString(USERNAME);
         }
 
         setTitle(username);

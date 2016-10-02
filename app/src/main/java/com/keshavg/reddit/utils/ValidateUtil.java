@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.support.design.widget.Snackbar;
 import android.view.View;
 
+import com.keshavg.reddit.R;
 import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.services.LoginService;
 
@@ -12,11 +13,9 @@ import com.keshavg.reddit.services.LoginService;
  */
 
 public class ValidateUtil {
-    private static final String LOGIN_ERROR = "You must be logged in to perform this function.";
-
     public static Boolean loginValidation(View view, final Activity activity) {
         if (!AuthSharedPrefHelper.isLoggedIn()) {
-            Snackbar.make(view, LOGIN_ERROR, Snackbar.LENGTH_LONG)
+            Snackbar.make(view, activity.getString(R.string.error_login), Snackbar.LENGTH_LONG)
                     .setAction("Login", new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {

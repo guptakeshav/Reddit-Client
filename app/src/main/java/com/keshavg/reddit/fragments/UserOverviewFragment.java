@@ -147,7 +147,7 @@ public class UserOverviewFragment extends Fragment {
 
             @Override
             public void onFailure(Call<UserResponse> call, Throwable t) {
-                showToast(getContext().getString(R.string.server_error));
+                showToast(getContext().getString(R.string.error_server_connect));
             }
         });
     }
@@ -189,7 +189,7 @@ public class UserOverviewFragment extends Fragment {
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                showToast(getString(R.string.server_error));
+                showToast(getString(R.string.error_server_connect));
             }
         });
     }
@@ -221,7 +221,7 @@ public class UserOverviewFragment extends Fragment {
 
             @Override
             public void onFailure(Call<UserTrophyResponse> call, Throwable t) {
-                showToast(getResources().getString(R.string.server_error));
+                showToast(getResources().getString(R.string.error_server_connect));
             }
         });
     }

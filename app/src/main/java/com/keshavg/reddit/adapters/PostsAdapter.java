@@ -434,7 +434,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
+                showToast(activity.getString(R.string.error_server_connect));
             }
         });
     }
@@ -481,7 +481,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
+                showToast(activity.getString(R.string.error_server_connect));
             }
         });
     }
@@ -505,7 +505,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
+                showToast(activity.getString(R.string.error_server_connect));
             }
         });
     }
@@ -546,7 +546,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.server_error));
+                showToast(activity.getString(R.string.error_server_connect));
             }
         });
     }
@@ -585,7 +585,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                 public void onResponse(Call<Void> call, Response<Void> response) {
                     if (!response.isSuccessful()) {
                         if (response.code() == 400) {
-                            showToast(activity.getString(R.string.archive_error));
+                            showToast(activity.getString(R.string.error_archive_post));
                         } else {
                             showToast("Voting - " + response.message());
                         }
@@ -598,7 +598,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
-                    showToast(activity.getString(R.string.server_error));
+                    showToast(activity.getString(R.string.error_server_connect));
                 }
             });
         }

@@ -169,7 +169,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
 
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
-                    showToast(activity.getString(R.string.server_error));
+                    showToast(activity.getString(R.string.error_server_connect));
                 }
             });
         }

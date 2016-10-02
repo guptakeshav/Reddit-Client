@@ -209,7 +209,7 @@ public class CommentsFragment extends Fragment {
 
                 @Override
                 public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
-                    showToast(getString(R.string.server_error));
+                    showToast(getString(R.string.error_server_connect));
                     onFetchCommentsComplete();
                 }
             });
@@ -237,7 +237,7 @@ public class CommentsFragment extends Fragment {
 
                 @Override
                 public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
-                    onLoadMoreUnsuccess(getString(R.string.server_error));
+                    onLoadMoreUnsuccess(getString(R.string.error_server_connect));
                 }
             });
         }
@@ -283,7 +283,7 @@ public class CommentsFragment extends Fragment {
 
                 @Override
                 public void onFailure(Call<CommentResponse> call, Throwable t) {
-                    showToast(getString(R.string.server_error));
+                    showToast(getString(R.string.error_server_connect));
                     onFetchCommentsComplete();
                 }
             });
@@ -311,7 +311,7 @@ public class CommentsFragment extends Fragment {
 
                 @Override
                 public void onFailure(Call<CommentResponse> call, Throwable t) {
-                    onLoadMoreUnsuccess(getString(R.string.server_error));
+                    onLoadMoreUnsuccess(getString(R.string.error_server_connect));
                 }
             });
         }

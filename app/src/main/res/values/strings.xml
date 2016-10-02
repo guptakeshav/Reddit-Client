@@ -11,9 +11,10 @@
     <string name="create_post">Create Post</string>
     <string name="clear_history">Clear History</string>
 
-    <string name="server_error">Network error</string>
-    <string name="session_expire_error">Session expired. Please log in again.</string>
-    <string name="archive_error">This is an archived post. You won\'t be able to vote or comment.</string>
+    <string name="error_server_connect">Network error</string>
+    <string name="error_login">You must be logged in to perform this function.</string>
+    <string name="error_session_expire">Session expired. Please log in again.</string>
+    <string name="error_archive_post">This is an archived post. You won\'t be able to vote or comment.</string>
 
     <string name="bad_captcha">BAD_CAPTCHA</string>
     <string name="rate_limit">RATELIMIT</string>

@@ -29,22 +29,17 @@ import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.fragments.PostsFragment;
 import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.models.Subreddit;
-import com.keshavg.reddit.models.SubredditResponse;
-import com.keshavg.reddit.models.User;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
 import com.keshavg.reddit.services.LoginService;
+import com.keshavg.reddit.services.SubredditInfoService;
+import com.keshavg.reddit.services.UserInfoService;
 import com.keshavg.reddit.utils.ValidateUtil;
-
-import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    public static final String PROFILE = "Profile";
+    public static final String FRONTPAGE = "Frontpage";
+    public static final String SUBSCRIPTIONS = "Subscriptions";
+
     private CoordinatorLayout coordinatorLayout;
     private TabLayout tabLayout;
     private ViewPager viewPager;
@@ -136,7 +131,7 @@ public class MainActivity extends AppCompatActivity
         if (AuthSharedPrefHelper.isLoggedIn()) {
             if (AuthSharedPrefHelper.isSessionExpired()) {
                 AuthSharedPrefHelper.clearPreferences();
-                showToast(getString(R.string.session_expire_error));
+                showToast(getString(R.string.error_session_expire));
             } else {
                 showLoggedIn();
             }
@@ -174,6 +169,33 @@ public class MainActivity extends AppCompatActivity
                 );
             }
         }
+    }
+
+    private void onLogin() {
+        UserInfoService.fetchUsername(getApplicationContext(), new PerformFunction() {
+            @Override
+            public void execute() {
+                showLoggedIn();
+            }
+        });
+
+        reloadApp();
+    }
+
+    private void showLoggedIn() {
+        authButton.setVisibility(View.GONE);
+        logoutButton.setVisibility(View.VISIBLE);
+        usernameView.setVisibility(View.VISIBLE);
+
+        usernameView.setText("Welcome, " + AuthSharedPrefHelper.getUsername());
+    }
+
+    private void onLogout() {
+        usernameView.setVisibility(View.GONE);
+        logoutButton.setVisibility(View.GONE);
+        authButton.setVisibility(View.VISIBLE);
+
+        reloadApp();
     }
 
     @Override
@@ -217,53 +239,39 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void reloadApp() {
-        fetchSubredditNames();
+        getSubscriptionsList();
         setupViewPager(currentPagerUrl);
     }
 
     private void createPost() {
         if (ValidateUtil.loginValidation(coordinatorLayout, MainActivity.this)) {
-
             Intent i = new Intent(MainActivity.this, SubmitPostActivity.class);
             startActivity(i);
         }
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        if (item.getTitle().equals("Profile")) {
-            openProfile(AuthSharedPrefHelper.getUsername());
-        } else {
-            prevMenuItem.setChecked(false);
-            item.setChecked(true);
-            prevMenuItem = item;
+    private void setupNavBar(NavigationView navigationView) {
+        Menu menu = navigationView.getMenu();
+        menu.add(PROFILE);
+        menu.add(FRONTPAGE);
+        prevMenuItem = menu.getItem(1);
+        prevMenuItem.setChecked(true);
 
-            if (item.getTitle().equals("Frontpage")) {
-                changePosts("");
-            } else {
-                changePosts(item.getTitle().toString());
+        subredditsMenu = menu.addSubMenu(SUBSCRIPTIONS);
+        getSubscriptionsList();
+    }
+
+    private void getSubscriptionsList() {
+        final SubredditInfoService subredditInfoService = new SubredditInfoService();
+        subredditInfoService.fetchSubscriptions(getApplicationContext(), new PerformFunction() {
+            @Override
+            public void execute() {
+                subredditsMenu.clear();
+                for (Subreddit subreddit : subredditInfoService.getSubreddits()) {
+                    subredditsMenu.add(subreddit.getSubredditName());
+                }
             }
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-
-        return true;
-    }
-
-    private void openProfile(String username) {
-        if (ValidateUtil.loginValidation(coordinatorLayout, MainActivity.this)) {
-            Intent i = new Intent(MainActivity.this, ProfileActivity.class);
-            i.putExtra("USERNAME", username);
-            startActivity(i);
-        }
-    }
-
-    public void changePosts(String subreddit) {
-        setTitle("Reddit - " + prevMenuItem.getTitle());
-        currentPagerUrl = subreddit;
-        setupViewPager(currentPagerUrl);
+        });
     }
 
     private void setupViewPager(String url) {
@@ -277,40 +285,33 @@ public class MainActivity extends AppCompatActivity
         tabLayout.setupWithViewPager(viewPager);
     }
 
-    private void setupNavBar(NavigationView navigationView) {
-        Menu menu = navigationView.getMenu();
-        menu.add("Profile");
-        menu.add("Frontpage");
-        menu.getItem(1).setChecked(true);
-        prevMenuItem = menu.getItem(1);
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        if (item.getTitle().equals(PROFILE)) {
+            openProfile(AuthSharedPrefHelper.getUsername());
+        } else {
+            prevMenuItem.setChecked(false);
+            item.setChecked(true);
+            prevMenuItem = item;
 
-        subredditsMenu = menu.addSubMenu("Subreddits");
-        fetchSubredditNames();
+            if (item.getTitle().equals(FRONTPAGE)) {
+                changePosts("");
+            } else {
+                changePosts(item.getTitle().toString());
+            }
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+
+        return true;
     }
 
-    private void fetchSubredditNames() {
-        subredditsMenu.clear();
-
-        RedditApiInterface apiService = RedditApiClient.getClient().create(RedditApiInterface.class);
-        Call<SubredditResponse> call = apiService.getSubredditNames();
-        call.enqueue(new Callback<SubredditResponse>() {
-            @Override
-            public void onResponse(Call<SubredditResponse> call, Response<SubredditResponse> response) {
-                if (response.isSuccessful()) {
-                    List<Subreddit> subreddits = response.body().getSubreddits();
-                    for (Subreddit subreddit : subreddits) {
-                        subredditsMenu.add(subreddit.getSubredditName());
-                    }
-                } else {
-                    showToast("Subreddits - " + response.message());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<SubredditResponse> call, Throwable t) {
-                showToast(getString(R.string.server_error));
-            }
-        });
+    private void changePosts(String subreddit) {
+        setTitle("Reddit - " + prevMenuItem.getTitle());
+        currentPagerUrl = subreddit;
+        setupViewPager(currentPagerUrl);
     }
 
     private void openSearchActivity(String type) {
@@ -320,48 +321,11 @@ public class MainActivity extends AppCompatActivity
         fam.close(true);
     }
 
-    private void getUsername() {
-        Retrofit retrofit = RedditApiClient.getOAuthClient();
-        RedditApiInterface apiService = retrofit.create(RedditApiInterface.class);
-
-        Call<User> call = apiService.getUsername("bearer " + AuthSharedPrefHelper.getAccessToken());
-        call.enqueue(new Callback<User>() {
-            @Override
-            public void onResponse(Call<User> call, Response<User> response) {
-                if (response.isSuccessful()) {
-                    AuthSharedPrefHelper.add("USERNAME", response.body().getUsername());
-                    showLoggedIn();
-                } else {
-                    showToast("Username - " + response.message());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<User> call, Throwable t) {
-                showToast(getString(R.string.server_error));
-            }
-        });
-    }
-
-    private void showLoggedIn() {
-        authButton.setVisibility(View.GONE);
-        logoutButton.setVisibility(View.VISIBLE);
-        usernameView.setVisibility(View.VISIBLE);
-
-        usernameView.setText("Welcome, " + AuthSharedPrefHelper.getUsername());
-    }
-
-    public void onLogin() {
-        getUsername();
-
-        reloadApp();
-    }
-
-    public void onLogout() {
-        usernameView.setVisibility(View.GONE);
-        logoutButton.setVisibility(View.GONE);
-        authButton.setVisibility(View.VISIBLE);
-
-        reloadApp();
+    private void openProfile(String username) {
+        if (ValidateUtil.loginValidation(coordinatorLayout, MainActivity.this)) {
+            Intent i = new Intent(MainActivity.this, ProfileActivity.class);
+            i.putExtra(ProfileActivity.USERNAME, username);
+            startActivity(i);
+        }
     }
 }
