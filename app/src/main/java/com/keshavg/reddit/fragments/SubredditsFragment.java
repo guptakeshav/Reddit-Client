@@ -28,6 +28,8 @@ import retrofit2.Response;
  * Created by keshav.g on 22/08/16.
  */
 public class SubredditsFragment extends Fragment {
+    public static final String SEARCH_QUERY = "SEARCH_QUERY";
+
     private Boolean loadingFlag;
 
     private SwipeRefreshLayout swipeContainer;
@@ -47,7 +49,7 @@ public class SubredditsFragment extends Fragment {
     public static SubredditsFragment newInstance(String searchQuery) {
         SubredditsFragment fragment = new SubredditsFragment();
         Bundle args = new Bundle();
-        args.putString("SEARCH_QUERY", searchQuery);
+        args.putString(SEARCH_QUERY, searchQuery);
         fragment.setArguments(args);
         return fragment;
     }
@@ -56,7 +58,7 @@ public class SubredditsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        searchQuery = getArguments().getString("SEARCH_QUERY");
+        searchQuery = getArguments().getString(SEARCH_QUERY);
         loadingFlag = false;
     }
 
@@ -88,12 +90,7 @@ public class SubredditsFragment extends Fragment {
         fastScroller.setRecyclerView(recList);
 
         swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_container);
-        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                fetchSubreddits(true, progressBarLoadMore);
-            }
-        });
+        swipeContainer.setOnRefreshListener(() -> fetchSubreddits(true, progressBarLoadMore));
 
         progressBar = (ProgressBar) rootView.findViewById(R.id.progressbar_fragment);
         progressBarLoadMore = (ProgressBar) rootView.findViewById(R.id.progressbar_bottom);

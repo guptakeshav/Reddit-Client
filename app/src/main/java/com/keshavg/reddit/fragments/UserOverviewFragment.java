@@ -33,6 +33,8 @@ import retrofit2.Response;
  */
 
 public class UserOverviewFragment extends Fragment {
+    public static final String USERNAME = "USERNAME";
+
     private String username;
 
     private ProgressBar progressBar;
@@ -49,7 +51,7 @@ public class UserOverviewFragment extends Fragment {
     public static UserOverviewFragment newInstance(String username) {
         UserOverviewFragment fragment = new UserOverviewFragment();
         Bundle args = new Bundle();
-        args.putString("USERNAME", username);
+        args.putString(USERNAME, username);
         fragment.setArguments(args);
         return fragment;
     }
@@ -58,7 +60,7 @@ public class UserOverviewFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        username = getArguments().getString("USERNAME");
+        username = getArguments().getString(USERNAME);
     }
 
     @Nullable
@@ -126,12 +128,7 @@ public class UserOverviewFragment extends Fragment {
                         addFriend.setVisibility(View.GONE);
                     }
 
-                    addFriend.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            onClickAddFriend(user);
-                        }
-                    });
+                    addFriend.setOnClickListener(v -> onClickAddFriend(user));
 
                     if (user.getIsFriend()) {
                         addFriend.setColorFilter(getResources().getColor(R.color.colorAccent));

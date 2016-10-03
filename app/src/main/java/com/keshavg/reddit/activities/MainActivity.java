@@ -1,6 +1,5 @@
 package com.keshavg.reddit.activities;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
@@ -27,7 +26,6 @@ import com.keshavg.reddit.R;
 import com.keshavg.reddit.adapters.ViewPagerFragmentAdapter;
 import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.fragments.PostsFragment;
-import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.models.Subreddit;
 import com.keshavg.reddit.services.LoginService;
 import com.keshavg.reddit.services.SubredditInfoService;
@@ -72,28 +70,13 @@ public class MainActivity extends AppCompatActivity
         fam.setClosedOnTouchOutside(true);
 
         FloatingActionButton fab_posts = (FloatingActionButton) findViewById(R.id.fab_posts);
-        fab_posts.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openSearchActivity(SearchActivity.POSTS);
-            }
-        });
+        fab_posts.setOnClickListener(v -> openSearchActivity(SearchActivity.POSTS));
 
         FloatingActionButton fab_subreddits = (FloatingActionButton) findViewById(R.id.fab_subreddits);
-        fab_subreddits.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openSearchActivity(SearchActivity.SUBREDDITS);
-            }
-        });
+        fab_subreddits.setOnClickListener(v -> openSearchActivity(SearchActivity.SUBREDDITS));
 
         FloatingActionButton fab_users = (FloatingActionButton) findViewById(R.id.fab_user);
-        fab_users.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openSearchActivity(SearchActivity.USERS);
-            }
-        });
+        fab_users.setOnClickListener(v -> openSearchActivity(SearchActivity.USERS));
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -107,26 +90,11 @@ public class MainActivity extends AppCompatActivity
 
         View navViewHeader = navigationView.getHeaderView(0);
         authButton = (Button) navViewHeader.findViewById(R.id.auth);
-        authButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LoginService.fetchAuthCode(MainActivity.this);
-            }
-        });
+        authButton.setOnClickListener(v -> LoginService.fetchAuthCode(MainActivity.this));
 
         usernameView = (TextView) navViewHeader.findViewById(R.id.username);
         logoutButton = (Button) navViewHeader.findViewById(R.id.logout);
-        logoutButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LoginService.logoutUser(getApplicationContext(), new PerformFunction() {
-                    @Override
-                    public void execute() {
-                        onLogout();
-                    }
-                });
-            }
-        });
+        logoutButton.setOnClickListener(v -> LoginService.logoutUser(getApplicationContext(), this::onLogout));
 
         if (AuthSharedPrefHelper.isLoggedIn()) {
             if (AuthSharedPrefHelper.isSessionExpired()) {
@@ -160,25 +128,14 @@ public class MainActivity extends AppCompatActivity
                 LoginService.fetchAccessToken(
                         getApplicationContext(),
                         data.getStringExtra(LoginService.AUTH_CODE),
-                        new PerformFunction() {
-                            @Override
-                            public void execute() {
-                                onLogin();
-                            }
-                        }
+                        this::onLogin
                 );
             }
         }
     }
 
     private void onLogin() {
-        UserInfoService.fetchUsername(getApplicationContext(), new PerformFunction() {
-            @Override
-            public void execute() {
-                showLoggedIn();
-            }
-        });
-
+        UserInfoService.fetchUsername(getApplicationContext(), this::showLoggedIn);
         reloadApp();
     }
 
@@ -212,11 +169,7 @@ public class MainActivity extends AppCompatActivity
                     .setTitle("Really Exit?")
                     .setMessage("Are you sure you want to exit?")
                     .setNegativeButton("No", null)
-                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            MainActivity.super.onBackPressed();
-                        }
-                    }).create().show();
+                    .setPositiveButton("Yes", (dialog, id) -> MainActivity.super.onBackPressed()).create().show();
         }
     }
 
@@ -263,13 +216,10 @@ public class MainActivity extends AppCompatActivity
 
     private void getSubscriptionsList() {
         final SubredditInfoService subredditInfoService = new SubredditInfoService();
-        subredditInfoService.fetchSubscriptions(getApplicationContext(), new PerformFunction() {
-            @Override
-            public void execute() {
-                subredditsMenu.clear();
-                for (Subreddit subreddit : subredditInfoService.getSubreddits()) {
-                    subredditsMenu.add(subreddit.getSubredditName());
-                }
+        subredditInfoService.fetchSubscriptions(getApplicationContext(), () -> {
+            subredditsMenu.clear();
+            for (Subreddit subreddit : subredditInfoService.getSubreddits()) {
+                subredditsMenu.add(subreddit.getSubredditName());
             }
         });
     }

@@ -84,12 +84,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
             holder.subscribe.setColorFilter(activity.getColor(R.color.colorAccent));
         }
 
-        holder.subscribe.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickSubscribe(subreddit, holder.subscribe);
-            }
-        });
+        holder.subscribe.setOnClickListener(v -> onClickSubscribe(subreddit, holder.subscribe));
 
         holder.name.setText(subreddit.getSubredditName());
         holder.subscribers.setText(subreddit.getSubscribers() + " subscribers");
@@ -99,12 +94,7 @@ public class SubredditsAdapter extends RecyclerView.Adapter<SubredditsAdapter.Vi
             holder.description.setText(Html.fromHtml(subreddit.getDescription()));
         }
 
-        holder.description.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickSubreddit(subreddit.getSubredditName());
-            }
-        });
+        holder.description.setOnClickListener(v -> onClickSubreddit(subreddit.getSubredditName()));
     }
 
     private void onClickSubreddit(String subreddit) {

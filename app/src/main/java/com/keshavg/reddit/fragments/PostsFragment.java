@@ -126,12 +126,7 @@ public class PostsFragment extends Fragment {
         fastScroller.setRecyclerView(recList);
 
         swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_container);
-        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                fetchPosts(true, progressBarLoadMore);
-            }
-        });
+        swipeContainer.setOnRefreshListener(() -> fetchPosts(true, progressBarLoadMore));
 
         ProgressBar progressBar = (ProgressBar) rootView.findViewById(R.id.progressbar_fragment);
         progressBarLoadMore = (ProgressBar) rootView.findViewById(R.id.progressbar_bottom);

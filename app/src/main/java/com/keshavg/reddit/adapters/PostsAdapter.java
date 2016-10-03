@@ -2,7 +2,6 @@ package com.keshavg.reddit.adapters;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.support.design.widget.CoordinatorLayout;
@@ -180,40 +179,15 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         holder.created.setText(post.getRelativeCreatedTimeSpan());
         holder.commentsCount.setText(post.getCommentsCount());
 
-        holder.image.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickImage(holder.getAdapterPosition());
-            }
-        });
+        holder.image.setOnClickListener(view -> onClickImage(holder.getAdapterPosition()));
 
-        holder.postContent.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickContent(post);
-            }
-        });
+        holder.postContent.setOnClickListener(view -> onClickContent(post));
 
-        holder.scoreUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickVote(holder.getAdapterPosition(), 1, holder);
-            }
-        });
+        holder.scoreUp.setOnClickListener(v -> onClickVote(holder.getAdapterPosition(), 1, holder));
 
-        holder.scoreDown.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickVote(holder.getAdapterPosition(), -1, holder);
-            }
-        });
+        holder.scoreDown.setOnClickListener(v -> onClickVote(holder.getAdapterPosition(), -1, holder));
 
-        holder.commentsCount.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickCommentsCount(post, holder);
-            }
-        });
+        holder.commentsCount.setOnClickListener(view -> onClickCommentsCount(post, holder));
     }
 
     private void showToast(String message) {
@@ -223,74 +197,54 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     private void setToolbar(final ViewHolder holder) {
         final Post post = objects.get(holder.getAdapterPosition());
 
-        holder.toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+        holder.toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.go_to_author) {
+                Intent i = new Intent(activity, SearchActivity.class);
+                i.putExtra(SearchActivity.TYPE, SearchActivity.USERS);
+                i.putExtra(SearchActivity.SEARCH_QUERY, post.getAuthor());
+                activity.startActivity(i);
+            } else if (item.getItemId() == R.id.go_to_subreddit) {
+                Intent i = new Intent(activity, SearchActivity.class);
+                i.putExtra(SearchActivity.TYPE, SearchActivity.SUBREDDIT_POSTS);
+                i.putExtra(SearchActivity.SEARCH_QUERY, post.getFormattedSubreddit());
+                activity.startActivity(i);
+            } else if (item.getItemId() == R.id.save) {
+                onClickSave(post, holder.save);
+                return true;
+            } else if (item.getItemId() == R.id.hide) {
+                onClickHide(post, holder.hide, holder.getAdapterPosition());
+                return true;
+            } else if (item.getItemId() == R.id.delete) {
+                AlertDialog alertDialog = new AlertDialog.Builder(activity)
+                        .setTitle(item.getTitle())
+                        .setMessage("Are you sure?")
+                        .setPositiveButton("Yes", (dialog, which) -> {
+                            onClickDelete(post.getName(), holder.getAdapterPosition());
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton("No", (dialog, which) -> dialog.cancel())
+                        .create();
 
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.go_to_author) {
-                    Intent i = new Intent(activity, SearchActivity.class);
-                    i.putExtra(SearchActivity.TYPE, SearchActivity.USERS);
-                    i.putExtra(SearchActivity.SEARCH_QUERY, post.getAuthor());
-                    activity.startActivity(i);
-                } else if (item.getItemId() == R.id.go_to_subreddit) {
-                    Intent i = new Intent(activity, SearchActivity.class);
-                    i.putExtra(SearchActivity.TYPE, SearchActivity.SUBREDDIT_POSTS);
-                    i.putExtra(SearchActivity.SEARCH_QUERY, post.getFormattedSubreddit());
-                    activity.startActivity(i);
-                } else if (item.getItemId() == R.id.save) {
-                    onClickSave(post, holder.save);
-                    return true;
-                } else if (item.getItemId() == R.id.hide) {
-                    onClickHide(post, holder.hide, holder.getAdapterPosition());
-                    return true;
-                } else if (item.getItemId() == R.id.delete) {
-                    AlertDialog alertDialog = new AlertDialog.Builder(activity)
-                            .setTitle(item.getTitle())
-                            .setMessage("Are you sure?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    onClickDelete(post.getName(), holder.getAdapterPosition());
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            })
-                            .create();
+                alertDialog.show();
+                return true;
+            } else if (item.getItemId() == R.id.nsfw) {
+                AlertDialog alertDialog = new AlertDialog.Builder(activity)
+                        .setTitle(item.getTitle())
+                        .setMessage("Are you sure?")
+                        .setPositiveButton("Yes", (dialog, which) -> {
+                            onClickNsfw(holder, post, holder.markNsfw, holder.getAdapterPosition());
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton("No", (dialog, which) -> dialog.cancel())
+                        .create();
 
-                    alertDialog.show();
-                    return true;
-                } else if (item.getItemId() == R.id.nsfw) {
-                    AlertDialog alertDialog = new AlertDialog.Builder(activity)
-                            .setTitle(item.getTitle())
-                            .setMessage("Are you sure?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    onClickNsfw(holder, post, holder.markNsfw, holder.getAdapterPosition());
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            })
-                            .create();
-
-                    alertDialog.show();
-                    return true;
-                } else if (item.getItemId() == R.id.share) {
-                    startShareIntent(post);
-                }
-
-                return false;
+                alertDialog.show();
+                return true;
+            } else if (item.getItemId() == R.id.share) {
+                startShareIntent(post);
             }
+
+            return false;
         });
 
         if (AuthSharedPrefHelper.isLoggedIn()) {

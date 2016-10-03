@@ -20,7 +20,6 @@ import com.keshavg.reddit.fragments.CommentsFragment;
 import com.keshavg.reddit.fragments.PostsFragment;
 import com.keshavg.reddit.fragments.SubredditsFragment;
 import com.keshavg.reddit.fragments.UserOverviewFragment;
-import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.providers.SearchSuggestionsProvider;
 import com.keshavg.reddit.services.LoginService;
 
@@ -139,12 +138,7 @@ public class SearchActivity extends AppCompatActivity {
                 LoginService.fetchAccessToken(
                         getApplicationContext(),
                         data.getStringExtra(LoginService.AUTH_CODE),
-                        new PerformFunction() {
-                            @Override
-                            public void execute() {
-                                doSearch();
-                            }
-                        }
+                        this::doSearch
                 );
             }
         }

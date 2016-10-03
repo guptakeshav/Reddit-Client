@@ -10,13 +10,11 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
 
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.adapters.ViewPagerFragmentAdapter;
 import com.keshavg.reddit.fragments.CommentsFragment;
-import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.models.Comment;
 import com.keshavg.reddit.services.LoginService;
 import com.keshavg.reddit.utils.Constants;
@@ -73,12 +71,7 @@ public class CommentsActivity extends AppCompatActivity {
         fragments = new ArrayList<>();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.comment_create);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickCreateComment();
-            }
-        });
+        fab.setOnClickListener(v -> onClickCreateComment());
 
         adapter = new ViewPagerFragmentAdapter(getSupportFragmentManager());
         setUpViewPager();
@@ -114,42 +107,48 @@ public class CommentsActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == COMMENT_SUBMIT_REQUEST_CODE) {
-            if (resultCode == RESULT_SUBMIT_COMMENT) {
-                int position = tabLayout.getSelectedTabPosition();
+        switch (requestCode) {
+            case COMMENT_SUBMIT_REQUEST_CODE:
+                switch (resultCode) {
+                    case RESULT_SUBMIT_COMMENT:
+                        int position = tabLayout.getSelectedTabPosition();
 
-                String parentId = data.getStringExtra(PARENT_ID);
-                Comment submittedComment = (Comment) data.getSerializableExtra(COMMENT);
+                        String parentId = data.getStringExtra(PARENT_ID);
+                        Comment submittedComment = (Comment) data.getSerializableExtra(COMMENT);
 
-                if (parentId.startsWith(Constants.POST_PREFIX)) { // comment directly to the post
-                    ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
-                            .add(0, submittedComment);
-                } else {
-                    ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
-                            .add(parentId, submittedComment);
-                }
-            } else if (resultCode == RESULT_EDIT_COMMENT) {
-                int position = tabLayout.getSelectedTabPosition();
-
-                String id = data.getStringExtra(ID);
-                Comment editComment = (Comment) data.getSerializableExtra(COMMENT);
-
-                ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
-                        .edit(id, editComment);
-            }
-        } else if (requestCode == LoginService.AUTH_CODE_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                LoginService.fetchAccessToken(
-                        getApplicationContext(),
-                        data.getStringExtra(LoginService.AUTH_CODE),
-                        new PerformFunction() {
-                            @Override
-                            public void execute() {
-                                setUpViewPager();
-                            }
+                        if (parentId.startsWith(Constants.POST_PREFIX)) { // comment directly to the post
+                            ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
+                                    .add(0, submittedComment);
+                        } else {
+                            ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
+                                    .add(parentId, submittedComment);
                         }
-                );
-            }
+
+                        break;
+
+                    case RESULT_EDIT_COMMENT:
+                        position = tabLayout.getSelectedTabPosition();
+
+                        String id = data.getStringExtra(ID);
+                        Comment editComment = (Comment) data.getSerializableExtra(COMMENT);
+
+                        ((CommentsFragment) fragments.get(position)).getCommentsAdapter()
+                                .edit(id, editComment);
+
+                        break;
+                }
+
+                break;
+
+            case LoginService.AUTH_CODE_REQUEST:
+                switch (resultCode) {
+                    case RESULT_OK:
+                        LoginService.fetchAccessToken(
+                                getApplicationContext(),
+                                data.getStringExtra(LoginService.AUTH_CODE),
+                                this::setUpViewPager
+                        );
+                }
         }
     }
 

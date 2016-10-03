@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -89,50 +88,26 @@ public class SubmitPostActivity extends AppCompatActivity {
         Button submit = (Button) findViewById(R.id.submit);
         Button discard = (Button) findViewById(R.id.discard);
 
-        submit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickSubmit();
-            }
-        });
-        discard.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        submit.setOnClickListener(v -> onClickSubmit());
+        discard.setOnClickListener(v -> finish());
 
         aSwitch = (Switch) findViewById(R.id.toggle_post);
-        aSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    text.setVisibility(GONE);
-                    url.setVisibility(View.VISIBLE);
-                    uploadImgButton.setVisibility(View.VISIBLE);
-                    kind = "link";
-                } else {
-                    uploadImgButton.setVisibility(GONE);
-                    url.setVisibility(GONE);
-                    text.setVisibility(View.VISIBLE);
-                    kind = "self";
-                }
+        aSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                text.setVisibility(GONE);
+                url.setVisibility(View.VISIBLE);
+                uploadImgButton.setVisibility(View.VISIBLE);
+                kind = "link";
+            } else {
+                uploadImgButton.setVisibility(GONE);
+                url.setVisibility(GONE);
+                text.setVisibility(View.VISIBLE);
+                kind = "self";
             }
         });
 
-        uploadImgButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickUploadImage();
-            }
-        });
-
-        refreshCaptcha.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                refreshCaptcha();
-            }
-        });
+        uploadImgButton.setOnClickListener(v -> onClickUploadImage());
+        refreshCaptcha.setOnClickListener(v -> refreshCaptcha());
 
         getCaptcha();
     }

@@ -15,7 +15,6 @@ import android.widget.ProgressBar;
 import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.adapters.CommentsAdapter;
-import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.models.CommentResponse;
 import com.keshavg.reddit.services.CommentService;
 
@@ -127,12 +126,7 @@ public class CommentsFragment extends Fragment {
             final Queue<String> moreIds = response.getMoreIds();
             if (moreIds != null && !moreIds.isEmpty()) {
                 button.setVisibility(View.VISIBLE);
-                button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        onClickLoadMore(moreIds);
-                    }
-                });
+                button.setOnClickListener(v -> onClickLoadMore(moreIds));
             }
 
             onFetchCommentsComplete();
@@ -171,18 +165,8 @@ public class CommentsFragment extends Fragment {
                     url,
                     "",
                     sortByParam,
-                    new PerformFunction() {
-                        @Override
-                        public void execute() {
-                            onFetchCommentsSuccessfulResponse(commentService.getCommentResponse());
-                        }
-                    },
-                    new PerformFunction() {
-                        @Override
-                        public void execute() {
-                            onFetchCommentsComplete();
-                        }
-                    }
+                    () -> onFetchCommentsSuccessfulResponse(commentService.getCommentResponse()),
+                    this::onFetchCommentsComplete
             );
         }
 
@@ -201,18 +185,8 @@ public class CommentsFragment extends Fragment {
                     url,
                     moreIds.peek(),
                     sortByParam,
-                    new PerformFunction() {
-                        @Override
-                        public void execute() {
-                            onLoadMoreSuccessfulResponse(commentService.getCommentResponse(), moreIds);
-                        }
-                    },
-                    new PerformFunction() {
-                        @Override
-                        public void execute() {
-                            onLoadMoreUnsuccess();
-                        }
-                    }
+                    () -> onLoadMoreSuccessfulResponse(commentService.getCommentResponse(), moreIds),
+                    () -> onLoadMoreUnsuccess()
             );
         }
     }
@@ -227,18 +201,8 @@ public class CommentsFragment extends Fragment {
                     getContext(),
                     url,
                     "",
-                    new PerformFunction() {
-                        @Override
-                        public void execute() {
-                            onFetchCommentsSuccessfulResponse(commentService.getCommentResponse());
-                        }
-                    },
-                    new PerformFunction() {
-                        @Override
-                        public void execute() {
-                            onFetchCommentsComplete();
-                        }
-                    }
+                    () -> onFetchCommentsSuccessfulResponse(commentService.getCommentResponse()),
+                    () -> onFetchCommentsComplete()
             );
         }
 
@@ -256,18 +220,8 @@ public class CommentsFragment extends Fragment {
                     getContext(),
                     url,
                     moreIds.peek(),
-                    new PerformFunction() {
-                        @Override
-                        public void execute() {
-                            onLoadMoreSuccessfulResponse(commentService.getCommentResponse(), moreIds);
-                        }
-                    },
-                    new PerformFunction() {
-                        @Override
-                        public void execute() {
-                            onLoadMoreUnsuccess();
-                        }
-                    }
+                    () -> onLoadMoreSuccessfulResponse(commentService.getCommentResponse(), moreIds),
+                    () -> onLoadMoreUnsuccess()
             );
         }
     }

@@ -3,7 +3,6 @@ package com.keshavg.reddit.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -61,23 +60,15 @@ public class SubmitCommentActivity extends AppCompatActivity {
         Button submit = (Button) findViewById(R.id.comment_submit);
         Button discard = (Button) findViewById(R.id.comment_discard);
 
-        submit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (id != null) {
-                    editComment(text.getText().toString());
-                } else {
-                    submitComment(text.getText().toString());
-                }
+        submit.setOnClickListener(v -> {
+            if (id != null) {
+                editComment(text.getText().toString());
+            } else {
+                submitComment(text.getText().toString());
             }
         });
 
-        discard.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        discard.setOnClickListener(v -> finish());
     }
 
     private void showToast(String message) {
