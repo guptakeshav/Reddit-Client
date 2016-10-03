@@ -11,40 +11,35 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.futuremind.recyclerviewfastscroll.FastScroller;
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.adapters.CommentsAdapter;
-import com.keshavg.reddit.db.AuthSharedPrefHelper;
+import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.models.CommentResponse;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
+import com.keshavg.reddit.services.CommentService;
 
-import java.util.List;
 import java.util.Queue;
 
 import lombok.Getter;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 /**
  * Created by keshavgupta on 9/13/16.
  */
 public class CommentsFragment extends Fragment {
+    public static final String URL = "URL";
+    public static final String SORT_BY = "SORT_BY";
+    public static final String IS_PROFILE_ACTIVITY = "IS_PROFILE_ACTIVITY";
+
     private String url;
     private String sortByParam;
     private Boolean isProfileActivity;
     private Comments comments;
 
     private SwipeRefreshLayout swipeContainer;
-    private RecyclerView recList;
-    private FastScroller fastScroller;
 
     @Getter
     private CommentsAdapter commentsAdapter;
-    private LinearLayoutManager llm;
     private Button button;
     private ProgressBar progressBarLoadMore;
 
@@ -53,9 +48,9 @@ public class CommentsFragment extends Fragment {
     public static CommentsFragment newInstance(String url, String sortBy, Boolean isProfileActivity) {
         CommentsFragment fragment = new CommentsFragment();
         Bundle args = new Bundle();
-        args.putString("URL", url);
-        args.putString("SORT_BY", sortBy);
-        args.putBoolean("IS_PROFILE_ACTIVITY", isProfileActivity);
+        args.putString(URL, url);
+        args.putString(SORT_BY, sortBy);
+        args.putBoolean(IS_PROFILE_ACTIVITY, isProfileActivity);
         fragment.setArguments(args);
         return fragment;
     }
@@ -64,9 +59,9 @@ public class CommentsFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        url = getArguments().getString("URL");
-        sortByParam = getArguments().getString("SORT_BY");
-        isProfileActivity = getArguments().getBoolean("IS_PROFILE_ACTIVITY");
+        url = getArguments().getString(URL);
+        sortByParam = getArguments().getString(SORT_BY);
+        isProfileActivity = getArguments().getBoolean(IS_PROFILE_ACTIVITY);
 
         if (isProfileActivity) {
             comments = new CommentsForProfile();
@@ -95,16 +90,16 @@ public class CommentsFragment extends Fragment {
             }
         });
 
-        recList = (RecyclerView) view.findViewById(R.id.recycler_list);
+        RecyclerView recList = (RecyclerView) view.findViewById(R.id.recycler_list);
         commentsAdapter = new CommentsAdapter(getActivity(), url, sortByParam, isProfileActivity);
         recList.setAdapter(commentsAdapter);
-        llm = new LinearLayoutManager(
+        LinearLayoutManager llm = new LinearLayoutManager(
                 getActivity(),
                 LinearLayoutManager.VERTICAL,
                 false
         );
         recList.setLayoutManager(llm);
-        fastScroller = (FastScroller) view.findViewById(R.id.fast_scroll);
+        FastScroller fastScroller = (FastScroller) view.findViewById(R.id.fast_scroll);
         fastScroller.setRecyclerView(recList);
 
         button = (Button) view.findViewById(R.id.button);
@@ -117,15 +112,11 @@ public class CommentsFragment extends Fragment {
         comments.fetchComments();
     }
 
-    private void showToast(String message) {
-        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-    }
-
     private abstract class Comments {
         abstract void fetchComments();
         abstract void onClickLoadMore(final Queue<String> moreIds);
 
-        public void onFetchCommentsSuccessfulResponse(CommentResponse response) {
+        void onFetchCommentsSuccessfulResponse(CommentResponse response) {
             // clearing out the previous content
             button.setVisibility(View.GONE);
             commentsAdapter.clear();
@@ -143,14 +134,16 @@ public class CommentsFragment extends Fragment {
                     }
                 });
             }
+
+            onFetchCommentsComplete();
         }
 
-        public void onFetchCommentsComplete() {
+        void onFetchCommentsComplete() {
             progressBar.setVisibility(View.GONE);
             swipeContainer.setRefreshing(false);
         }
 
-        public void onLoadMoreSuccessfulResponse(CommentResponse response, Queue<String> moreIds) {
+        void onLoadMoreSuccessfulResponse(CommentResponse response, Queue<String> moreIds) {
             commentsAdapter.addAll(response.getComments());
 
             progressBarLoadMore.setVisibility(View.GONE);
@@ -160,8 +153,7 @@ public class CommentsFragment extends Fragment {
             }
         }
 
-        public void onLoadMoreUnsuccess(String message) {
-            showToast(message);
+        void onLoadMoreUnsuccess() {
             progressBarLoadMore.setVisibility(View.GONE);
             button.setVisibility(View.VISIBLE);
         }
@@ -169,50 +161,29 @@ public class CommentsFragment extends Fragment {
     }
 
     private class CommentsForPost extends Comments {
-        private Call<List<CommentResponse>> getRetrofitCall(String moreId) {
-            RedditApiInterface apiService;
-            Call<List<CommentResponse>> call;
-
-            if (AuthSharedPrefHelper.isLoggedIn()) {
-                apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-                call = apiService.getOAuthComments(
-                        "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                        url,
-                        moreId,
-                        sortByParam,
-                        1
-                );
-            } else {
-                apiService = RedditApiClient.getClient().create(RedditApiInterface.class);
-                call = apiService.getComments(url, moreId, sortByParam, 1);
-            }
-
-            return call;
-        }
-
         /**
          * Function to fetch the list of comments from the REST api
          */
         public void fetchComments() {
-            Call<List<CommentResponse>> call = getRetrofitCall("");
-            call.enqueue(new Callback<List<CommentResponse>>() {
-                @Override
-                public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
-                    if (response.isSuccessful()) {
-                        onFetchCommentsSuccessfulResponse(response.body().get(1));
-                    } else {
-                        showToast("Comments - " + response.message());
+            final CommentService commentService = new CommentService();
+            commentService.fetchCommentsForPosts(
+                    getContext(),
+                    url,
+                    "",
+                    sortByParam,
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            onFetchCommentsSuccessfulResponse(commentService.getCommentResponse());
+                        }
+                    },
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            onFetchCommentsComplete();
+                        }
                     }
-
-                    onFetchCommentsComplete();
-                }
-
-                @Override
-                public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
-                    showToast(getString(R.string.error_server_connect));
-                    onFetchCommentsComplete();
-                }
-            });
+            );
         }
 
         /**
@@ -224,69 +195,51 @@ public class CommentsFragment extends Fragment {
             button.setVisibility(View.GONE);
             progressBarLoadMore.setVisibility(View.VISIBLE);
 
-            Call<List<CommentResponse>> callMore = getRetrofitCall(moreIds.peek());
-            callMore.enqueue(new Callback<List<CommentResponse>>() {
-                @Override
-                public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
-                    if (response.isSuccessful()) {
-                        onLoadMoreSuccessfulResponse(response.body().get(1), moreIds);
-                    } else {
-                        onLoadMoreUnsuccess(response.message());
+            final CommentService commentService = new CommentService();
+            commentService.fetchCommentsForPosts(
+                    getContext(),
+                    url,
+                    moreIds.peek(),
+                    sortByParam,
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            onLoadMoreSuccessfulResponse(commentService.getCommentResponse(), moreIds);
+                        }
+                    },
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            onLoadMoreUnsuccess();
+                        }
                     }
-                }
-
-                @Override
-                public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
-                    onLoadMoreUnsuccess(getString(R.string.error_server_connect));
-                }
-            });
+            );
         }
     }
 
     private class CommentsForProfile extends Comments {
-        private Call<CommentResponse> getRetrofitCall(String moreId) {
-            RedditApiInterface apiService;
-            Call<CommentResponse> call;
-            if (AuthSharedPrefHelper.isLoggedIn()) {
-                apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-                call = apiService.getOAuthProfileComments(
-                        "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                        url,
-                        moreId,
-                        "",
-                        1
-                );
-            } else {
-                apiService = RedditApiClient.getClient().create(RedditApiInterface.class);
-                call = apiService.getProfileComments(url, moreId, "", 1);
-            }
-
-            return call;
-        }
-
         /**
          * Function to fetch the list of comments from the REST api
          */
         public void fetchComments() {
-            Call<CommentResponse> call = getRetrofitCall("");
-            call.enqueue(new Callback<CommentResponse>() {
-                @Override
-                public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
-                    if (response.isSuccessful()) {
-                        onFetchCommentsSuccessfulResponse(response.body());
-                    } else {
-                        showToast("Comments - " + response.message());
+            final CommentService commentService = new CommentService();
+            commentService.fetchCommentsForProfile(
+                    getContext(),
+                    url,
+                    "",
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            onFetchCommentsSuccessfulResponse(commentService.getCommentResponse());
+                        }
+                    },
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            onFetchCommentsComplete();
+                        }
                     }
-
-                    onFetchCommentsComplete();
-                }
-
-                @Override
-                public void onFailure(Call<CommentResponse> call, Throwable t) {
-                    showToast(getString(R.string.error_server_connect));
-                    onFetchCommentsComplete();
-                }
-            });
+            );
         }
 
         /**
@@ -298,22 +251,24 @@ public class CommentsFragment extends Fragment {
             button.setVisibility(View.GONE);
             progressBarLoadMore.setVisibility(View.VISIBLE);
 
-            Call<CommentResponse> callMore = getRetrofitCall(moreIds.peek());
-            callMore.enqueue(new Callback<CommentResponse>() {
-                @Override
-                public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
-                    if (response.isSuccessful()) {
-                        onLoadMoreSuccessfulResponse(response.body(), moreIds);
-                    } else {
-                        onLoadMoreUnsuccess(response.message());
+            final CommentService commentService = new CommentService();
+            commentService.fetchCommentsForProfile(
+                    getContext(),
+                    url,
+                    moreIds.peek(),
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            onLoadMoreSuccessfulResponse(commentService.getCommentResponse(), moreIds);
+                        }
+                    },
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            onLoadMoreUnsuccess();
+                        }
                     }
-                }
-
-                @Override
-                public void onFailure(Call<CommentResponse> call, Throwable t) {
-                    onLoadMoreUnsuccess(getString(R.string.error_server_connect));
-                }
-            });
+            );
         }
     }
 }

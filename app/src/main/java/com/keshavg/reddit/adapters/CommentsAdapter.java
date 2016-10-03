@@ -27,10 +27,9 @@ import com.keshavg.reddit.R;
 import com.keshavg.reddit.activities.CommentsActivity;
 import com.keshavg.reddit.activities.SubmitCommentActivity;
 import com.keshavg.reddit.db.AuthSharedPrefHelper;
+import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.models.Comment;
-import com.keshavg.reddit.models.CommentResponse;
-import com.keshavg.reddit.network.RedditApiClient;
-import com.keshavg.reddit.network.RedditApiInterface;
+import com.keshavg.reddit.services.CommentService;
 import com.keshavg.reddit.utils.ValidateUtil;
 
 import java.util.ArrayList;
@@ -39,10 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 import static android.view.View.GONE;
 
@@ -361,7 +356,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private void createThreadedComments(LinearLayout subcomments, List<Comment> replies) {
         if (replies != null && replies.size() > 0) {
             for (final Comment reply : replies) {
-                View view = LayoutInflater.from(activity).inflate(R.layout.comment_row, null);
+                View view = LayoutInflater.from(activity).inflate(R.layout.comment_row, subcomments, false);
                 makeRandomColorLine(view);
                 setViewData(new ViewHolder(view), reply);
                 subcomments.addView(view);
@@ -372,9 +367,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     /**
      *
      * @param viewHolder
+     * @param isPresentMoreIds
      */
     private void onClickCommentCollapse(ViewHolder viewHolder, Boolean isPresentMoreIds) {
-        if (isCollapsed == false) {
+        if (!isCollapsed) {
             viewHolder.button.setVisibility(GONE);
             viewHolder.subcommentsView.setVisibility(GONE);
             viewHolder.toolbar.setVisibility(GONE);
@@ -417,37 +413,24 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private void onClickVote(final Comment comment, int likes, final ViewHolder viewHolder) {
         if (ValidateUtil.loginValidation(coordinatorLayout, activity)) {
 
-            RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-
             final int prevLikes = comment.getLikeInt();
             comment.setLikes((comment.getLikeInt() == likes) ? 0 : likes);
             final int delta = comment.getLikeInt() - prevLikes;
             comment.updateScore(delta);
             setScoreInformation(viewHolder, comment);
 
-            Call<Void> call = apiService.votePost(
-                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    comment.getName(),
-                    comment.getLikeInt()
-            );
-
-            call.enqueue(new Callback<Void>() {
-                @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {
-                    if (!response.isSuccessful()) {
-                        showToast("Comments Voting - " + response.message());
-
-                        comment.setLikes(prevLikes);
-                        comment.updateScore(-delta);
-                        setScoreInformation(viewHolder, comment);
+            CommentService.voteComment(
+                    activity.getApplicationContext(),
+                    comment,
+                    new PerformFunction() {
+                        @Override
+                        public void execute() {
+                            comment.setLikes(prevLikes);
+                            comment.updateScore(-delta);
+                            setScoreInformation(viewHolder, comment);
+                        }
                     }
-                }
-
-                @Override
-                public void onFailure(Call<Void> call, Throwable t) {
-                    showToast(activity.getString(R.string.error_server_connect));
-                }
-            });
+            );
         }
     }
 
@@ -469,46 +452,32 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         viewHolder.button.setVisibility(GONE);
         viewHolder.progressBar.setVisibility(View.VISIBLE);
 
-        RedditApiInterface apiService;
-        Call<List<CommentResponse>> callMore;
+        final CommentService commentService = new CommentService();
+        commentService.fetchCommentsForPosts(
+                activity.getApplicationContext(),
+                url,
+                moreIds.peek(),
+                sortByParam,
+                new PerformFunction() {
+                    @Override
+                    public void execute() {
+                        createThreadedComments(viewHolder.subcommentsView, commentService.getCommentResponse().getComments());
 
-        if (AuthSharedPrefHelper.isLoggedIn()) {
-            apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-            callMore = apiService.getOAuthComments(
-                    "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    url,
-                    moreIds.peek(),
-                    sortByParam,
-                    1
-            );
-        } else {
-            apiService = RedditApiClient.getClient().create(RedditApiInterface.class);
-            callMore = apiService.getComments(url, moreIds.peek(), sortByParam, 1);
-        }
-
-        callMore.enqueue(new Callback<List<CommentResponse>>() {
-            @Override
-            public void onResponse(Call<List<CommentResponse>> call, Response<List<CommentResponse>> response) {
-                if (response.isSuccessful()) {
-                    createThreadedComments(viewHolder.subcommentsView, response.body().get(1).getComments());
-
-                    viewHolder.progressBar.setVisibility(GONE);
-                    moreIds.remove();
-                    if (moreIds != null && !moreIds.isEmpty()) {
+                        viewHolder.progressBar.setVisibility(GONE);
+                        moreIds.remove();
+                        if (moreIds != null && !moreIds.isEmpty()) {
+                            viewHolder.button.setVisibility(View.VISIBLE);
+                        }
+                    }
+                },
+                new PerformFunction() {
+                    @Override
+                    public void execute() {
+                        viewHolder.progressBar.setVisibility(GONE);
                         viewHolder.button.setVisibility(View.VISIBLE);
                     }
-                } else {
-                    showToast("Load More - " + response.message());
                 }
-            }
-
-            @Override
-            public void onFailure(Call<List<CommentResponse>> call, Throwable t) {
-                showToast(activity.getString(R.string.error_server_connect));
-                viewHolder.progressBar.setVisibility(GONE);
-                viewHolder.button.setVisibility(View.VISIBLE);
-            }
-        });
+        );
     }
 
     private void onClickDelete(final ViewHolder viewHolder, final String id) {
@@ -531,28 +500,17 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     }
 
     private void deleteComment(final ViewHolder viewHolder, String id) {
-        RedditApiInterface apiClient = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-        Call<Void> call = apiClient.deleteThing(
-                "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                id
-        );
-
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    viewHolder.commentBody.setText("[removed]");
-                    viewHolder.author.setText("[deleted]");
-                } else {
-                    showToast("Deleting - " + response.message());
+        CommentService.deleteComment(
+                activity.getApplicationContext(),
+                id,
+                new PerformFunction() {
+                    @Override
+                    public void execute() {
+                        viewHolder.commentBody.setText("[removed]");
+                        viewHolder.author.setText("[deleted]");
+                    }
                 }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.error_server_connect));
-            }
-        });
+        );
     }
 
     /**

@@ -2,6 +2,7 @@ package com.keshavg.reddit.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -19,6 +20,7 @@ import com.keshavg.reddit.interfaces.PerformFunction;
 import com.keshavg.reddit.models.Comment;
 import com.keshavg.reddit.services.LoginService;
 import com.keshavg.reddit.utils.Constants;
+import com.keshavg.reddit.utils.ValidateUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,7 @@ public class CommentsActivity extends AppCompatActivity {
     private String url;
     private String title;
 
+    private CoordinatorLayout coordinatorLayout;
     private TabLayout tabLayout;
     private ViewPager viewPager;
     private ViewPagerFragmentAdapter adapter;
@@ -63,6 +66,7 @@ public class CommentsActivity extends AppCompatActivity {
         TextView titleView = (TextView) findViewById(R.id.post_title);
         titleView.setText(title);
 
+        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
 
@@ -150,8 +154,10 @@ public class CommentsActivity extends AppCompatActivity {
     }
 
     private void onClickCreateComment() {
-        Intent i = new Intent(CommentsActivity.this, SubmitCommentActivity.class);
-        i.putExtra(PARENT_ID, Constants.POST_PREFIX + url.split(Constants.LINK_SEPARATOR)[3]);
-        startActivityForResult(i, COMMENT_SUBMIT_REQUEST_CODE);
+        if (ValidateUtil.loginValidation(coordinatorLayout, CommentsActivity.this)) {
+            Intent i = new Intent(CommentsActivity.this, SubmitCommentActivity.class);
+            i.putExtra(PARENT_ID, Constants.POST_PREFIX + url.split(Constants.LINK_SEPARATOR)[3]);
+            startActivityForResult(i, COMMENT_SUBMIT_REQUEST_CODE);
+        }
     }
 }
