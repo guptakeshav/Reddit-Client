@@ -27,6 +27,7 @@ import com.keshavg.reddit.activities.SubmitCommentActivity;
 import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.Comment;
 import com.keshavg.reddit.services.CommentService;
+import com.keshavg.reddit.services.ThingService;
 import com.keshavg.reddit.utils.Constants;
 import com.keshavg.reddit.utils.ValidateUtil;
 
@@ -53,7 +54,6 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private Map<String, ViewHolder> viewHolderById;
     private Map<String, Integer> adapterPositionById;
     private List<Comment> objects;
-    private Boolean isCollapsed;
     private CoordinatorLayout coordinatorLayout;
 
     public CommentsAdapter(Activity activity, String url, String sortByParam, Boolean isProfileActivity) {
@@ -67,7 +67,6 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
         viewHolderById = new HashMap<>();
         adapterPositionById = new HashMap<>();
         objects = new ArrayList<>();
-        isCollapsed = false;
 
         coordinatorLayout = (CoordinatorLayout) activity.findViewById(R.id.coordinator_layout);
     }
@@ -75,6 +74,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     public static class ViewHolder extends RecyclerView.ViewHolder {
         LinearLayout comment;
 
+        Boolean isCollapsed;
         RelativeLayout header;
         ImageView collapse;
         TextView author;
@@ -101,6 +101,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
             this.comment = (LinearLayout) v.findViewById(R.id.comment);
 
+            this.isCollapsed = false;
             this.header = (RelativeLayout) this.comment.findViewById(R.id.comment_header);
             this.collapse = (ImageView) this.header.findViewById(R.id.comment_collapse);
             this.author = (TextView) this.header.findViewById(R.id.comment_author);
@@ -143,13 +144,13 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, final int position) {
         final Comment comment = objects.get(position);
-        adapterPositionById.put(comment.getName(), position);
+        adapterPositionById.put(comment.getId(), position);
         setViewData(viewHolder, comment);
     }
 
     private void setViewData(final ViewHolder viewHolder, final Comment comment) {
-        viewById.put(comment.getName(), viewHolder.comment);
-        viewHolderById.put(comment.getName(), viewHolder);
+        viewById.put(comment.getId(), viewHolder.comment);
+        viewHolderById.put(comment.getId(), viewHolder);
 
         viewHolder.author.setText(comment.getPostedBy());
 
@@ -170,11 +171,11 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
         setScoreInformation(viewHolder, comment);
 
-        if (!childViewOfCommentById.containsKey(comment.getName())) {
+        if (!childViewOfCommentById.containsKey(comment.getId())) {
             // do not repeat this on notifydatasetchanged
             createThreadedComments(viewHolder.subcommentsView, comment.getReplies());
         }
-        childViewOfCommentById.put(comment.getName(), viewHolder.subcommentsView);
+        childViewOfCommentById.put(comment.getId(), viewHolder.subcommentsView);
 
         viewHolder.header.setOnClickListener(v -> onClickCommentCollapse(viewHolder, comment.getMoreReplyIds() != null));
 
@@ -184,7 +185,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
         viewHolder.commentDownvote.setOnClickListener(v -> onClickVote(comment, -1, viewHolder));
 
-        viewHolder.commentReply.setOnClickListener(v -> onClickReply(comment.getName()));
+        viewHolder.commentReply.setOnClickListener(v -> onClickReply(comment.getId()));
 
         if (AuthSharedPrefHelper.isLoggedIn()) {
             if (comment.getAuthor().equals(AuthSharedPrefHelper.getUsername())) {
@@ -198,18 +199,15 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
         viewHolder.commentEdit.setOnClickListener(v -> {
             Intent i = new Intent(activity, SubmitCommentActivity.class);
-            i.putExtra(SubmitCommentActivity.ID, comment.getName());
+            i.putExtra(SubmitCommentActivity.ID, comment.getId());
             i.putExtra(SubmitCommentActivity.COMMENT, comment.getBody());
             activity.startActivityForResult(i, CommentsActivity.COMMENT_SUBMIT_REQUEST_CODE);
         });
 
-        viewHolder.commentDelete.setOnClickListener(v -> onClickDelete(viewHolder, comment.getName()));
+        viewHolder.commentDelete.setOnClickListener(v -> onClickDelete(viewHolder, comment.getId()));
 
-        if (comment.getParentId().startsWith(Constants.POST_PREFIX)) { // no parent for direct comments to post
-            viewHolder.commentParent.setVisible(false);
-        } else {
-            viewHolder.commentParent.setVisible(true);
-        }
+        // no parent for direct comments to post
+        viewHolder.commentParent.setVisible(!comment.getParentId().startsWith(Constants.POST_PREFIX));
         viewHolder.commentParent.setOnMenuItemClickListener(item -> {
             View targetView = viewById.get(comment.getParentId());
             targetView.getParent().requestChildFocus(targetView, targetView);
@@ -291,10 +289,10 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
 
     private void setScoreInformation(ViewHolder viewHolder, Comment comment) {
         viewHolder.upvotes.setText(comment.getScoreString());
-        if (comment.getLikeInt() == 1) {
+        if (comment.getLikes() == 1) {
             viewHolder.commentUpvote.setColorFilter(activity.getColor(R.color.colorAccent));
             viewHolder.commentDownvote.setColorFilter(activity.getColor(android.R.color.black));
-        } else if (comment.getLikeInt() == -1) {
+        } else if (comment.getLikes() == -1) {
             viewHolder.commentUpvote.setColorFilter(activity.getColor(android.R.color.black));
             viewHolder.commentDownvote.setColorFilter(activity.getColor(R.color.colorAccent));
         } else {
@@ -320,7 +318,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
      * @param isPresentMoreIds
      */
     private void onClickCommentCollapse(ViewHolder viewHolder, Boolean isPresentMoreIds) {
-        if (!isCollapsed) {
+        if (!viewHolder.isCollapsed) {
             viewHolder.button.setVisibility(GONE);
             viewHolder.subcommentsView.setVisibility(GONE);
             viewHolder.toolbar.setVisibility(GONE);
@@ -338,7 +336,7 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
             viewHolder.collapse.setImageDrawable(activity.getDrawable(R.drawable.ic_keyboard_arrow_down));
         }
 
-        isCollapsed = !isCollapsed;
+        viewHolder.isCollapsed = !viewHolder.isCollapsed;
     }
 
     /**
@@ -363,17 +361,17 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private void onClickVote(final Comment comment, int likes, final ViewHolder viewHolder) {
         if (ValidateUtil.loginValidation(coordinatorLayout, activity)) {
 
-            final int prevLikes = comment.getLikeInt();
-            comment.setLikes((comment.getLikeInt() == likes) ? 0 : likes);
-            final int delta = comment.getLikeInt() - prevLikes;
+            final int prevLikes = comment.getLikes();
+            comment.setIsLiked((comment.getLikes() == likes) ? 0 : likes);
+            final int delta = comment.getLikes() - prevLikes;
             comment.updateScore(delta);
             setScoreInformation(viewHolder, comment);
 
-            CommentService.voteComment(
+            ThingService.voteThing(
                     activity.getApplicationContext(),
                     comment,
                     () -> {
-                        comment.setLikes(prevLikes);
+                        comment.setIsLiked(prevLikes);
                         comment.updateScore(-delta);
                         setScoreInformation(viewHolder, comment);
                     }
@@ -424,14 +422,14 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.ViewHo
     private void onClickDelete(final ViewHolder viewHolder, final String id) {
         AlertDialog alertDialog = new AlertDialog.Builder(activity)
                 .setTitle("Confirm Delete?")
-                .setPositiveButton("Yes", ((dialog, which) -> deleteComment(viewHolder, id)))
-                .setNegativeButton("No", ((dialog, which) -> dialog.cancel()))
+                .setPositiveButton("Yes", (dialog, which) -> deleteComment(viewHolder, id))
+                .setNegativeButton("No", (dialog, which) -> dialog.cancel())
                 .create();
         alertDialog.show();
     }
 
     private void deleteComment(final ViewHolder viewHolder, String id) {
-        CommentService.deleteComment(
+        ThingService.deleteThing(
                 activity.getApplicationContext(),
                 id,
                 () -> {

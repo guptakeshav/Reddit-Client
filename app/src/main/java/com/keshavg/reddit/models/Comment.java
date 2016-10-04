@@ -3,6 +3,7 @@ package com.keshavg.reddit.models;
 import android.text.format.DateUtils;
 
 import com.google.gson.annotations.SerializedName;
+import com.keshavg.reddit.interfaces.Thing;
 
 import java.io.Serializable;
 import java.util.List;
@@ -14,7 +15,7 @@ import lombok.Setter;
 /**
  * Created by keshav.g on 29/08/16.
  */
-public class Comment implements Serializable {
+public class Comment implements Thing, Serializable {
     /**
      * 1
      */
@@ -46,10 +47,10 @@ public class Comment implements Serializable {
     @SerializedName("created_utc") private int created;
 
     @Getter
-    private Boolean likes;
+    @SerializedName("likes") private Boolean isLiked;
 
     @Getter
-    private String name;
+    @SerializedName("name") private String id;
 
     @Getter
     @SerializedName("parent_id") private String parentId;
@@ -72,8 +73,8 @@ public class Comment implements Serializable {
         this.author = comment.getAuthor();
         this.htmlBody = comment.getHtmlBody();
         this.created = comment.getCreated();
-        this.likes = comment.getLikes();
-        this.name = comment.getName();
+        this.isLiked = comment.getIsLiked();
+        this.id = comment.getId();
         this.parentId = comment.getParentId();
         this.replyResponse = comment.getReplyResponse();
         this.score = comment.getScore();
@@ -90,22 +91,22 @@ public class Comment implements Serializable {
         return DateUtils.getRelativeTimeSpanString(created * 1000L).toString();
     }
 
-    public int getLikeInt() {
-        if (likes == null) {
+    public int getLikes() {
+        if (isLiked == null) {
             return 0;
-        } else if (likes.equals(true)) {
+        } else if (isLiked.equals(true)) {
             return 1;
         }
         return -1;
     }
 
-    public void setLikes(int likes) {
-        if (likes == 0) {
-            this.likes = null;
-        } else if (likes == 1) {
-            this.likes = true;
+    public void setIsLiked(int isLiked) {
+        if (isLiked == 0) {
+            this.isLiked = null;
+        } else if (isLiked == 1) {
+            this.isLiked = true;
         } else {
-            this.likes = false;
+            this.isLiked = false;
         }
     }
 

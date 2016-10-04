@@ -43,8 +43,8 @@ public class MainActivity extends AppCompatActivity
     private ViewPager viewPager;
     private FloatingActionMenu fam;
 
-    private SubMenu subredditsMenu;
     private MenuItem prevMenuItem;
+    private SubMenu subscriptionsMenu;
 
     private TextView usernameView;
     private Button authButton;
@@ -166,10 +166,12 @@ public class MainActivity extends AppCompatActivity
             fam.close(true);
         } else {
             new AlertDialog.Builder(this)
-                    .setTitle("Really Exit?")
+                    .setTitle("Confirm Exit?")
                     .setMessage("Are you sure you want to exit?")
                     .setNegativeButton("No", null)
-                    .setPositiveButton("Yes", (dialog, id) -> MainActivity.super.onBackPressed()).create().show();
+                    .setPositiveButton("Yes", (dialog, id) -> MainActivity.super.onBackPressed())
+                    .create()
+                    .show();
         }
     }
 
@@ -210,16 +212,16 @@ public class MainActivity extends AppCompatActivity
         prevMenuItem = menu.getItem(1);
         prevMenuItem.setChecked(true);
 
-        subredditsMenu = menu.addSubMenu(SUBSCRIPTIONS);
+        subscriptionsMenu = menu.addSubMenu(SUBSCRIPTIONS);
         getSubscriptionsList();
     }
 
     private void getSubscriptionsList() {
         final SubredditInfoService subredditInfoService = new SubredditInfoService();
         subredditInfoService.fetchSubscriptions(getApplicationContext(), () -> {
-            subredditsMenu.clear();
+            subscriptionsMenu.clear();
             for (Subreddit subreddit : subredditInfoService.getSubreddits()) {
-                subredditsMenu.add(subreddit.getSubredditName());
+                subscriptionsMenu.add(subreddit.getSubredditName());
             }
         });
     }

@@ -186,7 +186,7 @@ public class CommentsFragment extends Fragment {
                     moreIds.peek(),
                     sortByParam,
                     () -> onLoadMoreSuccessfulResponse(commentService.getCommentResponse(), moreIds),
-                    () -> onLoadMoreUnsuccess()
+                    this::onLoadMoreUnsuccess
             );
         }
     }
@@ -202,7 +202,7 @@ public class CommentsFragment extends Fragment {
                     url,
                     "",
                     () -> onFetchCommentsSuccessfulResponse(commentService.getCommentResponse()),
-                    () -> onFetchCommentsComplete()
+                    this::onFetchCommentsComplete
             );
         }
 
@@ -221,7 +221,7 @@ public class CommentsFragment extends Fragment {
                     url,
                     moreIds.peek(),
                     () -> onLoadMoreSuccessfulResponse(commentService.getCommentResponse(), moreIds),
-                    () -> onLoadMoreUnsuccess()
+                    this::onLoadMoreUnsuccess
             );
         }
     }

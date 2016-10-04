@@ -6,5 +6,5 @@ package com.keshavg.reddit.interfaces;
 
 @FunctionalInterface
 public interface PerformFunction {
-    public void execute();
+    void execute();
 }

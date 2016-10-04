@@ -3,6 +3,7 @@ package com.keshavg.reddit.models;
 import android.text.format.DateUtils;
 
 import com.google.gson.annotations.SerializedName;
+import com.keshavg.reddit.interfaces.Thing;
 
 import java.util.List;
 
@@ -11,7 +12,7 @@ import lombok.Getter;
 /**
  * Created by keshav.g on 22/08/16.
  */
-public class Post {
+public class Post implements Thing {
     private class Preview {
         private class Types {
             private class Image {
@@ -53,7 +54,7 @@ public class Post {
      */
 
     @Getter
-    private String name;
+    @SerializedName("name") private String id;
 
     @Getter
     private String author;
@@ -100,7 +101,7 @@ public class Post {
      * Constructor
      */
 
-    public Post(String name,
+    public Post(String Id,
                 String author,
                 long created,
                 int isSaved,
@@ -114,7 +115,7 @@ public class Post {
                 String image,
                 String title,
                 String url) {
-        this.name = name;
+        this.id = Id;
         this.author = author;
         this.created = created;
         this.isSaved = convertIntToBool(isSaved);
@@ -181,7 +182,7 @@ public class Post {
         isHidden = convertIntToBool(hidden);
     }
 
-    public int getIsLiked() {
+    public int getLikes() {
         return convertBoolToInt(isLiked);
     }
 

@@ -125,9 +125,9 @@ public interface RedditApiInterface {
 
     @FormUrlEncoded
     @POST("api/vote")
-    Call<Void> votePost(@Header("Authorization") String authorization,
-                        @Field("id") String name,
-                        @Field("dir") int vote);
+    Call<Void> voteThing(@Header("Authorization") String authorization,
+                         @Field("id") String name,
+                         @Field("dir") int vote);
 
     // TODO: search in subreddits
     @GET("search")

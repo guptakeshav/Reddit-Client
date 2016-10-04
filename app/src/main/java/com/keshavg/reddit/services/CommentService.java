@@ -6,7 +6,6 @@ import android.widget.Toast;
 import com.keshavg.reddit.R;
 import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.interfaces.PerformFunction;
-import com.keshavg.reddit.models.Comment;
 import com.keshavg.reddit.models.CommentResponse;
 import com.keshavg.reddit.network.RedditApiClient;
 import com.keshavg.reddit.network.RedditApiInterface;
@@ -115,55 +114,6 @@ public class CommentService {
             public void onFailure(Call<CommentResponse> call, Throwable t) {
                 showToast(context, context.getString(R.string.error_server_connect));
                 onFailure.execute();
-            }
-        });
-    }
-
-    public static void deleteComment(final Context context, String id, final PerformFunction onDelete) {
-        RedditApiInterface apiClient = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-        Call<Void> call = apiClient.deleteThing(
-                "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                id
-        );
-
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    onDelete.execute();
-                } else {
-                    showToast(context, "Deleting - " + response.message());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                showToast(context, context.getString(R.string.error_server_connect));
-            }
-        });
-    }
-
-    public static void voteComment(final Context context, final Comment comment, final PerformFunction onVoteUnsuccess) {
-        RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-        Call<Void> call = apiService.votePost(
-                "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                comment.getName(),
-                comment.getLikeInt()
-        );
-
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (!response.isSuccessful()) {
-                    showToast(context, "Comments Voting - " + response.message());
-                    onVoteUnsuccess.execute();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                showToast(context, context.getString(R.string.error_server_connect));
-                onVoteUnsuccess.execute();
             }
         });
     }

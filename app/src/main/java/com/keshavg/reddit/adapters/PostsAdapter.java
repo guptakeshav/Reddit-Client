@@ -34,6 +34,7 @@ import com.keshavg.reddit.db.AuthSharedPrefHelper;
 import com.keshavg.reddit.models.Post;
 import com.keshavg.reddit.network.RedditApiClient;
 import com.keshavg.reddit.network.RedditApiInterface;
+import com.keshavg.reddit.services.ThingService;
 import com.keshavg.reddit.utils.DeviceUtil;
 import com.keshavg.reddit.utils.ValidateUtil;
 
@@ -169,24 +170,16 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         setToolbar(holder);
 
         setPostImage(holder);
-
         holder.subreddit.setText(post.getFormattedSubreddit());
         holder.title.setText(post.getTitle());
         holder.author.setText(post.getPostedBy());
-
-        setScoreInformation(holder, post.getScore(), post.getIsLiked());
-
+        setScoreInformation(holder, post.getScore(), post.getLikes());
         holder.created.setText(post.getRelativeCreatedTimeSpan());
         holder.commentsCount.setText(post.getCommentsCount());
-
         holder.image.setOnClickListener(view -> onClickImage(holder.getAdapterPosition()));
-
         holder.postContent.setOnClickListener(view -> onClickContent(post));
-
         holder.scoreUp.setOnClickListener(v -> onClickVote(holder.getAdapterPosition(), 1, holder));
-
         holder.scoreDown.setOnClickListener(v -> onClickVote(holder.getAdapterPosition(), -1, holder));
-
         holder.commentsCount.setOnClickListener(view -> onClickCommentsCount(post, holder));
     }
 
@@ -219,7 +212,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
                         .setTitle(item.getTitle())
                         .setMessage("Are you sure?")
                         .setPositiveButton("Yes", (dialog, which) -> {
-                            onClickDelete(post.getName(), holder.getAdapterPosition());
+                            onClickDelete(post.getId(), holder.getAdapterPosition());
                             dialog.dismiss();
                         })
                         .setNegativeButton("No", (dialog, which) -> dialog.cancel())
@@ -359,12 +352,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         if (post.getIsSaved() == 1) {
             call = apiService.unsaveThing(
                     "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    post.getName()
+                    post.getId()
             );
         } else {
             call = apiService.saveThing(
                     "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    post.getName()
+                    post.getId()
             );
         }
 
@@ -400,12 +393,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         if (post.getIsHidden() == 1) {
             call = apiService.unhideThing(
                     "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    post.getName()
+                    post.getId()
             );
         } else {
             call = apiService.hideThing(
                     "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    post.getName()
+                    post.getId()
             );
         }
 
@@ -441,27 +434,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
     }
 
     private void onClickDelete(String id, final int position) {
-        RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-        Call<Void> call = apiService.deleteThing(
-                "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                id
+        ThingService.deleteThing(
+                activity.getApplicationContext(),
+                id,
+                () -> remove(position)
         );
-
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    remove(position);
-                } else {
-                    showToast("Delete - " + response.message());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                showToast(activity.getString(R.string.error_server_connect));
-            }
-        });
     }
 
     private void onClickNsfw(final ViewHolder viewHolder, final Post post, final MenuItem nsfw, final int position) {
@@ -471,12 +448,12 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
         if (post.getIsNsfw() == 1) {
             call = apiService.unmarkNsfw(
                     "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    post.getName()
+                    post.getId()
             );
         } else {
             call = apiService.markNsfw(
                     "bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    post.getName()
+                    post.getId()
             );
         }
 
@@ -520,41 +497,22 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder>
 
     private void onClickVote(int position, final int likes, final ViewHolder holder) {
         if (ValidateUtil.loginValidation(coordinatorLayout, activity)) {
-
-            RedditApiInterface apiService = RedditApiClient.getOAuthClient().create(RedditApiInterface.class);
-
             final Post post = objects.get(position);
-            final int prevLikes = post.getIsLiked();
-            post.setIsLiked((post.getIsLiked() == likes) ? 0 : likes);
-            final int delta = post.getIsLiked() - prevLikes;
+            final int prevLikes = post.getLikes();
+            post.setIsLiked((post.getLikes() == likes) ? 0 : likes);
+            final int delta = post.getLikes() - prevLikes;
             post.updateScore(delta);
-            setScoreInformation(holder, post.getScore(), post.getIsLiked());
+            setScoreInformation(holder, post.getScore(), post.getLikes());
 
-            Call<Void> call = apiService.votePost("bearer " + AuthSharedPrefHelper.getAccessToken(),
-                    post.getName(),
-                    post.getIsLiked()
-            );
-            call.enqueue(new Callback<Void>() {
-                @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {
-                    if (!response.isSuccessful()) {
-                        if (response.code() == 400) {
-                            showToast(activity.getString(R.string.error_archive_post));
-                        } else {
-                            showToast("Voting - " + response.message());
-                        }
-
+            ThingService.voteThing(
+                    activity.getApplicationContext(),
+                    post,
+                    () -> {
                         post.setIsLiked(prevLikes);
                         post.updateScore(-delta);
-                        setScoreInformation(holder, post.getScore(), post.getIsLiked());
+                        setScoreInformation(holder, post.getScore(), post.getLikes());
                     }
-                }
-
-                @Override
-                public void onFailure(Call<Void> call, Throwable t) {
-                    showToast(activity.getString(R.string.error_server_connect));
-                }
-            });
+            );
         }
     }
 

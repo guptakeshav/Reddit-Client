@@ -22,7 +22,7 @@ public class PostsDbHelper extends SQLiteOpenHelper {
     private static final String TABLE_NAME = "Posts";
 
     private static final String COLUMN_REDDIT_LINK = "reddit_link";
-    private static final String COLUMN_NAME = "name";
+    private static final String COLUMN_ID = "id";
     private static final String COLUMN_AUTHOR = "author";
     private static final String COLUMN_CREATED = "created";
     private static final String COLUMN_IS_HIDDEN = "is_hidden";
@@ -49,7 +49,7 @@ public class PostsDbHelper extends SQLiteOpenHelper {
         db.execSQL(
                 "CREATE TABLE " + TABLE_NAME + "(" +
                 COLUMN_REDDIT_LINK + " " + TYPE_TEXT + ", " +
-                COLUMN_NAME + " " + TYPE_TEXT + ", " +
+                        COLUMN_ID + " " + TYPE_TEXT + ", " +
                 COLUMN_AUTHOR + " " + TYPE_TEXT + ", " +
                 COLUMN_CREATED + " " + TYPE_INT + ", " +
                 COLUMN_IS_HIDDEN + " " + TYPE_INT + ", " +
@@ -83,12 +83,12 @@ public class PostsDbHelper extends SQLiteOpenHelper {
             ContentValues values = new ContentValues();
 
             values.put(COLUMN_REDDIT_LINK, redditLink);
-            values.put(COLUMN_NAME, post.getName());
+            values.put(COLUMN_ID, post.getId());
             values.put(COLUMN_AUTHOR, post.getAuthor());
             values.put(COLUMN_CREATED, post.getCreated());
             values.put(COLUMN_IS_HIDDEN, post.getIsHidden());
             values.put(COLUMN_IS_SAVED, post.getIsSaved());
-            values.put(COLUMN_IS_LIKED, post.getIsLiked());
+            values.put(COLUMN_IS_LIKED, post.getLikes());
             values.put(COLUMN_IS_NSFW, post.getIsNsfw());
             values.put(COLUMN_NUM_COMMENTS, post.getNumComments());
             values.put(COLUMN_PERMALINK, post.getPermalink());
@@ -108,7 +108,7 @@ public class PostsDbHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
 
         String[] projection = {
-                COLUMN_NAME,
+                COLUMN_ID,
                 COLUMN_AUTHOR,
                 COLUMN_CREATED,
                 COLUMN_IS_HIDDEN,
@@ -142,7 +142,7 @@ public class PostsDbHelper extends SQLiteOpenHelper {
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
             Post post = new Post(
-                    cursor.getString(cursor.getColumnIndex(COLUMN_NAME)),
+                    cursor.getString(cursor.getColumnIndex(COLUMN_ID)),
                     cursor.getString(cursor.getColumnIndex(COLUMN_AUTHOR)),
                     cursor.getLong(cursor.getColumnIndex(COLUMN_CREATED)),
                     cursor.getInt(cursor.getColumnIndex(COLUMN_IS_SAVED)),
